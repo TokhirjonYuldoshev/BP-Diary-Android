@@ -301,3 +301,21 @@
   body.dark .mobile-report-toolbar{background:#0d1824;border-color:#26384b}
   .mobile-report-close{width:38px!important;padding:0!important}
 }
+
+/* Mobile V4 chart deck */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  #mobileChartDeck{
+    display:flex;gap:9px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;padding:0 9px 11px;scrollbar-width:none
+  }
+  #mobileChartDeck::-webkit-scrollbar{display:none}
+  #mobileChartDeck .chart-panel{
+    flex:0 0 calc(100% - 18px);margin:0!important;scroll-snap-align:center;min-height:168px
+  }
+  .mobile-page-analysis.mobile-mode-overview #mobileChartDeck{display:none!important}
+  .mobile-page-analysis.mobile-mode-charts #mobileChartDeck{display:flex!important}
+  .mobile-page-analysis.mobile-no-data #mobileChartDeck{display:none!important}
+  .analysis-card i{display:inline-block;width:1.05em;text-align:center;vertical-align:-.06em}
+  .advanced-score{padding:0 11px 9px!important}
+  .advanced-score .profile-fields{padding-left:0!important;padding-right:0!important;padding-bottom:0!important}
+}
