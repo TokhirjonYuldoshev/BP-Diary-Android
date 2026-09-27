@@ -73,7 +73,7 @@
     qa('.chart-panel',analysis).forEach(p=>{let n=q('.mobile-chart-empty',p);if(!count){p.classList.add('mobile-empty');if(!n){n=document.createElement('div');n.className='mobile-chart-empty';p.appendChild(n)}n.textContent=ru()?'Добавьте измерения — график появится здесь':'Add readings — the chart will appear here'}else{p.classList.remove('mobile-empty');n?.remove()}})
   }
 
-  function parsePressure(text){const s=(text||'').trim();const m=s.match(/^(d+)/(d+)(?:-(d+|—))?$/);return m?{bp:`${m[1]}/${m[2]}`,pulse:m[3]&&m[3]!=='—'?m[3]:''}:{bp:s||'—',pulse:''}}
+  function parsePressure(text){const s=(text||'').trim();const m=s.match(/^(\d+)\/(\d+)(?:-(\d+|—))?$/);return m?{bp:`${m[1]}/${m[2]}`,pulse:m[3]&&m[3]!=='—'?m[3]:''}:{bp:s||'—',pulse:''}}
   function archiveCards(archive){
     let host=q('#mobileArchiveCards',archive);if(!host){host=document.createElement('div');host.id='mobileArchiveCards';const tc=q('.table-container',archive);archive.insertBefore(host,tc||null)}host.innerHTML='';const table=q('#recordsTable',archive);if(!table)return;
     const headers=qa('thead th',table).map(x=>x.textContent.trim()),rows=qa('tbody tr',table).filter(r=>r.dataset.id);if(!rows.length){host.innerHTML=`<div class="mobile-archive-empty">${ru()?'Пока нет сохранённых измерений':'No saved readings yet'}</div>`;return}
