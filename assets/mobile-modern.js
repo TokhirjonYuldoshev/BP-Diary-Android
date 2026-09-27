@@ -72,57 +72,171 @@
   try{activeMobileChart=localStorage.getItem('bp_mobile_chart')||'pressureChart'}catch(_){}
 
   function analyticsChartSelector(analysis){
-    const panels=qa('.chart-panel',analysis);
-    if(!panels.length)return;
-    const ids=panels.map(p=>q('canvas',p)?.id).filter(Boolean);
-    if(!ids.includes(activeMobileChart))activeMobileChart=ids[0]||'pressureChart';
+    const ids=['pressureChart','pulseChart','tempWeightChart','timeOfDayChart','weekdayChart'];
+    if(!ids.includes(activeMobileChart))activeMobileChart='pressureChart';
     let selector=q('#mobileChartSelector',analysis);
     if(!selector){
       selector=document.createElement('div');selector.id='mobileChartSelector';
-      panels[0].before(selector);
+      const stats=q('.stats-bar',analysis);
+      (stats||q('#mobileAnalyticsTabs',analysis))?.after(selector);
     }
     const names=ru()?{
       pressureChart:'АД',pulseChart:'Пульс',tempWeightChart:'Темп./вес',timeOfDayChart:'Время суток',weekdayChart:'Дни недели'
     }:{
       pressureChart:'BP',pulseChart:'Pulse',tempWeightChart:'Temp/weight',timeOfDayChart:'Day time',weekdayChart:'Weekdays'
     };
-    selector.innerHTML=ids.map(id=>'<button type="button" data-chart="'+id+'">'+(names[id]||id)+'</button>').join('');
+    selector.innerHTML=ids.map(id=>'<button type="button" data-chart="'+id+'">'+names[id]+'</button>').join('');
     selector.onclick=e=>{
       const b=e.target.closest('[data-chart]');if(!b)return;
       activeMobileChart=b.dataset.chart;
       try{localStorage.setItem('bp_mobile_chart',activeMobileChart)}catch(_){}
       applyChartSelection(analysis);
-      setTimeout(()=>refreshActiveChart(analysis,true),30);
+      renderMobileNativeChart(analysis);
     };
+    let panel=q('#mobileNativeChartPanel',analysis);
+    if(!panel){
+      panel=document.createElement('section');panel.id='mobileNativeChartPanel';
+      selector.after(panel);
+    }
     applyChartSelection(analysis);
   }
 
   function applyChartSelection(analysis){
-    qa('.chart-panel',analysis).forEach(panel=>{
-      const id=q('canvas',panel)?.id||'';
-      panel.classList.toggle('mobile-chart-active',id===activeMobileChart);
-    });
     qa('#mobileChartSelector [data-chart]',analysis).forEach(b=>b.classList.toggle('active',b.dataset.chart===activeMobileChart));
   }
 
-  function refreshActiveChart(analysis,rerender=false){
-    if(!analysis||analyticsMode!=='charts')return;
-    const canvas=q('#'+activeMobileChart,analysis);if(!canvas)return;
-    const finish=()=>{
-      try{
-        const chart=window.Chart?.getChart?.(canvas);
-        if(chart){chart.resize();chart.update('none');return}
-      }catch(_){}
-      if(rerender){
-        try{
-          if(typeof window.getFilteredRecords==='function'&&typeof window.renderCharts==='function'){
-            window.renderCharts(window.getFilteredRecords());
-            requestAnimationFrame(()=>{try{window.Chart?.getChart?.(canvas)?.resize()}catch(_){}});
-          }
-        }catch(_){}
+  function mobileFilteredRecords(){
+    try{
+      if(typeof window.getFilteredRecords==='function'){
+        const arr=window.getFilteredRecords();
+        return Array.isArray(arr)?arr:[];
       }
+    }catch(_){}
+    return [];
+  }
+
+  function mobileRecordAverage(rec){
+    try{
+      if(typeof window.computeGlobalAverage==='function')return window.computeGlobalAverage(rec.measures);
+    }catch(_){}
+    const vals=[];
+    (rec?.measures||[]).forEach(m=>{
+      ['left','right'].forEach(side=>{
+        const x=m?.[side]||{};
+        if(Number(x.sys)>0&&Number(x.dia)>0)vals.push({sys:Number(x.sys),dia:Number(x.dia),pulse:Number(x.pulse)||0});
+      });
+    });
+    if(!vals.length)return{sys:0,dia:0,pulse:0};
+    return{
+      sys:vals.reduce((s,x)=>s+x.sys,0)/vals.length,
+      dia:vals.reduce((s,x)=>s+x.dia,0)/vals.length,
+      pulse:vals.filter(x=>x.pulse>0).length?vals.filter(x=>x.pulse>0).reduce((s,x)=>s+x.pulse,0)/vals.filter(x=>x.pulse>0).length:0
     };
-    requestAnimationFrame(()=>requestAnimationFrame(finish));
+  }
+
+  function mobileDateLabel(rec){
+    try{if(typeof window.formatDate==='function')return window.formatDate(rec.date)+' '+String(rec.time||'').slice(0,5)}catch(_){}
+    return String(rec.date||'')+' '+String(rec.time||'').slice(0,5);
+  }
+
+  function svgEsc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+  function mobileLineSvg(series,labels,unit,height=220){
+    const W=360,H=height,L=43,R=10,T=16,B=34,PW=W-L-R,PH=H-T-B;
+    const all=series.flatMap(s=>s.values).filter(v=>Number.isFinite(v)&&v>0);
+    if(!all.length)return '';
+    let min=Math.min(...all),max=Math.max(...all);
+    const pad=Math.max(5,(max-min)*.18||10);
+    min=Math.floor((min-pad)/5)*5;max=Math.ceil((max+pad)/5)*5;
+    if(max<=min)max=min+20;
+    const x=i=>labels.length<=1?L+PW/2:L+(i/(labels.length-1))*PW;
+    const y=v=>T+PH-((v-min)/(max-min))*PH;
+    const grid=[0,.25,.5,.75,1].map(f=>{
+      const yy=T+PH*f,val=Math.round(max-(max-min)*f);
+      return '<line x1="'+L+'" y1="'+yy+'" x2="'+(W-R)+'" y2="'+yy+'" class="mchart-grid"/><text x="'+(L-6)+'" y="'+(yy+3)+'" text-anchor="end" class="mchart-axis">'+val+'</text>';
+    }).join('');
+    const paths=series.map((s,si)=>{
+      const pts=s.values.map((v,i)=>Number.isFinite(v)&&v>0?[x(i),y(v)]:null);
+      const segments=[];let cur=[];
+      pts.forEach(p=>{if(p)cur.push(p);else if(cur.length){segments.push(cur);cur=[]}});if(cur.length)segments.push(cur);
+      const lines=segments.map(seg=>seg.length===1?'':('<polyline points="'+seg.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')+'" class="mchart-line mchart-series-'+si+'"/>')).join('');
+      const dots=pts.filter(Boolean).map(p=>'<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3" class="mchart-dot mchart-series-'+si+'"/>').join('');
+      return lines+dots;
+    }).join('');
+    const first=labels[0]||'',last=labels[labels.length-1]||'';
+    const xlabels=labels.length===1
+      ?'<text x="'+(L+PW/2)+'" y="'+(H-8)+'" text-anchor="middle" class="mchart-axis">'+svgEsc(first)+'</text>'
+      :'<text x="'+L+'" y="'+(H-8)+'" text-anchor="start" class="mchart-axis">'+svgEsc(first)+'</text><text x="'+(W-R)+'" y="'+(H-8)+'" text-anchor="end" class="mchart-axis">'+svgEsc(last)+'</text>';
+    return '<svg class="mobile-native-svg" viewBox="0 0 '+W+' '+H+'" role="img"><text x="8" y="12" class="mchart-unit">'+svgEsc(unit)+'</text>'+grid+paths+xlabels+'</svg>';
+  }
+
+  function mobileBarSvg(values,labels,unit){
+    const W=360,H=220,L=43,R=10,T=18,B=42,PW=W-L-R,PH=H-T-B;
+    const valid=values.filter(v=>Number.isFinite(v)&&v>0);
+    if(!valid.length)return '';
+    const max=Math.ceil((Math.max(...valid)*1.15)/10)*10||10;
+    const step=PW/Math.max(values.length,1),bw=Math.min(32,step*.58);
+    const grid=[0,.25,.5,.75,1].map(f=>{
+      const yy=T+PH*f,val=Math.round(max*(1-f));
+      return '<line x1="'+L+'" y1="'+yy+'" x2="'+(W-R)+'" y2="'+yy+'" class="mchart-grid"/><text x="'+(L-6)+'" y="'+(yy+3)+'" text-anchor="end" class="mchart-axis">'+val+'</text>';
+    }).join('');
+    const bars=values.map((v,i)=>{
+      const n=Number(v)||0,h=n>0?(n/max)*PH:0,xx=L+step*i+(step-bw)/2,yy=T+PH-h;
+      const label=labels[i]||'';
+      return '<rect x="'+xx.toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="5" class="mchart-bar"/><text x="'+(xx+bw/2).toFixed(1)+'" y="'+(H-17)+'" text-anchor="middle" class="mchart-axis">'+svgEsc(label)+'</text>';
+    }).join('');
+    return '<svg class="mobile-native-svg" viewBox="0 0 '+W+' '+H+'" role="img"><text x="8" y="12" class="mchart-unit">'+svgEsc(unit)+'</text>'+grid+bars+'</svg>';
+  }
+
+  function mobileNoChartData(title,msg){
+    return '<div class="mobile-native-chart-head"><strong>'+svgEsc(title)+'</strong></div><div class="mobile-native-chart-empty">'+svgIcon('chart')+'<span>'+svgEsc(msg)+'</span></div>';
+  }
+
+  function renderMobileNativeChart(analysis){
+    const host=q('#mobileNativeChartPanel',analysis);if(!host)return;
+    const records=mobileFilteredRecords().slice().sort((a,b)=>String(a.date+a.time).localeCompare(String(b.date+b.time)));
+    if(!records.length){
+      host.innerHTML=mobileNoChartData(ru()?'Графики':'Charts',ru()?'Нет данных для выбранного периода':'No data for the selected period');
+      return;
+    }
+    const labels=records.map(mobileDateLabel);
+    const avgs=records.map(mobileRecordAverage);
+    const titleMap=ru()?{
+      pressureChart:'Динамика давления',pulseChart:'Динамика пульса',tempWeightChart:'Температура и вес',timeOfDayChart:'Среднее по времени суток',weekdayChart:'Среднее по дням недели'
+    }:{
+      pressureChart:'Blood pressure trend',pulseChart:'Pulse trend',tempWeightChart:'Temperature and weight',timeOfDayChart:'Average by time of day',weekdayChart:'Average by weekday'
+    };
+    const no=ru()?'Недостаточно данных для этого графика':'Not enough data for this chart';
+    let body='',legend='';
+    if(activeMobileChart==='pressureChart'){
+      const sys=avgs.map(a=>Number(a.sys)||0),dia=avgs.map(a=>Number(a.dia)||0);
+      body=mobileLineSvg([{values:sys},{values:dia}],labels,ru()?'мм рт. ст.':'mmHg');
+      legend='<div class="mobile-native-legend"><span><i class="mchart-legend-0"></i>'+(ru()?'САД':'SYS')+'</span><span><i class="mchart-legend-1"></i>'+(ru()?'ДАД':'DIA')+'</span></div>';
+    }else if(activeMobileChart==='pulseChart'){
+      body=mobileLineSvg([{values:avgs.map(a=>Number(a.pulse)||0)}],labels,ru()?'уд/мин':'bpm');
+    }else if(activeMobileChart==='tempWeightChart'){
+      const temp=records.map(r=>Number(r.temperature)||0),weight=records.map(r=>Number(r.weight)||0);
+      const tempSvg=mobileLineSvg([{values:temp}],labels,'°C',128);
+      const weightSvg=mobileLineSvg([{values:weight}],labels,ru()?'кг':'kg',128);
+      if(tempSvg||weightSvg)body='<div class="mobile-dual-charts">'+(tempSvg?'<div><small>'+(ru()?'Температура':'Temperature')+'</small>'+tempSvg+'</div>':'')+(weightSvg?'<div><small>'+(ru()?'Вес':'Weight')+'</small>'+weightSvg+'</div>':'')+'</div>';
+    }else if(activeMobileChart==='timeOfDayChart'){
+      const buckets=[[],[],[]];
+      records.forEach((r,i)=>{const h=parseInt(String(r.time||'0').slice(0,2),10)||0;const v=Number(avgs[i].sys)||0;if(v>0)buckets[h<12?0:h<18?1:2].push(v)});
+      const vals=buckets.map(a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:0);
+      body=mobileBarSvg(vals,ru()?['Утро','День','Вечер']:['AM','Day','PM'],ru()?'мм рт. ст.':'mmHg');
+    }else if(activeMobileChart==='weekdayChart'){
+      const sums=Array(7).fill(0),cnt=Array(7).fill(0);
+      records.forEach((r,i)=>{const d=new Date(String(r.date)+'T12:00:00');if(Number.isNaN(d.getTime()))return;const k=(d.getDay()+6)%7,v=Number(avgs[i].sys)||0;if(v>0){sums[k]+=v;cnt[k]++}});
+      const vals=sums.map((s,i)=>cnt[i]?s/cnt[i]:0);
+      body=mobileBarSvg(vals,ru()?['Пн','Вт','Ср','Чт','Пт','Сб','Вс']:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],ru()?'мм рт. ст.':'mmHg');
+    }
+    if(!body){host.innerHTML=mobileNoChartData(titleMap[activeMobileChart]||'',no);return}
+    host.innerHTML='<div class="mobile-native-chart-head"><strong>'+svgEsc(titleMap[activeMobileChart]||'')+'</strong><span>'+records.length+' '+(ru()?'сеанс.':'sessions')+'</span></div>'+legend+body;
+  }
+
+  function refreshActiveChart(analysis){
+    if(!analysis||analyticsMode!=='charts')return;
+    requestAnimationFrame(()=>renderMobileNativeChart(analysis));
   }
 
   function analyticsMoreSheet(analysis,cards){
