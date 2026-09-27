@@ -417,3 +417,122 @@
   .mobile-sheet-panel{border-radius:19px}
   .mobile-sheet-title{font-size:.8rem}.mobile-sheet-grid button{font-size:.62rem!important}
 }
+
+/* Mobile V6 analytics redesign — scoped to Analytics only */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  .mobile-page-analysis>.card-header{padding:12px 12px 5px!important}
+  .mobile-page-analysis>.card-header h2{font-size:.91rem!important;letter-spacing:-.15px!important}
+  .mobile-page-analysis>.mobile-screen-subtitle{margin:0 12px 7px!important;font-size:.57rem!important}
+
+  .mobile-page-analysis #mobileAnalyticsTabs{
+    margin:0 8px 8px!important;padding:3px!important;border-radius:11px!important;
+    background:var(--m-surface-2)!important;border:1px solid var(--m-line)!important
+  }
+  .mobile-page-analysis #mobileAnalyticsTabs button{
+    min-height:32px!important;font-size:.58rem!important;border-radius:8px!important
+  }
+  .mobile-page-analysis #mobileAnalyticsTabs button svg{width:14px!important;height:14px!important}
+
+  /* Overview: remove the dashboard-inside-dashboard look. */
+  .mobile-page-analysis .pro-analysis{
+    margin:0 8px 8px!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important
+  }
+  .mobile-page-analysis .analysis-grid{
+    display:grid!important;grid-template-columns:1fr 1fr!important;gap:6px!important;margin:0 0 6px!important
+  }
+  .mobile-page-analysis .analysis-card{
+    min-width:0!important;margin:0!important;padding:9px 9px 8px!important;
+    border-radius:13px!important;background:var(--m-surface)!important;
+    border:1px solid var(--m-line)!important;box-shadow:0 4px 12px rgba(30,72,96,.035)!important
+  }
+  body.dark .mobile-page-analysis .analysis-card{background:#101b29!important;border-color:#26394e!important}
+  .mobile-page-analysis .analysis-card.mobile-kpi-primary{min-height:83px}
+  .mobile-page-analysis .analysis-card.mobile-kpi-secondary{min-height:73px}
+  .mobile-page-analysis .analysis-card.mobile-analytics-extra{display:none!important}
+  .mobile-page-analysis.mobile-show-all .analysis-card.mobile-analytics-extra{display:none!important}
+  .mobile-page-analysis .analysis-card>i{display:none!important}
+  .mobile-page-analysis .analysis-card .analysis-value{
+    margin-top:4px!important;font-size:.76rem!important;line-height:1.16!important;font-weight:800!important
+  }
+  .mobile-page-analysis .analysis-card small,
+  .mobile-page-analysis .analysis-card .status-note{
+    margin-top:3px!important;font-size:.49rem!important;line-height:1.24!important;color:var(--m-muted)!important
+  }
+  .mobile-page-analysis #mobileAnalyticsToggle{
+    display:flex!important;width:100%!important;margin:2px 0 0!important;min-height:35px!important;
+    justify-content:center!important;border:1px solid var(--m-line)!important;border-radius:11px!important;
+    background:var(--m-surface-2)!important;color:var(--m-accent)!important;font-size:.58rem!important
+  }
+  .mobile-page-analysis .mobile-calendar-wrap{display:none!important}
+
+  /* Overview and Charts are truly separate screens. */
+  .mobile-page-analysis.mobile-mode-overview .stats-bar,
+  .mobile-page-analysis.mobile-mode-overview #mobileChartSelector,
+  .mobile-page-analysis.mobile-mode-overview .chart-panel,
+  .mobile-page-analysis.mobile-mode-overview #mobileChartDeck{display:none!important}
+
+  .mobile-page-analysis.mobile-mode-charts .pro-analysis,
+  .mobile-page-analysis.mobile-mode-charts #mobileAnalyticsToggle,
+  .mobile-page-analysis.mobile-mode-charts #mobileChartDeck{display:none!important}
+
+  .mobile-page-analysis .stats-bar{
+    margin:0 8px 7px!important;padding:8px!important;border-radius:13px!important;
+    background:var(--m-surface-2)!important;border:1px solid var(--m-line)!important
+  }
+  .mobile-page-analysis .filter-group{gap:5px!important}
+  .mobile-page-analysis .mobile-date-field{gap:3px!important}
+  .mobile-page-analysis .mobile-date-field small{font-size:.49rem!important}
+  .mobile-page-analysis .mobile-date-field input{min-height:35px!important;font-size:11px!important;border-radius:10px!important}
+  .mobile-page-analysis .filter-group button{min-height:34px!important;font-size:.55rem!important;border-radius:10px!important}
+  .mobile-page-analysis .stat-numbers{gap:4px!important;margin-top:6px!important}
+  .mobile-page-analysis .stat-item{padding:4px 6px!important;font-size:.49rem!important;border-radius:999px!important}
+
+  #mobileChartSelector{
+    display:none;gap:5px;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
+    margin:0 8px 7px;padding:0 0 2px;scrollbar-width:none
+  }
+  #mobileChartSelector::-webkit-scrollbar{display:none}
+  .mobile-page-analysis.mobile-mode-charts #mobileChartSelector{display:flex!important}
+  #mobileChartSelector button{
+    flex:0 0 auto;min-height:31px!important;padding:5px 9px!important;border-radius:999px!important;
+    border:1px solid var(--m-line)!important;background:var(--m-surface)!important;color:var(--m-muted)!important;
+    font-size:.54rem!important;white-space:nowrap!important
+  }
+  #mobileChartSelector button.active{
+    border-color:#58b3ca!important;background:var(--m-accent-soft)!important;color:var(--m-accent)!important;font-weight:850!important
+  }
+
+  .mobile-page-analysis.mobile-mode-charts .chart-panel{display:none!important}
+  .mobile-page-analysis.mobile-mode-charts .chart-panel.mobile-chart-active{
+    display:block!important;margin:0 8px 9px!important;padding:10px 9px 8px!important;
+    min-height:245px!important;border-radius:15px!important;background:var(--m-surface)!important;
+    border:1px solid var(--m-line)!important;overflow:hidden!important
+  }
+  .mobile-page-analysis .chart-panel h2{font-size:.69rem!important;margin:0 0 4px!important}
+  .mobile-page-analysis .chart-panel canvas{
+    display:block!important;width:100%!important;height:210px!important;max-height:210px!important
+  }
+  .mobile-page-analysis .chart-panel.mobile-empty{min-height:100px!important}
+  .mobile-page-analysis .chart-panel.mobile-empty canvas{display:none!important}
+
+  /* More metrics live in a sheet instead of stretching the page. */
+  #mobileAnalyticsSheet{
+    display:flex;position:fixed;inset:0;z-index:15000;background:rgba(6,17,28,.44);
+    align-items:flex-end;padding:10px 10px calc(10px + env(safe-area-inset-bottom));
+    opacity:0;pointer-events:none;transition:opacity .18s
+  }
+  #mobileAnalyticsSheet.open{opacity:1;pointer-events:auto}
+  #mobileAnalyticsSheet .mobile-sheet-panel{max-height:80vh}
+  #mobileAnalyticsSheet .mobile-sheet-grid{grid-template-columns:1fr!important;gap:6px!important}
+  #mobileAnalyticsSheet .analysis-card{
+    display:block!important;min-height:0!important;padding:10px!important;border-radius:12px!important;
+    background:var(--m-surface-2)!important;border:1px solid var(--m-line)!important
+  }
+  #mobileAnalyticsSheet .analysis-card .analysis-value{font-size:.72rem!important}
+  #mobileAnalyticsSheet .analysis-card small{font-size:.5rem!important}
+
+  .mobile-page-analysis.mobile-no-data .pro-analysis,
+  .mobile-page-analysis.mobile-no-data .stats-bar,
+  .mobile-page-analysis.mobile-no-data #mobileChartSelector,
+  .mobile-page-analysis.mobile-no-data .chart-panel{display:none!important}
+}
