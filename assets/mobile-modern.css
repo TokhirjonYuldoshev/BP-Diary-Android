@@ -598,3 +598,26 @@
   .mobile-page-analysis.mobile-mode-charts #mobileNativeChartPanel{display:block!important}
   .mobile-page-analysis.mobile-no-data #mobileNativeChartPanel{display:none!important}
 }
+
+
+/* Mobile V8 native actions */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  #mobilePdfSheet{
+    display:flex;position:fixed;inset:0;z-index:16000;background:rgba(6,17,28,.46);
+    align-items:flex-end;padding:10px 10px calc(10px + env(safe-area-inset-bottom));
+    opacity:0;pointer-events:none;transition:opacity .18s
+  }
+  #mobilePdfSheet.open{opacity:1;pointer-events:auto}
+  #mobilePdfSheet .mobile-sheet-panel{max-height:65vh}
+  #mobilePdfSheet .mobile-sheet-grid{grid-template-columns:1fr 1fr!important;gap:7px!important}
+  #mobilePdfSheet .mobile-pdf-option{
+    min-height:78px!important;display:flex!important;flex-direction:column!important;align-items:center!important;
+    justify-content:center!important;gap:8px!important;text-align:center!important;font-size:.67rem!important
+  }
+  #mobilePdfSheet .mobile-pdf-option svg{width:26px!important;height:26px!important}
+  #mobileActionSheet .mobile-sheet-grid button{
+    display:flex!important;align-items:center!important;gap:8px!important
+  }
+  #mobileActionSheet .mobile-sheet-grid button svg{width:17px!important;height:17px!important}
+  .mobile-report-toolbar .mobile-report-print svg{width:18px!important;height:18px!important}
+}
