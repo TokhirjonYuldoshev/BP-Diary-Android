@@ -319,3 +319,101 @@
   .advanced-score{padding:0 11px 9px!important}
   .advanced-score .profile-fields{padding-left:0!important;padding-right:0!important;padding-bottom:0!important}
 }
+
+/* Mobile V5 visual cleanup */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  html{font-size:13px}
+  body{padding-left:6px;padding-right:6px}
+
+  /* V4 accidentally replaced translateX(-50%) on the bottom bar. Keep it truly centered. */
+  #mobileAppBar{transform:translateZ(0)!important}
+  #mobileBottomNav{
+    left:50%!important;right:auto!important;
+    transform:translateX(-50%) translateZ(0)!important;
+    width:calc(100% - 18px)!important;max-width:480px!important;
+    height:61px!important;padding:5px!important;border-radius:18px!important
+  }
+  #mobileBottomNav button{min-height:49px!important;font-size:.54rem!important;border-radius:12px!important}
+  #mobileBottomNav button svg{width:18px!important;height:18px!important}
+  #mobileBottomNav button.active::after{bottom:2px!important}
+
+  .card{border-radius:19px;border-color:rgba(205,221,230,.78);box-shadow:0 6px 20px rgba(28,68,94,.052)}
+  body.dark .card{border-color:#203044;box-shadow:0 7px 24px rgba(0,0,0,.18)}
+  #mobileMeasureHero{border-radius:17px;padding:13px;margin:9px 9px 6px}
+  #mobileMeasureHero h2{font-size:1.04rem}
+  .mobile-hero-chip{font-size:.56rem;padding:4px 7px}
+  .mobile-hero-date{font-size:.56rem}
+  .date-time-row{border-radius:15px;padding:9px}
+  .profile-section{border-radius:14px!important}
+  .profile-section-title{min-height:44px;padding:10px 11px;font-size:.69rem!important}
+  input,select,textarea{min-height:41px!important;font-size:13px!important;border-radius:12px!important}
+  button{font-size:.67rem!important}
+  .patient-block #addPatientBtn,.patient-block #editPatientBtn,.patient-block #delPatientBtn{height:38px!important;min-height:38px!important}
+  .patient-block #editPatientBtn,.patient-block #delPatientBtn{width:38px!important}
+
+  #mobileMeasureStepper{border-radius:13px;padding:3px;margin:7px 0 6px}
+  #mobileMeasureStepper button{min-height:34px!important;font-size:.59rem!important;border-radius:9px!important}
+  .measure-card{border-radius:15px;padding:11px 9px 10px}
+  .measure-card h3{font-size:.77rem}
+  .bp-inputs input{min-height:38px!important;font-size:12px!important}
+  .check-field{font-size:.64rem;padding:8px 9px}
+  .action-buttons #saveBtn{min-height:45px!important;font-size:.76rem!important;border-radius:12px!important}
+  .mobile-secondary-btn{min-height:37px!important;font-size:.62rem!important}
+  .clinical-note{font-size:.62rem!important;line-height:1.3!important}
+  .clinical-note.mobile-note-collapsed{height:39px!important;max-height:39px!important;min-height:39px!important;display:flex!important;align-items:center!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;padding:8px 34px 8px 10px!important}
+  .clinical-note.mobile-note-collapsed::after{top:9px!important}
+
+  .mobile-page-analysis>.card-header,.mobile-page-archive>.card-header{padding:13px 13px 6px}
+  .mobile-page-analysis>.card-header h2,.mobile-page-archive>.card-header h2{font-size:.94rem!important}
+  .mobile-screen-subtitle{font-size:.59rem;margin:0 13px 8px}
+  #mobileAnalyticsTabs{margin:0 8px 8px;padding:3px;border-radius:12px}
+  #mobileAnalyticsTabs button{min-height:33px!important;font-size:.59rem!important;border-radius:9px!important}
+  #mobileAnalyticsTabs button svg{width:15px;height:15px}
+
+  .pro-analysis,.stats-bar{margin:0 8px 8px;padding:9px;border-radius:14px;border-color:rgba(46,72,92,.72)}
+  .analysis-grid{gap:5px!important}
+  .analysis-card{padding:8px!important;border-radius:12px!important;border-color:rgba(48,76,96,.72)!important}
+  .analysis-card h3{font-size:.68rem!important}
+  .analysis-card .analysis-value{font-size:.79rem!important}
+  .analysis-card .status-note,.analysis-card small{font-size:.53rem!important}
+  .analysis-card i,.stat-item i{display:none!important}
+  .mobile-analytics-toggle{
+    width:auto!important;min-width:0!important;margin:7px auto 0!important;padding:5px 10px!important;
+    min-height:32px!important;border:0!important;background:transparent!important;color:#79b9cf!important;
+    font-size:.58rem!important
+  }
+
+  .filter-group{grid-template-columns:1fr 1fr;gap:6px}
+  .mobile-date-field{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .mobile-date-field small{padding-left:3px;color:var(--m-muted);font-size:.53rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+  .mobile-date-field input{min-height:38px!important;font-size:12px!important}
+  .filter-group button{min-height:37px!important;font-size:.59rem!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:5px!important}
+  .filter-group button svg{width:14px;height:14px}
+  .stat-numbers{gap:4px}.stat-item{padding:4px 7px;font-size:.53rem}
+
+  #mobileChartDeck{padding:0 8px 9px;gap:0}
+  #mobileChartDeck .chart-panel{
+    flex:0 0 100%!important;width:100%!important;min-width:100%!important;
+    border-radius:14px;padding:9px;min-height:155px;scroll-snap-align:start
+  }
+  .chart-panel h2{font-size:.73rem!important;margin-bottom:4px}
+  .chart-panel canvas{max-height:150px!important}
+  .chart-panel.mobile-empty{min-height:88px!important}
+  .mobile-chart-empty{font-size:.61rem}
+  .mobile-chart-empty::before{width:27px;height:27px;font-size:.75rem}
+
+  #mobileArchiveCards{padding:0 8px 9px;gap:6px}
+  .mobile-record-card{padding:9px;border-radius:14px}
+  .mobile-record-date{font-size:.7rem}.mobile-record-time{font-size:.53rem}
+  .mobile-record-grid{gap:5px}.mobile-record-item{padding:6px 7px;border-radius:10px}
+  .mobile-record-item small{font-size:.46rem}.mobile-record-item strong{font-size:.61rem}.mobile-record-item em{font-size:.48rem}
+  .mobile-record-actions button{width:33px!important;height:33px!important;min-height:33px!important}
+  .mobile-archive-more{min-height:34px!important;font-size:.59rem!important}
+
+  #mobileAnalyticsEmpty,.mobile-archive-empty{border-radius:15px;padding:20px 13px!important}
+  #mobileAnalyticsEmpty strong,.mobile-archive-empty strong{font-size:.74rem}
+  #mobileAnalyticsEmpty span,.mobile-archive-empty span{font-size:.58rem}
+
+  .mobile-sheet-panel{border-radius:19px}
+  .mobile-sheet-title{font-size:.8rem}.mobile-sheet-grid button{font-size:.62rem!important}
+}
