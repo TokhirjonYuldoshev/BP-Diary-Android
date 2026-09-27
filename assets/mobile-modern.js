@@ -127,8 +127,15 @@
 
   function disclaimer(){const n=q('#clinicalDisclaimer');if(!n||n.dataset.mobileNote)return;n.dataset.mobileNote='1';n.classList.add('mobile-note-collapsed');n.addEventListener('click',()=>{n.classList.toggle('mobile-note-open');n.classList.toggle('mobile-note-collapsed')})}
 
+  function chartDeck(analysis){
+    let deck=q('#mobileChartDeck',analysis);const panels=qa('.chart-panel',analysis);
+    if(!panels.length)return;
+    if(!deck){deck=document.createElement('div');deck.id='mobileChartDeck';panels[0].before(deck)}
+    panels.forEach(p=>{if(p.parentElement!==deck)deck.appendChild(p)});
+  }
+
   function enhanceAnalysis(analysis,archive){
-    if(!analysis)return;let sub=q('.mobile-screen-subtitle',analysis);if(!sub){sub=document.createElement('div');sub.className='mobile-screen-subtitle';q('.card-header',analysis)?.after(sub)}sub.textContent=ru()?'Тренды, цели и ключевые показатели':'Trends, targets and key metrics';analyticsTabs(analysis);
+    if(!analysis)return;let sub=q('.mobile-screen-subtitle',analysis);if(!sub){sub=document.createElement('div');sub.className='mobile-screen-subtitle';q('.card-header',analysis)?.after(sub)}sub.textContent=ru()?'Тренды, цели и ключевые показатели':'Trends, targets and key metrics';analyticsTabs(analysis);chartDeck(analysis);
     const cards=qa('.analysis-card',analysis);cards.forEach((c,i)=>{c.classList.toggle('mobile-wide',(c.textContent||'').trim().length>95||!!q('.progress-bar-container',c)||!!q('.achievement-badge',c));c.classList.toggle('mobile-analytics-extra',i>=6)});
     let more=q('#mobileAnalyticsToggle',analysis);const grid=q('.analysis-grid',analysis);if(cards.length>6&&grid){if(!more){more=document.createElement('button');more.type='button';more.id='mobileAnalyticsToggle';more.className='outline mobile-analytics-toggle';grid.after(more);more.onclick=()=>{analysis.classList.toggle('mobile-show-all');enhanceAnalysis(analysis,archive)}}const open=analysis.classList.contains('mobile-show-all');more.textContent=open?(ru()?'Свернуть дополнительные показатели':'Hide extra metrics'):(ru()?('Ещё показатели ('+(cards.length-6)+')'):('More metrics ('+(cards.length-6)+')'))}else if(more){more.remove()}
     const count=qa('#tableBody tr[data-id]',archive).length;
