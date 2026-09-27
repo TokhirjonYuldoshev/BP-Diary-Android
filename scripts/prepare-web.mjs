@@ -74,10 +74,27 @@ for (const [from, to] of replacements) {
   html = html.split(from).join(to);
 }
 
+// Mobile UX is layered on top of the validated web diary so medical logic stays untouched.
+await cp(join(root, 'assets', 'mobile-modern.css'), join(www, 'mobile-modern.css'));
+await cp(join(root, 'assets', 'mobile-modern.js'), join(www, 'mobile-modern.js'));
+
+if (!html.includes('mobile-modern.css')) {
+  html = html.replace('</head>', '    <link rel="stylesheet" href="mobile-modern.css">\n</head>');
+}
+if (!html.includes('mobile-modern.js')) {
+  html = html.replace('</body>', '    <script src="mobile-modern.js"></script>\n</body>');
+}
+html = html.replace(
+  'width=device-width, initial-scale=1.0, user-scalable=yes',
+  'width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover'
+);
+
 await writeFile(join(www, 'index.html'), html, 'utf8');
 
 for (const file of [
   join(www, 'index.html'),
+  join(www, 'mobile-modern.css'),
+  join(www, 'mobile-modern.js'),
   join(www, 'vendor', 'chart', 'chart.umd.js'),
   join(www, 'vendor', 'fontawesome', 'css', 'all.min.css'),
   join(www, 'vendor', 'xlsx', 'xlsx.full.min.js')
@@ -88,6 +105,9 @@ for (const file of [
 
 for (const [from] of replacements) {
   if (html.includes(from)) throw new Error(`External runtime URL still present: ${from}`);
+}
+if (!html.includes('mobile-modern.css') || !html.includes('mobile-modern.js')) {
+  throw new Error('Modern mobile shell was not injected');
 }
 
 console.log(
