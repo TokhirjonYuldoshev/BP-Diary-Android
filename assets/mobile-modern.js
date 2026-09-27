@@ -37,7 +37,7 @@
     const add=q('#addPatientBtn');if(add){add.innerHTML=svgIcon('plus')+'<span>'+(ru()?'Добавить':'Add')+'</span>';add.setAttribute('aria-label',ru()?'Добавить пациента':'Add patient')}
     const edit=q('#editPatientBtn');if(edit){edit.innerHTML=svgIcon('edit');edit.setAttribute('aria-label',ru()?'Изменить пациента':'Edit patient');edit.title=edit.getAttribute('aria-label')}
     const del=q('#delPatientBtn');if(del){del.innerHTML=svgIcon('trash');del.setAttribute('aria-label',ru()?'Удалить пациента':'Delete patient');del.title=del.getAttribute('aria-label')}
-    const avg=q('#scoreSysFromDiaryBtn');if(avg){avg.innerHTML=svgIcon('chart')+'<span>'+(ru()?'Среднее САД из дневника':'Diary SBP average')+'</span>'}
+    const save=q('#saveBtn');if(save)save.innerHTML=svgIcon('save')+'<span>'+(ru()?'Сохранить':'Save')+'</span>';const avg=q('#scoreSysFromDiaryBtn');if(avg){avg.innerHTML=svgIcon('chart')+'<span>'+(ru()?'Среднее САД из дневника':'Diary SBP average')+'</span>'}
     const adv=q('.advanced-score summary',measure);if(adv){adv.textContent=ru()?'Ручной выбор региона':'Manual region';adv.title=ru()?'Ручной выбор региона (резервный режим)':'Manual region selection (fallback)'}
   }
 
@@ -45,7 +45,7 @@
   function analyticsTabs(analysis){
     let tabs=q('#mobileAnalyticsTabs',analysis);if(!tabs){tabs=document.createElement('div');tabs.id='mobileAnalyticsTabs';const sub=q('.mobile-screen-subtitle',analysis);(sub||q('.card-header',analysis))?.after(tabs)}
     tabs.innerHTML='<button type="button" data-mode="overview">'+svgIcon('chart')+'<span>'+(ru()?'Обзор':'Overview')+'</span></button><button type="button" data-mode="charts">'+svgIcon('chart')+'<span>'+(ru()?'Графики':'Charts')+'</span></button>';
-    tabs.onclick=e=>{const b=e.target.closest('[data-mode]');if(!b)return;analyticsMode=b.dataset.mode;try{localStorage.setItem('bp_mobile_analytics_mode',analyticsMode)}catch(_){}applyAnalyticsMode(analysis)};
+    tabs.onclick=e=>{const b=e.target.closest('[data-mode]');if(!b)return;analyticsMode=b.dataset.mode;try{localStorage.setItem('bp_mobile_analytics_mode',analyticsMode)}catch(_){}applyAnalyticsMode(analysis);setTimeout(()=>analysis.scrollIntoView({block:'start',behavior:'smooth'}),0)};
     applyAnalyticsMode(analysis);
   }
   function applyAnalyticsMode(analysis){
@@ -83,7 +83,7 @@
   function appBar(){
     let bar=q('#mobileAppBar');if(!bar){bar=document.createElement('header');bar.id='mobileAppBar';document.body.prepend(bar)}
     bar.innerHTML=`<div class="mobile-brand-mark">${svgIcon('heart')}</div><div class="mobile-brand-copy"><strong>${ru()?'Давление':'BP Diary'}</strong><span>${ru()?'личный дневник здоровья':'personal health diary'}</span></div><div class="mobile-top-actions"><button type="button" data-top="lang" aria-label="Language">${ru()?'EN':'RU'}</button><button type="button" data-top="theme" aria-label="Theme">${svgIcon(document.body.classList.contains('dark')?'sun':'moon')}</button></div>`;
-    bar.onclick=e=>{const b=e.target.closest('button[data-top]');if(!b)return;if(b.dataset.top==='lang'){proxy('langSwitchBtn');setTimeout(()=>{setup(true);refreshText()},60)}else{document.body.classList.contains('dark')?proxy('lightThemeBtn'):proxy('darkThemeBtn');setTimeout(()=>appBar(),30)}};
+    bar.onclick=e=>{const b=e.target.closest('button[data-top]');if(!b)return;if(b.dataset.top==='lang'){proxy('langSwitchBtn');setTimeout(()=>{setup(true);refreshText()},60)}else{document.body.classList.contains('dark')?proxy('lightThemeBtn'):proxy('darkThemeBtn');setTimeout(()=>{appBar();const ps=pages();if(ps[1])polishCharts(ps[1])},60)}};
     return bar;
   }
 
@@ -129,7 +129,18 @@
     const sheet=makeSheet('mobileMeasureActionSheet',ru()?'Дополнительные действия':'More actions');q('.mobile-sheet-title',sheet).textContent=ru()?'Дополнительные действия':'More actions';const g=q('.mobile-sheet-grid',sheet);g.innerHTML='';['voiceBtn','speakRecordBtn','fillLastBtn'].forEach(id=>{const src=q('#'+id);if(!src)return;const b=document.createElement('button');b.type='button';b.className='outline';b.innerHTML=src.innerHTML;b.onclick=()=>{sheet.classList.remove('open');src.click()};g.appendChild(b)})
   }
 
-  function disclaimer(){const n=q('#clinicalDisclaimer');if(!n||n.dataset.mobileNote)return;n.dataset.mobileNote='1';n.classList.add('mobile-note-collapsed');n.addEventListener('click',()=>{n.classList.toggle('mobile-note-open');n.classList.toggle('mobile-note-collapsed')})}
+  function disclaimer(){
+    const n=q('#clinicalDisclaimer');if(!n)return;
+    if(!n.dataset.mobileNote){
+      n.dataset.mobileNote='1';n.dataset.mobileFullText=n.textContent.trim();n.classList.add('mobile-note-collapsed');
+      n.addEventListener('click',()=>{
+        const opening=!n.classList.contains('mobile-note-open');
+        n.classList.toggle('mobile-note-open',opening);n.classList.toggle('mobile-note-collapsed',!opening);
+        n.textContent=opening?(n.dataset.mobileFullText||''):(ru()?'Важная медицинская информация':'Important medical information');
+      });
+    }
+    compactDisclaimer();
+  }
 
   function chartDeck(analysis){
     let deck=q('#mobileChartDeck',analysis);const panels=qa('.chart-panel',analysis);
@@ -138,10 +149,52 @@
     panels.forEach(p=>{if(p.parentElement!==deck)deck.appendChild(p)});
   }
 
+  function polishFilterBar(analysis){
+    const group=q('.filter-group',analysis);if(!group)return;
+    const inputs=qa('input',group).slice(0,2);
+    inputs.forEach((input,i)=>{
+      if(input.parentElement?.classList.contains('mobile-date-field'))return;
+      const wrap=document.createElement('label');wrap.className='mobile-date-field';
+      const small=document.createElement('small');small.textContent=ru()?(i===0?'С даты':'По дату'):(i===0?'From':'To');
+      input.before(wrap);wrap.appendChild(small);wrap.appendChild(input);
+    });
+    const apply=q('#applyFilterBtn',group)||q('#applyFilterBtn');if(apply)apply.innerHTML=svgIcon('filter')+'<span>'+(ru()?'Фильтр':'Filter')+'</span>';
+    const reset=q('#resetFilterBtn',group)||q('#resetFilterBtn');if(reset)reset.innerHTML=svgIcon('reset')+'<span>'+(ru()?'Сброс':'Reset')+'</span>';
+  }
+
+  function polishCharts(analysis){
+    if(!window.Chart)return;
+    try{Chart.defaults.font.size=9;Chart.defaults.color=document.body.classList.contains('dark')?'#8ca0b1':'#6d8190'}catch(_){}
+    qa('canvas',analysis).forEach(canvas=>{
+      let ch=null;try{ch=Chart.getChart(canvas)}catch(_){}
+      if(!ch)return;
+      try{
+        ch.options.maintainAspectRatio=false;
+        ch.options.plugins=ch.options.plugins||{};
+        ch.options.plugins.legend=ch.options.plugins.legend||{};
+        ch.options.plugins.legend.labels={...(ch.options.plugins.legend.labels||{}),font:{size:9},boxWidth:12,boxHeight:7,padding:8};
+        ch.options.scales=ch.options.scales||{};
+        Object.values(ch.options.scales).forEach(scale=>{
+          scale.ticks=scale.ticks||{};scale.ticks.font={size:9};scale.ticks.padding=4;
+          if(scale.title?.display)scale.title.font={size:9};
+        });
+        ch.resize();ch.update('none');
+      }catch(_){}
+    });
+  }
+
+  function compactDisclaimer(){
+    const n=q('#clinicalDisclaimer');if(!n)return;
+    if(!n.dataset.mobileFullText)n.dataset.mobileFullText=n.textContent.trim();
+    if(n.classList.contains('mobile-note-collapsed')&&!n.classList.contains('mobile-note-open')){
+      n.textContent=ru()?'Важная медицинская информация':'Important medical information';
+    }
+  }
+
   function enhanceAnalysis(analysis,archive){
-    if(!analysis)return;let sub=q('.mobile-screen-subtitle',analysis);if(!sub){sub=document.createElement('div');sub.className='mobile-screen-subtitle';q('.card-header',analysis)?.after(sub)}sub.textContent=ru()?'Тренды, цели и ключевые показатели':'Trends, targets and key metrics';analyticsTabs(analysis);chartDeck(analysis);
+    if(!analysis)return;let sub=q('.mobile-screen-subtitle',analysis);if(!sub){sub=document.createElement('div');sub.className='mobile-screen-subtitle';q('.card-header',analysis)?.after(sub)}sub.textContent=ru()?'Тренды, цели и ключевые показатели':'Trends, targets and key metrics';analyticsTabs(analysis);polishFilterBar(analysis);chartDeck(analysis);setTimeout(()=>polishCharts(analysis),0);
     const cards=qa('.analysis-card',analysis);cards.forEach((c,i)=>{c.classList.toggle('mobile-wide',(c.textContent||'').trim().length>95||!!q('.progress-bar-container',c)||!!q('.achievement-badge',c));c.classList.toggle('mobile-analytics-extra',i>=6)});
-    let more=q('#mobileAnalyticsToggle',analysis);const grid=q('.analysis-grid',analysis);if(cards.length>6&&grid){if(!more){more=document.createElement('button');more.type='button';more.id='mobileAnalyticsToggle';more.className='outline mobile-analytics-toggle';grid.after(more);more.onclick=()=>{analysis.classList.toggle('mobile-show-all');enhanceAnalysis(analysis,archive)}}const open=analysis.classList.contains('mobile-show-all');more.textContent=open?(ru()?'Свернуть дополнительные показатели':'Hide extra metrics'):(ru()?('Ещё показатели ('+(cards.length-6)+')'):('More metrics ('+(cards.length-6)+')'))}else if(more){more.remove()}
+    let more=q('#mobileAnalyticsToggle',analysis);const grid=q('.analysis-grid',analysis);if(cards.length>6&&grid){if(!more){more=document.createElement('button');more.type='button';more.id='mobileAnalyticsToggle';more.className='outline mobile-analytics-toggle';grid.after(more);more.onclick=()=>{analysis.classList.toggle('mobile-show-all');enhanceAnalysis(analysis,archive);setTimeout(()=>analysis.scrollIntoView({block:'start',behavior:'smooth'}),0)}}const open=analysis.classList.contains('mobile-show-all');more.textContent=open?(ru()?'Свернуть дополнительные показатели':'Hide extra metrics'):(ru()?('Ещё показатели ('+(cards.length-6)+')'):('More metrics ('+(cards.length-6)+')'))}else if(more){more.remove()}
     const count=qa('#tableBody tr[data-id]',archive).length;
     analysis.classList.toggle('mobile-no-data',!count);
     let empty=q('#mobileAnalyticsEmpty',analysis);
@@ -198,7 +251,7 @@
   }
   function setTab(tab,scroll=true){if(!['measure','analysis','archive'].includes(tab))tab='measure';currentTab=tab;try{localStorage.setItem('bp_mobile_tab',tab)}catch(_){}qa('.mobile-page').forEach(p=>p.classList.toggle('mobile-hidden',p.dataset.mobilePage!==tab));qa('#mobileBottomNav [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));document.body.dataset.mobileTab=tab;if(scroll)window.scrollTo({top:0,behavior:'smooth'})}
 
-  function refreshText(){if(!mq.matches)return;const ps=pages();if(ps.length<3)return;const [m,a,r]=ps;appBar();updateHero(m);mobilePlaceholders(m);customScoreApplicability();polishControls(m);const kick=q('.mobile-section-kicker',m);if(kick)kick.textContent=ru()?'● Измерения':'● Measurements';measureStepper(m);measureActions(m);nav();archiveSheet(r);archiveCards(r);enhanceAnalysis(a,r);setTab(currentTab,false)}
+  function refreshText(){if(!mq.matches)return;const ps=pages();if(ps.length<3)return;const [m,a,r]=ps;appBar();updateHero(m);mobilePlaceholders(m);customScoreApplicability();polishControls(m);disclaimer();const kick=q('.mobile-section-kicker',m);if(kick)kick.textContent=ru()?'● Измерения':'● Measurements';measureStepper(m);measureActions(m);nav();archiveSheet(r);archiveCards(r);enhanceAnalysis(a,r);setTab(currentTab,false)}
 
   function setup(force=false){if(rebuilding||!mq.matches||!q('#app'))return;const ps=pages();if(ps.length<3)return;rebuilding=true;if(observer)observer.disconnect();try{const [m,a,r]=ps;[[m,'measure'],[a,'analysis'],[r,'archive']].forEach(([p,k])=>{p.classList.add('mobile-page','mobile-page-'+k);p.dataset.mobilePage=k});document.body.classList.add('mobile-shell-ready');installReportBridge();appBar();hero(m);accordions(m);mobilePlaceholders(m);customScoreApplicability();polishControls(m);measureStepper(m);measureActions(m);disclaimer();nav();archiveSheet(r);archiveCards(r);enhanceAnalysis(a,r);updateHero(m);['recordDate','recordTime','patientSelect','bpContext','primaryArm'].forEach(id=>{const el=q('#'+id);if(el&&!el.dataset.mobileHeroBound){el.dataset.mobileHeroBound='1';el.addEventListener('change',()=>updateHero(m))}});setTab(currentTab,false)}finally{rebuilding=false;const app=q('#app');if(observer&&app)observer.observe(app,{childList:true,subtree:true,characterData:true})}}
   function schedule(){clearTimeout(timer);timer=setTimeout(()=>setup(),70)}
