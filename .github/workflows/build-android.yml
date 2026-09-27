@@ -34,6 +34,19 @@ jobs:
       - name: Prepare offline web assets
         run: npm run prepare:web
 
+      - name: Verify modern mobile shell and offline URLs
+        run: |
+          grep -q 'id="mobileBottomNav"' www/index.html
+          grep -q 'id="mobileArchiveList"' www/index.html
+          grep -q 'data-mobile-tab="measure"' www/index.html
+          grep -q 'vendor/chart/chart.umd.js' www/index.html
+          grep -q 'vendor/fontawesome/css/all.min.css' www/index.html
+          grep -q 'vendor/xlsx/xlsx.full.min.js' www/index.html
+          if grep -qE 'cdnjs.cloudflare.com|cdn.jsdelivr.net/npm/chart.js|cdn.sheetjs.com/xlsx-' www/index.html; then
+            echo "External runtime CDN reference found"
+            exit 1
+          fi
+
       - name: Create Android project
         run: npx cap add android
 
@@ -43,6 +56,19 @@ jobs:
       - name: Generate Android icon and splash resources
         run: npx capacitor-assets generate --android --iconBackgroundColor '#1f4870' --iconBackgroundColorDark '#111827' --splashBackgroundColor '#eef2f7' --splashBackgroundColorDark '#0b1120'
 
+      - name: Configure Android build version
+        run: |
+          sed -i "s/versionCode 1/versionCode ${GITHUB_RUN_NUMBER}/" android/app/build.gradle
+          sed -i "s/versionName \"1.0\"/versionName \"5.5.${GITHUB_RUN_NUMBER}\"/" android/app/build.gradle
+          grep -E 'versionCode|versionName' android/app/build.gradle
+
+      - name: Install stable debug signing key
+        run: |
+          mkdir -p "$HOME/.android"
+          base64 --decode ci/debug.keystore.b64 > "$HOME/.android/debug.keystore"
+          chmod 600 "$HOME/.android/debug.keystore"
+          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey >/dev/null
+
       - name: Build debug APK
         working-directory: android
         run: |
@@ -50,12 +76,12 @@ jobs:
           ./gradlew assembleDebug --no-daemon
 
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-debug.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-MODERN.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BP-Diary-5.5-Android-APK
-          path: BP-Diary-5.5-debug.apk
+          name: BP-Diary-5.5-MODERN-Android-APK
+          path: BP-Diary-5.5-MODERN.apk
           if-no-files-found: error
           retention-days: 30
