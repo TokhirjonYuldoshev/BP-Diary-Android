@@ -68,7 +68,8 @@
 
   function enhanceAnalysis(analysis,archive){
     if(!analysis)return;let sub=q('.mobile-screen-subtitle',analysis);if(!sub){sub=document.createElement('div');sub.className='mobile-screen-subtitle';q('.card-header',analysis)?.after(sub)}sub.textContent=ru()?'Тренды, цели и ключевые показатели':'Trends, targets and key metrics';
-    qa('.analysis-card',analysis).forEach(c=>{c.classList.toggle('mobile-wide',(c.textContent||'').trim().length>95||!!q('.progress-bar-container',c)||!!q('.achievement-badge',c))});
+    const cards=qa('.analysis-card',analysis);cards.forEach((c,i)=>{c.classList.toggle('mobile-wide',(c.textContent||'').trim().length>95||!!q('.progress-bar-container',c)||!!q('.achievement-badge',c));c.classList.toggle('mobile-analytics-extra',i>=6)});
+    let more=q('#mobileAnalyticsToggle',analysis);const grid=q('.analysis-grid',analysis);if(cards.length>6&&grid){if(!more){more=document.createElement('button');more.type='button';more.id='mobileAnalyticsToggle';more.className='outline mobile-analytics-toggle';grid.after(more);more.onclick=()=>{analysis.classList.toggle('mobile-show-all');enhanceAnalysis(analysis,archive)}}const open=analysis.classList.contains('mobile-show-all');more.textContent=open?(ru()?'Свернуть дополнительные показатели':'Hide extra metrics'):(ru()?('Ещё показатели ('+(cards.length-6)+')'):('More metrics ('+(cards.length-6)+')'))}else if(more){more.remove()}
     const count=qa('#tableBody tr[data-id]',archive).length;const cal=q('#calendarChart',analysis);if(cal){const wrap=cal.parentElement;wrap.classList.add('mobile-calendar-wrap');let note=q('.mobile-calendar-note',wrap);if(count<2){cal.style.display='none';if(!note){note=document.createElement('div');note.className='mobile-calendar-note';wrap.appendChild(note)}note.textContent=ru()?'Календарная динамика появится после нескольких сеансов':'Calendar trend appears after several sessions'}else{cal.style.display='';note?.remove()}}
     qa('.chart-panel',analysis).forEach(p=>{let n=q('.mobile-chart-empty',p);if(!count){p.classList.add('mobile-empty');if(!n){n=document.createElement('div');n.className='mobile-chart-empty';p.appendChild(n)}n.textContent=ru()?'Добавьте измерения — график появится здесь':'Add readings — the chart will appear here'}else{p.classList.remove('mobile-empty');n?.remove()}})
   }
@@ -78,7 +79,7 @@
     let host=q('#mobileArchiveCards',archive);if(!host){host=document.createElement('div');host.id='mobileArchiveCards';const tc=q('.table-container',archive);archive.insertBefore(host,tc||null)}host.innerHTML='';const table=q('#recordsTable',archive);if(!table)return;
     const headers=qa('thead th',table).map(x=>x.textContent.trim()),rows=qa('tbody tr',table).filter(r=>r.dataset.id);if(!rows.length){host.innerHTML=`<div class="mobile-archive-empty">${ru()?'Пока нет сохранённых измерений':'No saved readings yet'}</div>`;return}
     rows.slice().reverse().forEach(row=>{const cells=qa('td',row);if(!cells.length)return;const strong=q('strong',cells[0]);const date=strong?.textContent.trim()||'';let time='';cells[0].childNodes.forEach(n=>{if(n.nodeType===3&&n.textContent.trim())time=n.textContent.trim()});const avg=parsePressure(cells[cells.length-2]?.textContent);const card=document.createElement('article');card.className='mobile-record-card';
-      const details=cells.slice(1,-2).map((c,i)=>{const p=parsePressure(c.textContent);return `<div class="mobile-record-item"><small>${headers[i+1]||''}</small><strong>${p.bp}</strong>${p.pulse?`<em>${ru()?'Пульс':'Pulse'} ${p.pulse}</em>`:''}</div>`}).join('');
+      const details=cells.slice(1,-2).map((cell,i)=>{const p=parsePressure(cell.textContent);if(!p.bp||p.bp==='—')return '';return `<div class="mobile-record-item"><small>${headers[i+1]||''}</small><strong>${p.bp}</strong>${p.pulse?`<em>${ru()?'Пульс':'Pulse'} ${p.pulse}</em>`:''}</div>`}).filter(Boolean).join('');
       card.innerHTML=`<div class="mobile-record-head"><div class="mobile-record-date">${date}<span class="mobile-record-time">${time}</span></div><div class="mobile-record-avg"><strong>${avg.bp}</strong><small>${avg.pulse?(ru()?'Пульс ':'Pulse ')+avg.pulse:(ru()?'Среднее':'Average')}</small></div></div><div class="mobile-record-grid">${details}</div><div class="mobile-record-actions"></div>`;
       const dest=q('.mobile-record-actions',card);qa('button',cells[cells.length-1]).forEach((src,i)=>{const b=document.createElement('button');b.type='button';b.className=i?'danger':'outline';b.innerHTML=src.innerHTML||src.textContent;b.onclick=()=>src.click();dest.appendChild(b)});host.appendChild(card)});
   }
@@ -89,14 +90,37 @@
     const sheet=makeSheet('mobileActionSheet',ru()?'Экспорт и данные':'Export & data');q('.mobile-sheet-title',sheet).textContent=ru()?'Экспорт и данные':'Export & data';const g=q('.mobile-sheet-grid',sheet);g.innerHTML='';qa('.toolbar button',archive).forEach(src=>{const b=document.createElement('button');b.type='button';b.className=src.className;b.innerHTML=src.innerHTML;b.onclick=()=>{sheet.classList.remove('open');src.click()};g.appendChild(b)});more.onclick=()=>sheet.classList.add('open')
   }
 
+  function customScoreApplicability(){
+    const sel=q('#scoreApplicability');if(!sel)return;
+    sel.style.display='none';
+    let trigger=q('#mobileScoreApplicabilityTrigger');
+    if(!trigger){
+      trigger=document.createElement('button');trigger.type='button';trigger.id='mobileScoreApplicabilityTrigger';trigger.className='mobile-choice-trigger';
+      sel.after(trigger);
+      trigger.onclick=()=>{
+        const sheet=makeSheet('mobileChoiceSheet',ru()?'Применимость SCORE':'SCORE applicability');
+        q('.mobile-sheet-title',sheet).textContent=ru()?'Применимость SCORE':'SCORE applicability';
+        const grid=q('.mobile-sheet-grid',sheet);grid.innerHTML='';
+        Array.from(sel.options).forEach(opt=>{
+          const b=document.createElement('button');b.type='button';b.className='outline mobile-choice-option'+(opt.value===sel.value?' active':'');
+          b.innerHTML='<span>'+opt.textContent+'</span><i class="fas '+(opt.value===sel.value?'fa-circle-check':'fa-circle')+'"></i>';
+          b.onclick=()=>{sel.value=opt.value;sel.dispatchEvent(new Event('change',{bubbles:true}));sheet.classList.remove('open');setTimeout(()=>customScoreApplicability(),20)};
+          grid.appendChild(b);
+        });
+        sheet.classList.add('open');
+      };
+    }
+    trigger.innerHTML='<span>'+(sel.selectedOptions?.[0]?.textContent||'')+'</span><i class="fas fa-chevron-down"></i>';
+  }
+
   function nav(){
     let n=q('#mobileBottomNav');if(!n){n=document.createElement('nav');n.id='mobileBottomNav';document.body.appendChild(n)}const items=ru()?[['measure','fa-stethoscope','Замер'],['analysis','fa-chart-line','Аналитика'],['archive','fa-box-archive','Архив']]:[['measure','fa-stethoscope','Measure'],['analysis','fa-chart-line','Analytics'],['archive','fa-box-archive','Archive']];n.innerHTML=items.map(([k,i,l])=>`<button type="button" data-tab="${k}"><i class="fas ${i}"></i><span>${l}</span></button>`).join('');n.onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)};return n
   }
   function setTab(tab,scroll=true){if(!['measure','analysis','archive'].includes(tab))tab='measure';currentTab=tab;try{localStorage.setItem('bp_mobile_tab',tab)}catch(_){}qa('.mobile-page').forEach(p=>p.classList.toggle('mobile-hidden',p.dataset.mobilePage!==tab));qa('#mobileBottomNav [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));document.body.dataset.mobileTab=tab;if(scroll)window.scrollTo({top:0,behavior:'smooth'})}
 
-  function refreshText(){if(!mq.matches)return;const ps=pages();if(ps.length<3)return;const [m,a,r]=ps;appBar();updateHero(m);mobilePlaceholders(m);const kick=q('.mobile-section-kicker',m);if(kick)kick.textContent=ru()?'● Измерения':'● Measurements';measureStepper(m);measureActions(m);nav();archiveSheet(r);archiveCards(r);enhanceAnalysis(a,r);setTab(currentTab,false)}
+  function refreshText(){if(!mq.matches)return;const ps=pages();if(ps.length<3)return;const [m,a,r]=ps;appBar();updateHero(m);mobilePlaceholders(m);customScoreApplicability();const kick=q('.mobile-section-kicker',m);if(kick)kick.textContent=ru()?'● Измерения':'● Measurements';measureStepper(m);measureActions(m);nav();archiveSheet(r);archiveCards(r);enhanceAnalysis(a,r);setTab(currentTab,false)}
 
-  function setup(force=false){if(rebuilding||!mq.matches||!q('#app'))return;const ps=pages();if(ps.length<3)return;rebuilding=true;if(observer)observer.disconnect();try{const [m,a,r]=ps;[[m,'measure'],[a,'analysis'],[r,'archive']].forEach(([p,k])=>{p.classList.add('mobile-page','mobile-page-'+k);p.dataset.mobilePage=k});document.body.classList.add('mobile-shell-ready');appBar();hero(m);accordions(m);mobilePlaceholders(m);measureStepper(m);measureActions(m);disclaimer();nav();archiveSheet(r);archiveCards(r);enhanceAnalysis(a,r);updateHero(m);['recordDate','recordTime','patientSelect','bpContext','primaryArm'].forEach(id=>{const el=q('#'+id);if(el&&!el.dataset.mobileHeroBound){el.dataset.mobileHeroBound='1';el.addEventListener('change',()=>updateHero(m))}});setTab(currentTab,false)}finally{rebuilding=false;const app=q('#app');if(observer&&app)observer.observe(app,{childList:true,subtree:true,characterData:true})}}
+  function setup(force=false){if(rebuilding||!mq.matches||!q('#app'))return;const ps=pages();if(ps.length<3)return;rebuilding=true;if(observer)observer.disconnect();try{const [m,a,r]=ps;[[m,'measure'],[a,'analysis'],[r,'archive']].forEach(([p,k])=>{p.classList.add('mobile-page','mobile-page-'+k);p.dataset.mobilePage=k});document.body.classList.add('mobile-shell-ready');appBar();hero(m);accordions(m);mobilePlaceholders(m);customScoreApplicability();measureStepper(m);measureActions(m);disclaimer();nav();archiveSheet(r);archiveCards(r);enhanceAnalysis(a,r);updateHero(m);['recordDate','recordTime','patientSelect','bpContext','primaryArm'].forEach(id=>{const el=q('#'+id);if(el&&!el.dataset.mobileHeroBound){el.dataset.mobileHeroBound='1';el.addEventListener('change',()=>updateHero(m))}});setTab(currentTab,false)}finally{rebuilding=false;const app=q('#app');if(observer&&app)observer.observe(app,{childList:true,subtree:true,characterData:true})}}
   function schedule(){clearTimeout(timer);timer=setTimeout(()=>setup(),70)}
   document.addEventListener('DOMContentLoaded',()=>{setup(true);const app=q('#app');if(app){observer=new MutationObserver(ms=>{if(ms.every(m=>m.target.closest?.('#mobileArchiveCards,#mobileActionSheet,#mobileMeasureActionSheet,.mobile-chart-empty')))return;schedule()});observer.observe(app,{childList:true,subtree:true,characterData:true})}mq.addEventListener?.('change',()=>location.reload())});
 })();
