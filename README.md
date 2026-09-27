@@ -1,14 +1,29 @@
 # BP Diary Android
 
-Android packaging of **Дневник артериального давления 5.5** using Capacitor 8.
+Android app packaging for **Дневник артериального давления 5.5** using Capacitor 8.
 
-## App
+## Mobile app
+
+The Android build now uses a dedicated modern mobile shell while preserving the validated diary calculations:
+
+- bottom navigation: **Замер / Аналитика / Архив**;
+- one main section at a time instead of one very long desktop page;
+- compact mobile header;
+- mobile archive rendered as touch-friendly measurement cards;
+- archive actions placed behind a compact **Действия** menu;
+- empty charts collapse to a compact no-data state;
+- larger touch targets and mobile-friendly form layout;
+- light/dark themes remain supported;
+- desktop HTML layout and medical calculation functions remain unchanged.
+
+## App identity
 
 - App name: `Дневник давления`
 - Android application ID: `com.tokhirjonyuldoshev.bpdiary`
-- Web app source is reconstructed into `www/index.html` by the build preparation script.
-- The original medical/calculation logic is preserved.
-- Chart.js, Font Awesome and SheetJS are packaged into the APK during CI so the installed app does not depend on those CDNs at runtime.
+
+## Offline assets
+
+Chart.js, Font Awesome and SheetJS are copied into the APK during CI and the HTML runtime URLs are rewritten to local files. The installed app therefore does not require those CDNs to display charts/icons or export Excel files.
 
 ## Build APK
 
@@ -26,14 +41,18 @@ cd android
 ./gradlew assembleDebug
 ```
 
-Output:
+## Test-build signing
 
-`android/app/build/outputs/apk/debug/app-debug.apk`
+CI uses a repository-stored **debug-only** keystore so subsequent test APKs have a stable signature and can update one another.
+
+This key is **not** intended for a Play Store release. A production release must use a separate private release keystore stored in GitHub Secrets.
 
 ## Data
 
-The app currently stores diary data in the WebView's local storage, matching the web version. Use the app's **Full backup** function regularly. Uninstalling the Android app clears its local app storage unless restored from a backup.
+Diary data currently live in the Android WebView local storage, matching the web version. Use **Полный бэкап** regularly.
+
+If Android requires uninstalling an older APK because it was signed with a different debug key, export a Full Backup **before uninstalling**, then install the new APK and restore that backup.
 
 ## Distribution
 
-The CI artifact is a debug APK intended for sideload/testing. A Play Store release should use a private signing key and generate a signed release AAB/APK.
+CI produces a debug APK for sideload/testing. A Play Store build should use a signed release AAB/APK and a private release key.
