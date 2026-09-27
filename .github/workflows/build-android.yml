@@ -55,6 +55,9 @@ jobs:
       - name: Create Android project
         run: npx cap add android
 
+      - name: Patch Android native features and signing
+        run: node scripts/patch-android.mjs
+
       - name: Sync Capacitor
         run: npx cap sync android
 
@@ -67,12 +70,11 @@ jobs:
           sed -i "s/versionName \"1.0\"/versionName \"5.5.${GITHUB_RUN_NUMBER}\"/" android/app/build.gradle
           grep -E 'versionCode|versionName' android/app/build.gradle
 
-      - name: Install stable debug signing key
+      - name: Verify permanent signing key
         run: |
-          mkdir -p "$HOME/.android"
-          base64 --decode ci/debug.keystore.b64 > "$HOME/.android/debug.keystore"
-          chmod 600 "$HOME/.android/debug.keystore"
-          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey >/dev/null
+          keytool -list -keystore android/app/bp-diary-signing.p12 -storetype PKCS12 -storepass android -alias androiddebugkey >/dev/null
+          echo "Signing key SHA-256:"
+          keytool -exportcert -keystore android/app/bp-diary-signing.p12 -storetype PKCS12 -storepass android -alias androiddebugkey | sha256sum
 
       - name: Build debug APK
         working-directory: android
@@ -80,13 +82,25 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
+      - name: Verify APK signature matches permanent key
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
+          test -x "$APKSIGNER"
+          "$APKSIGNER" verify --print-certs "$APK" | tee /tmp/apk-signature.txt
+          KEY_FP="$(keytool -exportcert -keystore android/app/bp-diary-signing.p12 -storetype PKCS12 -storepass android -alias androiddebugkey | sha256sum | awk '{print $1}')"
+          APK_FP="$(awk -F': ' '/Signer #1 certificate SHA-256 digest/ {print tolower($2); exit}' /tmp/apk-signature.txt | tr -d ':')"
+          test -n "$APK_FP"
+          test "$KEY_FP" = "$APK_FP"
+          echo "Verified permanent signer: $KEY_FP"
+
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-WOW.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-V8.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BP-Diary-5.5-WOW-Android-APK
-          path: BP-Diary-5.5-WOW.apk
+          name: BP-Diary-5.5-V8-Android-APK
+          path: BP-Diary-5.5-V8.apk
           if-no-files-found: error
           retention-days: 30
