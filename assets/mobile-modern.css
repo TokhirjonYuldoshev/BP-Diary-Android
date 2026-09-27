@@ -130,3 +130,79 @@
 
   footer{display:none!important}
 }
+
+/* Mobile V3 precision polish */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  :root{--m-nav-h:64px;--m-top-h:56px}
+  body{padding:calc(var(--m-top-h) + 7px + env(safe-area-inset-top)) 7px calc(var(--m-nav-h) + 18px + env(safe-area-inset-bottom))}
+  #mobileAppBar{height:calc(var(--m-top-h) + env(safe-area-inset-top));padding:calc(6px + env(safe-area-inset-top)) 10px 6px;gap:8px}
+  .mobile-brand-mark{width:35px;height:35px;border-radius:11px;font-size:15px}
+  .mobile-brand-copy strong{font-size:.86rem}.mobile-brand-copy span{font-size:.56rem;margin-top:2px}
+  .mobile-top-actions{gap:5px}.mobile-top-actions button{width:35px;height:35px;min-height:35px;border-radius:11px!important;font-size:.7rem!important}
+  .card{border-radius:21px;margin-bottom:9px;box-shadow:0 8px 24px rgba(28,68,94,.065)}
+  .mobile-page-analysis>.card-header,.mobile-page-archive>.card-header{padding:14px 14px 7px;gap:7px}
+  .mobile-page-analysis>.card-header h2,.mobile-page-archive>.card-header h2{font-size:1.06rem;line-height:1.08}
+  .mobile-screen-subtitle{margin:0 14px 10px;font-size:.64rem}
+  #mobileMeasureHero{margin:10px 10px 6px;padding:14px;border-radius:19px}
+  #mobileMeasureHero h2{font-size:1.12rem}.mobile-hero-eyebrow{font-size:.55rem}.mobile-hero-date{font-size:.61rem;padding:5px 7px}
+  .mobile-hero-chips{gap:5px;margin-top:10px}.mobile-hero-chip{padding:5px 8px;font-size:.6rem}
+  .form-panel{padding:6px 9px 1px}.date-time-row{padding:10px;gap:8px;border-radius:17px;margin-bottom:9px}
+  .field label{font-size:.56rem;letter-spacing:.045em}
+  input,select,textarea{min-height:44px;border-radius:13px!important;font-size:14px!important;padding:8px 10px!important}
+  select{padding-right:28px!important}
+  .patient-block{grid-template-columns:minmax(0,1fr) 44px 44px;gap:6px}
+  .patient-block #addPatientBtn,.patient-block #editPatientBtn,.patient-block #delPatientBtn{height:44px!important;min-height:44px!important;border-radius:13px!important}
+  .patient-block #addPatientBtn{font-size:.72rem!important;padding:7px 9px!important}
+  .patient-block #editPatientBtn,.patient-block #delPatientBtn{width:44px!important}
+  button{min-height:42px;border-radius:13px!important;font-size:.72rem!important}
+  .profile-section{border-radius:16px!important}.profile-section-title{min-height:48px;padding:11px 12px;font-size:.74rem!important}
+  .profile-section-title::after{font-size:1.15rem}.profile-section .profile-fields{padding:2px 11px 11px;gap:8px!important}
+  .profile-section .score-source-line{padding:0 11px 11px}
+  .mobile-section-kicker{padding:10px 2px 6px;font-size:.56rem}
+  #mobileMeasureStepper{margin:8px 0 7px;padding:4px;gap:5px;border-radius:15px}
+  #mobileMeasureStepper button{min-height:36px;border-radius:11px!important;font-size:.64rem!important}
+  #mobileMeasureStepper button.done::after{right:7px;top:7px;width:6px;height:6px}
+  .measure-card{border-radius:17px;padding:12px 10px 11px}.measure-card h3{font-size:.84rem;margin-bottom:7px}
+  .bp-inputs{grid-template-columns:minmax(0,1fr) 10px minmax(0,1fr) 10px minmax(0,1fr);gap:3px}
+  .bp-inputs input{min-height:41px!important;font-size:13px!important;padding:7px 2px!important;border-radius:12px!important}
+  .bp-inputs span{font-size:.66rem}
+  .check-field{padding:9px 10px;border-radius:14px;font-size:.69rem}.check-field input{width:19px!important;height:19px!important}
+  .action-buttons #saveBtn{min-height:48px;font-size:.82rem!important;border-radius:14px!important}
+  #mobileMeasureQuickActions{gap:7px;margin-top:7px}.mobile-secondary-btn{min-height:40px!important;font-size:.68rem!important}
+  .clinical-note{margin:8px 0 9px;padding:10px 11px;border-radius:14px;font-size:.68rem;line-height:1.38}
+  .clinical-note.mobile-note-collapsed{max-height:43px;padding-right:34px}.clinical-note.mobile-note-collapsed::after{right:12px;top:11px}
+  .pro-analysis,.stats-bar{margin:0 9px 9px;padding:10px;border-radius:16px}
+  .analysis-grid{gap:6px!important;margin-top:6px!important}
+  .analysis-card{border-radius:13px!important;padding:9px!important;font-size:.64rem!important;line-height:1.23}
+  .analysis-card h3{font-size:.75rem!important;margin-bottom:5px}.analysis-card .analysis-value{font-size:.88rem!important;margin-top:3px;line-height:1.14}
+  .analysis-card .status-note,.analysis-card small{font-size:.57rem!important;line-height:1.24}
+  .analysis-card.mobile-analytics-extra{display:none!important}
+  .mobile-page-analysis.mobile-show-all .analysis-card.mobile-analytics-extra{display:block!important}
+  .mobile-page-analysis.mobile-show-all .analysis-card.mobile-analytics-extra.mobile-wide{display:block!important;grid-column:1/-1}
+  .mobile-analytics-toggle{display:flex!important;width:100%;margin-top:8px;justify-content:center;min-height:38px!important;font-size:.66rem!important}
+  .filter-group{gap:6px}.filter-group button{min-height:38px!important;font-size:.64rem!important}
+  .stat-numbers{gap:5px;margin-top:7px}.stat-item{padding:5px 8px;font-size:.58rem}
+  .chart-panel{margin:0 9px 9px;padding:10px;border-radius:16px;min-height:175px}.chart-panel h2{font-size:.82rem;margin-bottom:6px}.chart-panel canvas{max-height:165px!important}
+  .chart-panel.mobile-empty{min-height:96px}.mobile-chart-empty{font-size:.67rem;padding:7px}.mobile-chart-empty::before{width:30px;height:30px;border-radius:10px;font-size:.88rem;margin-bottom:5px}
+  .mobile-calendar-note{padding:9px;font-size:.64rem;border-radius:12px}
+  .mobile-archive-more{min-height:37px!important;padding:5px 9px!important;font-size:.65rem!important}
+  .mobile-page-archive>div[style*="margin:8px 24px"]{margin:0 9px 9px!important}
+  #mobileArchiveCards{gap:7px;padding:0 9px 10px}.mobile-record-card{border-radius:17px;padding:10px}
+  .mobile-record-date{font-size:.78rem}.mobile-record-time{font-size:.58rem}.mobile-record-avg{padding:5px 8px;border-radius:10px}.mobile-record-avg strong{font-size:.76rem}.mobile-record-avg small{font-size:.51rem}
+  .mobile-record-grid{gap:6px;margin-top:8px}.mobile-record-item{padding:7px 8px;border-radius:11px}.mobile-record-item small{font-size:.5rem;margin-bottom:3px}.mobile-record-item strong{font-size:.67rem}.mobile-record-item em{font-size:.52rem}
+  .mobile-record-actions{gap:6px;margin-top:8px}.mobile-record-actions button{width:36px!important;height:36px!important;min-height:36px!important;border-radius:11px!important}
+  #mobileActionSheet,#mobileMeasureActionSheet,#mobileChoiceSheet{display:flex;position:fixed;inset:0;z-index:15000;background:rgba(6,17,28,.44);align-items:flex-end;padding:10px 10px calc(10px + env(safe-area-inset-bottom));opacity:0;pointer-events:none;transition:opacity .18s}
+  #mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open{opacity:1;pointer-events:auto}
+  #mobileChoiceSheet .mobile-sheet-grid{grid-template-columns:1fr}
+  .mobile-choice-trigger{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:8px 10px!important;text-align:left;white-space:normal;line-height:1.25;background:var(--m-surface)!important;border:1px solid #cfdee6!important;color:var(--m-ink)!important}
+  body.dark .mobile-choice-trigger{background:#101b29!important;border-color:#304157!important;color:#eef7fb!important}
+  .mobile-choice-option{display:flex!important;align-items:flex-start;justify-content:space-between!important;text-align:left!important;line-height:1.28;min-height:46px!important;padding:9px 10px!important}
+  .mobile-choice-option.active{border-color:#4fb4cd!important;background:var(--m-accent-soft)!important}
+  .mobile-sheet-panel{border-radius:22px;padding:8px 10px 12px}.mobile-sheet-title{font-size:.88rem;margin-bottom:8px}.mobile-sheet-grid{gap:6px}
+  #mobileBottomNav{height:var(--m-nav-h);padding:6px;bottom:calc(6px + env(safe-area-inset-bottom));border-radius:20px}
+  #mobileBottomNav button{min-height:50px;border-radius:14px!important;font-size:.57rem!important;gap:2px}#mobileBottomNav button i{font-size:.94rem}
+  #mobileBottomNav button.active::after{bottom:3px;width:14px;height:2px}
+  input:focus,select:focus,textarea:focus,button:focus,[role="button"]:focus{outline:none!important;box-shadow:none!important}
+  input:focus,select:focus,textarea:focus{border-color:#62b8cd!important}
+  button:focus-visible,[role="button"]:focus-visible{outline:2px solid rgba(83,183,209,.38)!important;outline-offset:1px!important}
+}
