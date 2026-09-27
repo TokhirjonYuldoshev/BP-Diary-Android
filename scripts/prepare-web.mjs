@@ -17,6 +17,22 @@ async function fetchTo(url, destination) {
   return bytes.length;
 }
 
+function injectBeforeRealHeadClose(html, snippet) {
+  const lower = html.toLowerCase();
+  const bodyOpen = lower.search(/<body\b/);
+  if (bodyOpen < 0) throw new Error('Missing <body>');
+  const headClose = lower.lastIndexOf('</head>', bodyOpen);
+  if (headClose < 0) throw new Error('Missing real </head>');
+  return html.slice(0, headClose) + snippet + '\n' + html.slice(headClose);
+}
+
+function injectBeforeRealBodyClose(html, snippet) {
+  const lower = html.toLowerCase();
+  const bodyClose = lower.lastIndexOf('</body>');
+  if (bodyClose < 0) throw new Error('Missing real </body>');
+  return html.slice(0, bodyClose) + snippet + '\n' + html.slice(bodyClose);
+}
+
 await ensureDir(www);
 
 const parts = ['index.part01.b64','index.part02.b64','index.part03.b64','index.part04.b64'];
@@ -30,59 +46,29 @@ await ensureDir(join(www, 'vendor', 'fontawesome', 'css'));
 await ensureDir(join(www, 'vendor', 'fontawesome', 'webfonts'));
 await ensureDir(join(www, 'vendor', 'xlsx'));
 
-await cp(
-  join(root, 'node_modules', 'chart.js', 'dist', 'chart.umd.js'),
-  join(www, 'vendor', 'chart', 'chart.umd.js')
-);
-await cp(
-  join(root, 'node_modules', '@fortawesome', 'fontawesome-free', 'css', 'all.min.css'),
-  join(www, 'vendor', 'fontawesome', 'css', 'all.min.css')
-);
-await cp(
-  join(root, 'node_modules', '@fortawesome', 'fontawesome-free', 'webfonts'),
-  join(www, 'vendor', 'fontawesome', 'webfonts'),
-  { recursive: true }
-);
+await cp(join(root, 'node_modules', 'chart.js', 'dist', 'chart.umd.js'), join(www, 'vendor', 'chart', 'chart.umd.js'));
+await cp(join(root, 'node_modules', '@fortawesome', 'fontawesome-free', 'css', 'all.min.css'), join(www, 'vendor', 'fontawesome', 'css', 'all.min.css'));
+await cp(join(root, 'node_modules', '@fortawesome', 'fontawesome-free', 'webfonts'), join(www, 'vendor', 'fontawesome', 'webfonts'), { recursive: true });
 
 const xlsxUrl = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
-const xlsxBytes = await fetchTo(
-  xlsxUrl,
-  join(www, 'vendor', 'xlsx', 'xlsx.full.min.js')
-);
+const xlsxBytes = await fetchTo(xlsxUrl, join(www, 'vendor', 'xlsx', 'xlsx.full.min.js'));
 
-// The installed Android app must not depend on external CDNs at runtime.
 const replacements = [
-  [
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css',
-    'vendor/fontawesome/css/all.min.css'
-  ],
-  [
-    'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
-    'vendor/chart/chart.umd.js'
-  ],
-  [
-    'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js',
-    'vendor/chart/chart.umd.js'
-  ],
-  [
-    'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js',
-    'vendor/xlsx/xlsx.full.min.js'
-  ]
+  ['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css', 'vendor/fontawesome/css/all.min.css'],
+  ['https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js', 'vendor/chart/chart.umd.js'],
+  ['https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js', 'vendor/chart/chart.umd.js'],
+  ['https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js', 'vendor/xlsx/xlsx.full.min.js']
 ];
+for (const [from, to] of replacements) html = html.split(from).join(to);
 
-for (const [from, to] of replacements) {
-  html = html.split(from).join(to);
-}
-
-// Mobile UX is layered on top of the validated web diary so medical logic stays untouched.
 await cp(join(root, 'assets', 'mobile-modern.css'), join(www, 'mobile-modern.css'));
 await cp(join(root, 'assets', 'mobile-modern.js'), join(www, 'mobile-modern.js'));
 
 if (!html.includes('mobile-modern.css')) {
-  html = html.replace('</head>', '    <link rel="stylesheet" href="mobile-modern.css">\n</head>');
+  html = injectBeforeRealHeadClose(html, '    <link rel="stylesheet" href="mobile-modern.css">');
 }
 if (!html.includes('mobile-modern.js')) {
-  html = html.replace('</body>', '    <script src="mobile-modern.js"></script>\n</body>');
+  html = injectBeforeRealBodyClose(html, '    <script src="mobile-modern.js"></script>');
 }
 html = html.replace(
   'width=device-width, initial-scale=1.0, user-scalable=yes',
@@ -110,6 +96,13 @@ if (!html.includes('mobile-modern.css') || !html.includes('mobile-modern.js')) {
   throw new Error('Modern mobile shell was not injected');
 }
 
-console.log(
-  `Prepared offline web app. HTML bytes: ${Buffer.byteLength(html)}; SheetJS bytes: ${xlsxBytes}`
-);
+const lower = html.toLowerCase();
+const bodyOpen = lower.search(/<body\b/);
+const realHeadClose = lower.lastIndexOf('</head>', bodyOpen);
+const realBodyClose = lower.lastIndexOf('</body>');
+const mobileCssPos = html.indexOf('mobile-modern.css');
+const mobileJsPos = html.indexOf('<script src="mobile-modern.js"></script>');
+if (!(mobileCssPos > 0 && mobileCssPos < realHeadClose)) throw new Error('Mobile CSS was injected outside the real <head>');
+if (!(mobileJsPos > bodyOpen && mobileJsPos < realBodyClose)) throw new Error('Mobile JS was injected outside the real <body>');
+
+console.log(`Prepared offline web app. HTML bytes: ${Buffer.byteLength(html)}; SheetJS bytes: ${xlsxBytes}`);

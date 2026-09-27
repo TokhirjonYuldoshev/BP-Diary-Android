@@ -1,144 +1,53 @@
 (()=>{
   'use strict';
   const mq=window.matchMedia('(max-width:720px)');
-  let observer=null,setupTimer=null;
+  let observer=null, timer=null, rebuilding=false, currentTab='measure';
+  try{currentTab=localStorage.getItem('bp_mobile_tab')||'measure'}catch(_){}
+  const q=(s,r=document)=>r.querySelector(s);
+  const qa=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  const ru=()=>document.documentElement.lang!=='en';
+  const pages=()=>qa('#app > .card');
 
-  const isRu=()=>document.documentElement.lang!=='en';
-  const directCards=()=>Array.from(document.querySelectorAll('#app > .card'));
+  function proxyClick(id){ q('#'+id)?.click(); }
 
-  function enhanceArchiveRows(archive){
-    const table=archive?.querySelector('#recordsTable');
-    if(!table)return;
-    const headers=Array.from(table.querySelectorAll('thead th')).map(th=>th.textContent.trim());
-    table.querySelectorAll('tbody tr').forEach(row=>{
-      const cells=Array.from(row.children);
-      if(!row.dataset.id){
-        row.classList.add('mobile-empty-row');
-        return;
-      }
-      cells.forEach((cell,i)=>{
-        if(headers[i])cell.dataset.label=headers[i];
-        cell.classList.toggle('mobile-record-date',i===0);
-        cell.classList.toggle('mobile-record-average',i===cells.length-2);
-        cell.classList.toggle('mobile-record-actions',i===cells.length-1);
-      });
+  function appBar(){
+    let bar=q('#mobileAppBar');
+    if(bar)return bar;
+    bar=document.createElement('header');bar.id='mobileAppBar';
+    bar.innerHTML=`<div class="mobile-brand-mark">♥</div><div class="mobile-brand-copy"><strong>${ru()?'Давление':'BP Diary'}</strong><span>${ru()?'личный дневник здоровья':'personal health diary'}</span></div><div class="mobile-top-actions"><button type="button" data-top="lang" aria-label="Language">${ru()?'EN':'RU'}</button><button type="button" data-top="theme" aria-label="Theme">☾</button></div>`;
+    bar.addEventListener('click',e=>{const b=e.target.closest('button[data-top]');if(!b)return;if(b.dataset.top==='lang'){proxyClick('langSwitchBtn');setTimeout(refreshText,30)}else{document.body.classList.contains('dark')?proxyClick('lightThemeBtn'):proxyClick('darkThemeBtn');setTimeout(refreshText,30)}});
+    document.body.prepend(bar);return bar;
+  }
+
+  function hero(measure){
+    let h=q('#mobileMeasureHero',measure);if(h)return h;
+    h=document.createElement('section');h.id='mobileMeasureHero';
+    h.innerHTML=`<div class="mobile-hero-top"><div><div class="mobile-hero-eyebrow"></div><h2></h2></div><div class="mobile-hero-date"></div></div><div class="mobile-hero-chips"><span class="mobile-hero-chip" data-hero="patient"></span><span class="mobile-hero-chip" data-hero="context"></span><span class="mobile-hero-chip" data-hero="arm"></span></div>`;
+    const panel=q('.form-panel',measure);measure.insertBefore(h,panel||measure.firstChild);return h;
+  }
+
+  function updateHero(measure){
+    const h=q('#mobileMeasureHero',measure);if(!h)return;
+    q('.mobile-hero-eyebrow',h).textContent=ru()?'НОВЫЙ ЗАМЕР':'NEW READING';
+    q('h2',h).textContent=ru()?'Контроль давления':'Blood pressure check';
+    const d=q('#recordDate')?.value||'';const tm=q('#recordTime')?.value||'';
+    q('.mobile-hero-date',h).textContent=[d,tm.slice(0,5)].filter(Boolean).join(' · ')||(ru()?'Сегодня':'Today');
+    q('[data-hero="patient"]',h).textContent='👤 '+(q('#patientSelect')?.selectedOptions?.[0]?.textContent|| (ru()?'Основной':'Main'));
+    q('[data-hero="context"]',h).textContent='⌂ '+(q('#bpContext')?.selectedOptions?.[0]?.textContent||'');
+    q('[data-hero="arm"]',h).textContent='↔ '+(q('#primaryArm')?.selectedOptions?.[0]?.textContent||'');
+  }
+
+  function accordions(measure){
+    qa('.profile-section',measure).forEach((sec,i)=>{
+      if(sec.dataset.mobileAccordion)return;sec.dataset.mobileAccordion='1';
+      const title=q('.profile-section-title',sec);if(!title)return;
+      title.setAttribute('role','button');title.setAttribute('tabindex','0');title.setAttribute('aria-expanded','false');
+      if(!sec.hidden)sec.classList.add('mobile-collapsed');
+      const toggle=()=>{if(sec.hidden)return;const collapsed=sec.classList.toggle('mobile-collapsed');title.setAttribute('aria-expanded',String(!collapsed));};
+      title.addEventListener('click',toggle);title.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}});
     });
+    const grid=q('.measures-grid',measure);if(grid&&!grid.previousElementSibling?.classList.contains('mobile-section-kicker')){const k=document.createElement('div');k.className='mobile-section-kicker';k.textContent=ru()?'● Измерения':'● Measurements';grid.before(k)}
   }
 
-  function hasVisibleArchiveRecords(archive){
-    return !!archive?.querySelector('#tableBody tr[data-id]');
-  }
-
-  function updateEmptyCharts(analysis,archive){
-    if(!mq.matches||!analysis)return;
-    const empty=!hasVisibleArchiveRecords(archive);
-    analysis.querySelectorAll('.chart-panel').forEach(panel=>{
-      panel.classList.toggle('mobile-empty',empty);
-      let note=panel.querySelector('.mobile-chart-empty');
-      if(empty){
-        if(!note){
-          note=document.createElement('div');
-          note.className='mobile-chart-empty';
-          panel.appendChild(note);
-        }
-        note.textContent=isRu()?'Нет данных для графика':'No chart data';
-      }else if(note){
-        note.remove();
-      }
-    });
-  }
-
-  function setTab(tab,scroll=true){
-    if(!['measure','analysis','archive'].includes(tab))tab='measure';
-    try{localStorage.setItem('bp_mobile_tab',tab)}catch(_){}
-    document.body.classList.remove('mobile-tab-measure','mobile-tab-analysis','mobile-tab-archive');
-    document.body.classList.add('mobile-tab-'+tab);
-    document.querySelectorAll('.mobile-page').forEach(el=>el.classList.toggle('mobile-hidden',el.dataset.mobilePage!==tab));
-    document.querySelectorAll('#mobileBottomNav button[data-tab]').forEach(btn=>{
-      const active=btn.dataset.tab===tab;
-      btn.classList.toggle('active',active);
-      btn.setAttribute('aria-current',active?'page':'false');
-    });
-    if(scroll)window.scrollTo({top:0,behavior:'smooth'});
-  }
-
-  function ensureArchiveMenu(archive){
-    const header=archive?.querySelector('.card-header');
-    const toolbar=header?.querySelector('.toolbar');
-    if(!header||!toolbar||header.querySelector('.mobile-archive-more'))return;
-    const more=document.createElement('button');
-    more.type='button';
-    more.className='outline mobile-archive-more';
-    more.innerHTML='<i class="fas fa-sliders"></i><span>'+(isRu()?'Действия':'Actions')+'</span>';
-    more.setAttribute('aria-expanded','false');
-    more.addEventListener('click',()=>{
-      const open=archive.classList.toggle('mobile-tools-open');
-      more.setAttribute('aria-expanded',String(open));
-    });
-    header.insertBefore(more,toolbar);
-  }
-
-  function buildNav(){
-    document.getElementById('mobileBottomNav')?.remove();
-    const nav=document.createElement('nav');
-    nav.id='mobileBottomNav';
-    nav.setAttribute('aria-label',isRu()?'Навигация приложения':'App navigation');
-    const items=isRu()
-      ?[['measure','fa-stethoscope','Замер'],['analysis','fa-chart-line','Аналитика'],['archive','fa-box-archive','Архив']]
-      :[['measure','fa-stethoscope','Measure'],['analysis','fa-chart-line','Analytics'],['archive','fa-box-archive','Archive']];
-    nav.innerHTML=items.map(([key,icon,label])=>'<button type="button" data-tab="'+key+'"><i class="fas '+icon+'"></i><span>'+label+'</span></button>').join('');
-    nav.addEventListener('click',e=>{
-      const btn=e.target.closest('button[data-tab]');
-      if(btn)setTab(btn.dataset.tab);
-    });
-    document.body.appendChild(nav);
-  }
-
-  function cleanupDesktop(){
-    document.body.classList.remove('mobile-shell-ready','mobile-tab-measure','mobile-tab-analysis','mobile-tab-archive');
-    document.getElementById('mobileBottomNav')?.remove();
-    document.querySelectorAll('.mobile-page').forEach(el=>el.classList.remove('mobile-hidden'));
-  }
-
-  function setup(){
-    if(!mq.matches){
-      cleanupDesktop();
-      return;
-    }
-    const cards=directCards();
-    if(cards.length<3)return;
-    const measure=cards[0],analysis=cards[1],archive=cards[2];
-    [[measure,'measure'],[analysis,'analysis'],[archive,'archive']].forEach(([el,key])=>{
-      el.classList.add('mobile-page','mobile-page-'+key);
-      el.dataset.mobilePage=key;
-    });
-    ensureArchiveMenu(archive);
-    enhanceArchiveRows(archive);
-    updateEmptyCharts(analysis,archive);
-    buildNav();
-    document.body.classList.add('mobile-shell-ready');
-    let saved='measure';
-    try{saved=localStorage.getItem('bp_mobile_tab')||'measure'}catch(_){}
-    setTab(saved,false);
-  }
-
-  function scheduleSetup(){
-    clearTimeout(setupTimer);
-    setupTimer=setTimeout(setup,50);
-  }
-
-  function startObserver(){
-    const app=document.getElementById('app');
-    if(!app)return;
-    observer?.disconnect();
-    observer=new MutationObserver(scheduleSetup);
-    observer.observe(app,{childList:true,subtree:true,characterData:true});
-  }
-
-  document.addEventListener('DOMContentLoaded',()=>{
-    setup();
-    startObserver();
-    mq.addEventListener?.('change',scheduleSetup);
-    window.addEventListener('resize',scheduleSetup,{passive:true});
-  });
-})();
+  function numericInputs(measure){
+    qa('.bp-inputs input',measure).forEach(x=>x.q�좷����q�b�y�

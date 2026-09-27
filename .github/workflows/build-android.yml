@@ -34,15 +34,15 @@ jobs:
       - name: Prepare offline web assets
         run: npm run prepare:web
 
-      - name: Verify modern mobile shell and offline URLs
+      - name: Validate HTML and mobile shell
         run: |
           test -s www/mobile-modern.css
           test -s www/mobile-modern.js
           grep -q 'mobile-modern.css' www/index.html
           grep -q 'mobile-modern.js' www/index.html
           grep -q 'mobileBottomNav' www/mobile-modern.js
-          grep -q 'mobile-record-average' www/mobile-modern.css
-          grep -q 'mobile-archive-more' www/mobile-modern.css
+          grep -q 'mobileArchiveCards' www/mobile-modern.js
+          grep -q 'mobileMeasureHero' www/mobile-modern.js
           grep -q 'vendor/chart/chart.umd.js' www/index.html
           grep -q 'vendor/fontawesome/css/all.min.css' www/index.html
           grep -q 'vendor/xlsx/xlsx.full.min.js' www/index.html
@@ -50,42 +50,6 @@ jobs:
             echo "External runtime CDN reference found"
             exit 1
           fi
-
-      - name: Create Android project
-        run: npx cap add android
-
-      - name: Sync Capacitor
-        run: npx cap sync android
-
-      - name: Generate Android icon and splash resources
-        run: npx capacitor-assets generate --android --iconBackgroundColor '#1f4870' --iconBackgroundColorDark '#111827' --splashBackgroundColor '#eef2f7' --splashBackgroundColorDark '#0b1120'
-
-      - name: Configure Android build version
-        run: |
-          sed -i "s/versionCode 1/versionCode ${GITHUB_RUN_NUMBER}/" android/app/build.gradle
-          sed -i "s/versionName \"1.0\"/versionName \"5.5.${GITHUB_RUN_NUMBER}\"/" android/app/build.gradle
-          grep -E 'versionCode|versionName' android/app/build.gradle
-
-      - name: Install stable debug signing key
-        run: |
-          mkdir -p "$HOME/.android"
-          base64 --decode ci/debug.keystore.b64 > "$HOME/.android/debug.keystore"
-          chmod 600 "$HOME/.android/debug.keystore"
-          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey >/dev/null
-
-      - name: Build debug APK
-        working-directory: android
-        run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
-
-      - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-MODERN.apk
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: BP-Diary-5.5-MODERN-Android-APK
-          path: BP-Diary-5.5-MODERN.apk
-          if-no-files-found: error
-          retention-days: 30
+          node - <<'NODE'
+          const fs=require('fs');
+          const html=fs.readFileSync('www/inde`¹¡Ñµ°œ°ÕÑ˜àœ¤ì(€€€€€€€€€½¹ÍÐ±½Ý•Èõ¡Ñµ°¹Ñ½1½Ý•É…Í” ¤ì(€€€€€€€€€½¹ÍÐ‰½‘å=Á•¸õ±½Ý•È¹Í•…É  ¼ñ‰½‘åqˆ¼¤ì(€€€€€€€€€½¹ÍÐ¡•…‘±½Í”õ±½Ý•È¹±…ÍÑ%¹‘•á=˜ œð½¡•…øœ±‰½‘å=Á•¸¤ì(€€€€€€€€€½¹ÍÐ‰½‘å±½Í”õ±½Ý•È¹±…ÍÑ%¹‘•á=˜ œð½‰½‘äøœ¤ì(€€€€€€€€€½¹ÍÐµ½‰¥±•ÍÌõ¡Ñµ°¹¥¹‘•á=˜ µ½‰¥±”µµ½‘•É¸¹ÍÌœ¤ì(€€€€€€€€€½¹ÍÐµ½‰¥±•)Ìõ¡Ñµ°¹¥¹‘•á=˜ œñÍÉ¥ÁÐÍÉŒô‰µ½‰¥±”µµ½‘•É¸¹©Ìˆøð½ÍÉ¥ÁÐøœ¤ì(€€€€€€€€€¥˜ „¡µ½‰¥±•ÍÌøÀ€˜˜µ½‰¥±•ÍÌñ¡•…‘±½Í”¤¤Ñ¡É½Ü¹•ÜÉÉ½È µ½‰¥±”ÍÌ¥Ì¹½Ð¥¸É•…°¡•…œ¤ì(€€€€€€€€€¥˜ „¡µ½‰¥±•)Ìù‰½‘å=Á•¸€˜˜µ½‰¥±•)Ìñ‰½‘å±½Í”¤¤Ñ¡É½Ü¹•ÜÉÉ½È µ½‰¥±”©Ì¥Ì¹½Ð‰•™½É”É•…°‰½‘ä±½Í”œ¤ì(€€€€€€€€€½¹ÍÐÍÉ¥ÁÑÌõl¸¸¹¡Ñµ°¹µ…Ñ¡±° ¼ñÍÉ¥ÁÐ ü…mxùt©q‰ÍÉŒô¥mxùt¨ø¡mqÍqMt¨ü¤ñp½ÍÉ¥ÁÐø½¤¥tì(€€€€€€€€€ÍÉ¥ÁÑÌ¹™½É…  ¡´±¤¤ôùíÑÉåí¹•ÜÕ¹Ñ¥½¸¡µlÅt¥õ…Ñ ¡”¥íÑ¡É½Ü¹•ÜÉÉ½È¡¥¹±¥¹”ÍÉ¥ÁÐ€‘í¥ôÍå¹Ñ…àè€‘í”¹µ•ÍÍ…•õ€¥õô¤ì(€€€€€€€€€½¹Í½±”¹±½œ¡%¹±¥¹”)LÍå¹Ñ…à=,€ ‘íÍÉ¥ÁÑÌ¹±•¹Ñ¡ô‰±½­Ì¥€¤ì(€€€€€€€€€9=(€€€€€€€€€¹½‘”€´µ¡•¬ÝÝÜ½µ½‰¥±”µµ½‘•É¸¹©Ì((€€€€€€´¹…µ”èÉ•…Ñ”¹‘É½¥ÁÉ½©•Ð(€€€€€€€ÉÕ¸è¹Áà…À…‘…¹‘É½¥((€€€€€€´¹…µ”èMå¹Œ…Á…¥Ñ½È(€€€€€€€ÉÕ¸è¹Áà…ÀÍå¹Œ…¹‘É½¥((€€€€€€´¹…µ”è•¹•É…Ñ”¹‘É½¥¥½¸…¹ÍÁ±…Í É•Í½ÕÉ•Ì(€€€€€€€ÉÕ¸è¹Áà…Á…¥Ñ½Èµ…ÍÍ•ÑÌ•¹•É…Ñ”€´µ…¹‘É½¥€´µ¥½¹	…­É½Õ¹‘½±½È€œŒÄÈÙ˜äØœ€´µ¥½¹	…­É½Õ¹‘½±½É…É¬€œŒÀàÄÌÅ˜œ€´µÍÁ±…Í¡	…­É½Õ¹‘½±½È€œ••˜Ù™„œ€´µÍÁ±…Í¡	…­É½Õ¹‘½±½É…É¬€œŒÀàÄÌÅ˜œ((€€€€€€´¹…µ”è½¹™¥ÕÉ”¹‘É½¥‰Õ¥±Ù•ÉÍ¥½¸(€€€€€€€ÉÕ¸èð(€€€€€€€€€Í•€µ¤€‰Ì½Ù•ÉÍ¥½¹½‘”€Ä½Ù•ÉÍ¥½¹½‘”€‘í%Q!U	}IU9}9U5	Iô¼ˆ…¹‘É½¥½…ÁÀ½‰Õ¥±¹É…‘±”(€€€€€€€€€Í•€µ¤€‰Ì½Ù•ÉÍ¥½¹9…µ”pˆÄ¸Ápˆ½Ù•ÉÍ¥½¹9…µ”pˆÔ¸Ô¸‘í%Q!U	}IU9}9U5	Iõpˆ¼ˆ…¹‘É½¥½…ÁÀ½‰Õ¥±¹É…‘±”(€€€€€€€€€É•À€µ€Ù•ÉÍ¥½¹½‘•ñÙ•ÉÍ¥½¹9…µ”œ…¹‘É½¥½…ÁÀ½‰Õ¥±¹É…‘±”((€€€€€€´¹…µ”è%¹ÍÑ…±°ÍÑ…‰±”‘•‰ÕœÍ¥¹¥¹œ­•ä(€€€€€€€ÉÕ¸èð(€€€€€€€€€µ­‘¥È€µÀ€ˆ‘!=5¼¹…¹‘É½¥ˆ(€€€€€€€€€‰…Í”ØÐ€´µ‘•½‘”¤½‘•‰Õœ¹­•åÍÑ½É”¹ˆØÐ€ø€ˆ‘!=5¼¹…¹‘É½¥½‘•‰Õœ¹­•åÍÑ½É”ˆ(€€€€€€€€€¡µ½€ØÀÀ€ˆ‘!=5¼¹…¹‘É½¥½‘•‰Õœ¹­•åÍÑ½É”ˆ(€€€€€€€€€­•åÑ½½°€´µ±¥ÍÐ€µ­•åÍÑ½É”€ˆ‘!=5¼¹…¹‘É½¥½‘•‰Õœ¹­•åÍÑ½É”ˆ€µÍÑ½É•Á…ÍÌ…¹‘É½¥€µ…±¥…Ì…¹‘É½¥‘‘•‰Õ­•ä€ø½‘•Ø½¹Õ±°((€€€€€€´¹…µ”è	Õ¥±‘•‰ÕœA,(€€€€€€€Ý½É­¥¹œµ‘¥É•Ñ½Éäè…¹‘É½¥(€€€€€€€ÉÕ¸èð(€€€€€€€€€¡µ½€­àÉ…‘±•Ü(€€€€€€€€€€¸½É…‘±•Ü…ÍÍ•µ‰±••‰Õœ€´µ¹¼µ‘…•µ½¸((€€€€€€´¹…µ”èI•¹…µ”A,(€€€€€€€ÉÕ¸èÀ…¹‘É½¥½…ÁÀ½‰Õ¥±½½ÕÑÁÕÑÌ½…Á¬½‘•‰Õœ½…ÁÀµ‘•‰Õœ¹…Á¬	@µ¥…Éä´Ô¸Ôµ]=\¹…Á¬((€€€€€€´¹…µ”èUÁ±½…A,…ÉÑ¥™…Ð(€€€€€€€ÕÍ•Ìè…Ñ¥½¹Ì½ÕÁ±½…µ…ÉÑ¥™…ÑØÐ(€€€€€€€Ý¥Ñ è(€€€€€€€€€¹…µ”è	@µ¥…Éä´Ô¸Ôµ]=\µ¹‘É½¥µA,(€€€€€€€€€Á…Ñ è	@µ¥…Éä´Ô¸Ôµ]=\¹…Á¬(€€€€€€€€€¥˜µ¹¼µ™¥±•Ìµ™½Õ¹è•ÉÉ½È(€€€€€€€€€É•Ñ•¹Ñ¥½¸µ‘…åÌè€ÌÀ

@@ -2,57 +2,35 @@
 
 Android app packaging for **Дневник артериального давления 5.5** using Capacitor 8.
 
-## Mobile app
+## Modern mobile UI
 
-The Android build now uses a dedicated modern mobile shell while preserving the validated diary calculations:
+The Android build keeps the validated diary logic and adds a dedicated mobile application layer:
 
+- fixed app bar with quick language/theme controls;
+- premium mobile hero for the current reading;
 - bottom navigation: **Замер / Аналитика / Архив**;
-- one main section at a time instead of one very long desktop page;
-- compact mobile header;
-- mobile archive rendered as touch-friendly measurement cards;
-- archive actions placed behind a compact **Действия** menu;
-- empty charts collapse to a compact no-data state;
-- larger touch targets and mobile-friendly form layout;
-- light/dark themes remain supported;
-- desktop HTML layout and medical calculation functions remain unchanged.
+- only one main screen is shown at a time;
+- Cardio profile, SCORE2 and personal targets are compact expandable panels;
+- measurement cards and controls are optimized for touch;
+- analytics charts collapse into compact no-data states when there are no records;
+- the archive is rendered as modern measurement cards instead of a 1000px-wide table;
+- archive export/backup actions are available through a bottom action sheet;
+- light/dark themes and RU/EN remain supported;
+- Chart.js, Font Awesome and SheetJS are packaged locally for offline runtime use.
+
+The mobile shell is injected **outside the diary's validated inline JavaScript**. CI checks the generated HTML positions and JavaScript syntax before Android compilation, preventing the prior failure where template source appeared as visible text.
 
 ## App identity
 
 - App name: `Дневник давления`
 - Android application ID: `com.tokhirjonyuldoshev.bpdiary`
 
-## Offline assets
+## Build
 
-Chart.js, Font Awesome and SheetJS are copied into the APK during CI and the HTML runtime URLs are rewritten to local files. The installed app therefore does not require those CDNs to display charts/icons or export Excel files.
+GitHub Actions builds `BP-Diary-5.5-WOW.apk` on every push to `main`.
 
-## Build APK
-
-GitHub Actions automatically builds a debug APK on every push to `main`.
-
-Manual local build requires Node.js 22+, Java 21 and Android SDK:
-
-```bash
-npm install
-npm run prepare:web
-npx cap add android
-npx cap sync android
-npx capacitor-assets generate --android
-cd android
-./gradlew assembleDebug
-```
-
-## Test-build signing
-
-CI uses a repository-stored **debug-only** keystore so subsequent test APKs have a stable signature and can update one another.
-
-This key is **not** intended for a Play Store release. A production release must use a separate private release keystore stored in GitHub Secrets.
+The test APK uses a repository-stored debug-only signing key so subsequent test builds can update one another. A Play Store release must use a separate private release key and signed AAB.
 
 ## Data
 
-Diary data currently live in the Android WebView local storage, matching the web version. Use **Полный бэкап** regularly.
-
-If Android requires uninstalling an older APK because it was signed with a different debug key, export a Full Backup **before uninstalling**, then install the new APK and restore that backup.
-
-## Distribution
-
-CI produces a debug APK for sideload/testing. A Play Store build should use a signed release AAB/APK and a private release key.
+Diary data are stored in the Android WebView local storage, matching the web version. Use **Полный бэкап** regularly. Before uninstalling an older build signed with a different key, export a Full Backup and restore it after installation.
