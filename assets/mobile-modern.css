@@ -536,3 +536,55 @@
   .mobile-page-analysis.mobile-no-data #mobileChartSelector,
   .mobile-page-analysis.mobile-no-data .chart-panel{display:none!important}
 }
+
+/* Mobile V7 SVG analytics — Android-safe graph rendering */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  .mobile-page-analysis .chart-panel,
+  .mobile-page-analysis #mobileChartDeck{display:none!important}
+
+  #mobileNativeChartPanel{
+    display:none;margin:0 8px 9px;padding:10px 9px 9px;
+    border:1px solid var(--m-line);border-radius:15px;background:var(--m-surface);
+    min-height:245px;overflow:hidden
+  }
+  .mobile-page-analysis.mobile-mode-charts #mobileNativeChartPanel{display:block}
+  .mobile-page-analysis.mobile-no-data #mobileNativeChartPanel{display:none!important}
+
+  .mobile-native-chart-head{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px
+  }
+  .mobile-native-chart-head strong{font-size:.7rem;color:var(--m-ink);line-height:1.2}
+  .mobile-native-chart-head span{
+    flex:none;font-size:.5rem;color:var(--m-muted);padding:3px 6px;border-radius:999px;
+    background:var(--m-surface-2);border:1px solid var(--m-line)
+  }
+
+  .mobile-native-legend{display:flex;gap:10px;align-items:center;margin:2px 0 2px;font-size:.52rem;color:var(--m-muted)}
+  .mobile-native-legend span{display:flex;align-items:center;gap:4px}
+  .mobile-native-legend i{width:13px;height:3px;border-radius:999px;display:block}
+  .mchart-legend-0{background:#df5d5d}.mchart-legend-1{background:#2387b5}
+
+  .mobile-native-svg{display:block;width:100%;height:auto;overflow:visible}
+  .mchart-grid{stroke:var(--m-line);stroke-width:.8}
+  .mchart-axis,.mchart-unit{fill:var(--m-muted);font-size:8px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+  .mchart-unit{font-size:8px;font-weight:700}
+  .mchart-line{fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .mchart-dot{stroke:none}
+  .mchart-series-0{stroke:#df5d5d;fill:#df5d5d}
+  .mchart-series-1{stroke:#2387b5;fill:#2387b5}
+  .mchart-bar{fill:#2387b5}
+
+  .mobile-dual-charts{display:grid;grid-template-columns:1fr;gap:6px}
+  .mobile-dual-charts>div{padding:5px 6px 2px;border-radius:11px;background:var(--m-surface-2);border:1px solid var(--m-line)}
+  .mobile-dual-charts small{display:block;margin:0 0 1px 3px;font-size:.52rem;color:var(--m-muted);font-weight:800}
+  .mobile-dual-charts .mobile-native-svg{max-height:112px}
+
+  .mobile-native-chart-empty{
+    min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:8px;text-align:center;color:var(--m-muted);font-size:.62rem
+  }
+  .mobile-native-chart-empty svg{width:28px;height:28px;color:var(--m-accent)}
+
+  body.dark .mchart-grid{stroke:#25384a}
+  body.dark .mchart-axis,body.dark .mchart-unit{fill:#91a6b8}
+}
