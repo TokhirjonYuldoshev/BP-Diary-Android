@@ -219,3 +219,85 @@
   .mobile-page-analysis.mobile-no-data .chart-panel{display:none!important}
   .mobile-archive-empty{display:grid;place-items:center;padding:25px 15px!important;text-align:center}
 }
+
+/* Mobile V4 screenshot audit */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  html{font-size:14px}
+  #mobileAppBar{
+    background:#f8fcfd!important;
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+    box-shadow:0 1px 0 rgba(207,223,232,.9);
+  }
+  body.dark #mobileAppBar{background:#0a1420!important}
+  #mobileBottomNav{
+    background:#fff!important;
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+    box-shadow:0 10px 28px rgba(14,45,64,.14)!important;
+  }
+  body.dark #mobileBottomNav{background:#0c1622!important}
+  #mobileAppBar,#mobileBottomNav{will-change:auto;transform:translateZ(0)}
+  .mobile-top-actions button,.patient-block button,.mobile-record-actions button,
+  #mobileBottomNav button,.mobile-archive-more,.mobile-secondary-btn{
+    display:flex!important;align-items:center!important;justify-content:center!important;gap:6px!important
+  }
+  button i,button svg,.mobile-brand-mark i,.mobile-brand-mark svg{
+    flex:none!important;display:block!important;line-height:1!important;vertical-align:middle!important
+  }
+  button svg,.mobile-brand-mark svg{width:17px;height:17px;stroke:currentColor}
+  .mobile-brand-mark svg{width:19px;height:19px}
+  #mobileBottomNav button svg{width:19px;height:19px}
+  .mobile-record-actions button svg{width:16px;height:16px}
+  .patient-block #editPatientBtn,.patient-block #delPatientBtn{
+    width:40px!important;height:40px!important;min-height:40px!important;padding:0!important;border-radius:12px!important
+  }
+  .patient-block #addPatientBtn{min-height:40px!important;height:40px!important;padding:6px 9px!important}
+  .patient-block #addPatientBtn i,.patient-block #editPatientBtn i,.patient-block #delPatientBtn i{display:none!important}
+  .patient-block #addPatientBtn svg,.patient-block #editPatientBtn svg,.patient-block #delPatientBtn svg{margin:0!important}
+  #bpContext,#primaryArm{font-size:13px!important;padding-left:10px!important;padding-right:30px!important}
+  .score-row #scoreSysFromDiaryBtn{min-height:39px!important;padding:7px 9px!important;font-size:.65rem!important;line-height:1.15!important}
+  .advanced-score{margin-top:5px!important;font-size:.63rem!important}
+  .advanced-score summary{font-size:.63rem!important;line-height:1.25!important;padding:4px 0!important}
+  .score-source-line .field-note{font-size:.58rem!important}
+  .mobile-choice-trigger{font-size:.67rem!important}
+  .mobile-choice-trigger span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mobile-choice-option{font-size:.67rem!important}
+  .mobile-page-analysis>.card-header h2{font-size:1rem!important}
+  #mobileAnalyticsTabs{
+    display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:0 9px 9px;padding:4px;
+    border:1px solid var(--m-line);border-radius:14px;background:var(--m-surface-2)
+  }
+  #mobileAnalyticsTabs button{
+    min-height:36px!important;border:0!important;border-radius:10px!important;
+    background:transparent!important;color:var(--m-muted)!important;font-size:.64rem!important
+  }
+  #mobileAnalyticsTabs button.active{
+    background:var(--m-surface)!important;color:var(--m-accent)!important;
+    box-shadow:0 3px 10px rgba(26,96,126,.09)!important;font-weight:850!important
+  }
+  .mobile-page-analysis.mobile-mode-overview .stats-bar,
+  .mobile-page-analysis.mobile-mode-overview .chart-panel{display:none!important}
+  .mobile-page-analysis.mobile-mode-charts .pro-analysis,
+  .mobile-page-analysis.mobile-mode-charts #mobileAnalyticsToggle{display:none!important}
+  .mobile-page-analysis.mobile-mode-charts .stats-bar{display:block!important}
+  .mobile-page-analysis.mobile-mode-charts .chart-panel{display:block!important}
+  .mobile-page-analysis.mobile-mode-charts .chart-panel.mobile-empty{display:flex!important}
+  .analysis-card{overflow:hidden}
+  .analysis-card .analysis-value{overflow-wrap:anywhere;word-break:normal}
+  .analysis-card.mobile-wide{grid-column:1/-1}
+  .mobile-report-viewer{
+    position:fixed;inset:0;z-index:18000;display:none;flex-direction:column;background:#eef5f8;color:#102b3c
+  }
+  .mobile-report-viewer.open{display:flex}
+  .mobile-report-toolbar{
+    flex:none;display:flex;align-items:center;gap:7px;padding:calc(7px + env(safe-area-inset-top)) 9px 7px;
+    min-height:56px;background:#fff;border-bottom:1px solid #dbe7ed
+  }
+  .mobile-report-toolbar strong{flex:1;font-size:.78rem}
+  .mobile-report-toolbar button{min-height:38px!important;padding:6px 9px!important;font-size:.65rem!important}
+  .mobile-report-viewer iframe{flex:1;width:100%;border:0;background:#fff}
+  body.dark .mobile-report-viewer{background:#0a1420;color:#edf7fc}
+  body.dark .mobile-report-toolbar{background:#0d1824;border-color:#26384b}
+  .mobile-report-close{width:38px!important;padding:0!important}
+}
