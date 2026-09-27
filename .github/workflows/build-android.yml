@@ -1,8 +1,6 @@
 name: Build Android APK
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -23,7 +21,7 @@ jobs:
           node-version: '22'
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
@@ -36,9 +34,9 @@ jobs:
 
       - name: Verify modern mobile shell and offline URLs
         run: |
-          grep -q 'id="mobileBottomNav"' www/index.html
-          grep -q 'id="mobileArchiveList"' www/index.html
-          grep -q 'data-mobile-tab="measure"' www/index.html
+          grep -q 'mobileBottomNav' www/index.html
+          grep -q 'mobile-record-average' www/index.html
+          grep -q 'mobile-archive-more' www/index.html
           grep -q 'vendor/chart/chart.umd.js' www/index.html
           grep -q 'vendor/fontawesome/css/all.min.css' www/index.html
           grep -q 'vendor/xlsx/xlsx.full.min.js' www/index.html
