@@ -588,3 +588,13 @@
   body.dark .mchart-grid{stroke:#25384a}
   body.dark .mchart-axis,body.dark .mchart-unit{fill:#91a6b8}
 }
+
+/* V7 force-disable legacy canvas panels on mobile */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  .mobile-page-analysis.mobile-mode-charts .chart-panel,
+  .mobile-page-analysis.mobile-mode-charts .chart-panel.mobile-chart-active,
+  .mobile-page-analysis.mobile-mode-overview .chart-panel,
+  .mobile-page-analysis #mobileChartDeck{display:none!important}
+  .mobile-page-analysis.mobile-mode-charts #mobileNativeChartPanel{display:block!important}
+  .mobile-page-analysis.mobile-no-data #mobileNativeChartPanel{display:none!important}
+}
