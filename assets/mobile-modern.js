@@ -24,7 +24,11 @@
       more:'<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>',
       chevron:'<path d="m8 10 4 4 4-4"/>',
       arrowLeft:'<path d="M19 12H5M10 7l-5 5 5 5"/>',
-      print:'<path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M7 14h10v7H7z"/>'
+      print:'<path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M7 14h10v7H7z"/>',
+      filter:'<path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z"/>',
+      reset:'<path d="M4 10a8 8 0 1 1 2 8"/><path d="M4 4v6h6"/>',
+      save:'<path d="M5 4h12l2 2v14H5V4Z"/><path d="M8 4v5h7V4M8 20v-7h8v7"/>',
+      info:'<circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/>'
     }[name]||'';
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
   }
