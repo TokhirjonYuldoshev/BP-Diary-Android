@@ -206,3 +206,16 @@
   input:focus,select:focus,textarea:focus{border-color:#62b8cd!important}
   button:focus-visible,[role="button"]:focus-visible{outline:2px solid rgba(83,183,209,.38)!important;outline-offset:1px!important}
 }
+
+/* Mobile V3 empty states */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  #mobileAnalyticsEmpty{display:grid;place-items:center;text-align:center;margin:0 9px 10px;padding:24px 16px;border:1px dashed #c9dce6;border-radius:18px;background:linear-gradient(180deg,var(--m-surface),var(--m-surface-2));color:var(--m-ink)}
+  #mobileAnalyticsEmpty .mobile-empty-icon,.mobile-archive-empty .mobile-empty-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:14px;margin-bottom:9px;background:var(--m-accent-soft);color:var(--m-accent);font-size:1rem}
+  #mobileAnalyticsEmpty strong,.mobile-archive-empty strong{font-size:.82rem;line-height:1.25}
+  #mobileAnalyticsEmpty span,.mobile-archive-empty span{display:block;max-width:290px;margin-top:6px;color:var(--m-muted);font-size:.64rem;line-height:1.38}
+  #mobileAnalyticsEmpty button,.mobile-archive-empty button{margin-top:12px;min-height:40px;padding:7px 12px;font-size:.67rem!important}
+  .mobile-page-analysis.mobile-no-data .pro-analysis,
+  .mobile-page-analysis.mobile-no-data .stats-bar,
+  .mobile-page-analysis.mobile-no-data .chart-panel{display:none!important}
+  .mobile-archive-empty{display:grid;place-items:center;padding:25px 15px!important;text-align:center}
+}
