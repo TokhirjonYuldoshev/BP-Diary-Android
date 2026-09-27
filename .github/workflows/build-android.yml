@@ -89,7 +89,7 @@ jobs:
           test -x "$APKSIGNER"
           "$APKSIGNER" verify --print-certs "$APK" | tee /tmp/apk-signature.txt
           KEY_FP="$(keytool -exportcert -keystore android/app/bp-diary-signing.p12 -storetype PKCS12 -storepass android -alias androiddebugkey | sha256sum | awk '{print $1}')"
-          APK_FP="$(awk -F': ' '/Signer #1 certificate SHA-256 digest/ {print tolower($2); exit}' /tmp/apk-signature.txt | tr -d ':')"
+          APK_FP="$(awk -F': ' '/certificate SHA-256 digest/ {print tolower($2); exit}' /tmp/apk-signature.txt | tr -d ':')"
           test -n "$APK_FP"
           test "$KEY_FP" = "$APK_FP"
           echo "Verified permanent signer: $KEY_FP"
