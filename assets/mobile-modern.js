@@ -1168,7 +1168,13 @@
     clearTimeout(backHintTimer);backHintTimer=setTimeout(()=>hint.classList.remove('show'),1700);
   }
   function handleAndroidBack(){
-    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open').at(-1);
+    const onboard=q('#mobileOnboarding.open');
+    if(onboard){
+      if(onboardingIndex>0)q('.mobile-onboarding-back',onboard)?.click();
+      else q('.mobile-onboarding-skip',onboard)?.click();
+      return 'handled';
+    }
+    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open').at(-1);
     if(open){closeMobileSheet(open);return 'handled'}
     const report=q('#mobileReportViewer.open');if(report){report.classList.remove('open');return 'handled'}
     const focused=document.activeElement;
