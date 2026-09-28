@@ -1,6 +1,6 @@
 {
   "appId": "com.tokhirjonyuldoshev.bpdiary",
-  "appName": "Дневник давления",
+  "appName": "BP Diary",
   "webDir": "www",
   "bundledWebRuntime": false,
   "server": {
