@@ -38,11 +38,16 @@ jobs:
         run: |
           test -s www/mobile-modern.css
           test -s www/mobile-modern.js
+          test -s www/vendor/pdf/html2canvas.min.js
+          test -s www/vendor/pdf/jspdf.umd.min.js
           grep -q 'mobile-modern.css' www/index.html
           grep -q 'mobile-modern.js' www/index.html
           grep -q 'mobileBottomNav' www/mobile-modern.js
           grep -q 'mobileArchiveCards' www/mobile-modern.js
           grep -q 'mobileMeasureHero' www/mobile-modern.js
+          grep -q 'sharePdfBase64' www/mobile-modern.js
+          grep -q 'vendor/pdf/html2canvas.min.js' www/index.html
+          grep -q 'vendor/pdf/jspdf.umd.min.js' www/index.html
           grep -q 'vendor/chart/chart.umd.js' www/index.html
           grep -q 'vendor/fontawesome/css/all.min.css' www/index.html
           grep -q 'vendor/xlsx/xlsx.full.min.js' www/index.html
@@ -56,7 +61,10 @@ jobs:
         run: npx cap add android
 
       - name: Patch Android native features and signing
-        run: node scripts/patch-android.mjs
+        run: |
+          node scripts/patch-android.mjs
+          grep -q 'OnBackPressedCallback' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/MainActivity.java
+          grep -q 'sharePdfBase64' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
 
       - name: Sync Capacitor
         run: npx cap sync android
@@ -95,12 +103,12 @@ jobs:
           echo "Verified permanent signer: $KEY_FP"
 
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-V9.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-V10.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BP-Diary-5.5-V9-Android-APK
-          path: BP-Diary-5.5-V9.apk
+          name: BP-Diary-5.5-V10-Android-APK
+          path: BP-Diary-5.5-V10.apk
           if-no-files-found: error
           retention-days: 30

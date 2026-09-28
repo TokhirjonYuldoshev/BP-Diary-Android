@@ -15,6 +15,31 @@
     if(!p||typeof p[method]!=='function')throw new Error(ru()?'Нативная функция недоступна':'Native feature unavailable');
     return await p[method](args);
   }
+
+  const mobileNativeAlert=window.alert.bind(window);
+  function personalRangeLooksValid(){
+    const valid=(a,b,c,d)=>[a,b,c,d].every(Number.isFinite)&&a>0&&b>0&&c>0&&d>0&&a<c&&b<d;
+    const dom=[
+      Number(q('#targetSysMin')?.value),
+      Number(q('#targetDiaMin')?.value),
+      Number(q('#targetSys')?.value),
+      Number(q('#targetDia')?.value)
+    ];
+    if(valid(...dom))return true;
+    try{
+      const all=JSON.parse(localStorage.getItem('bp_patient_settings')||'{}');
+      const id=q('#patientSelect')?.value||localStorage.getItem('bp_current_patient')||'default';
+      const s=all?.[id]||all?.default;
+      if(!s)return false;
+      return valid(Number(s.targetSysMin),Number(s.targetDiaMin),Number(s.targetSys),Number(s.targetDia));
+    }catch(_){return false}
+  }
+  window.alert=function(message){
+    const text=String(message??'');
+    const rangeWarning=/Минимальные границы персонального диапазона должны быть ниже максимальных|minimum.+personal.+range.+maximum|personal.+range.+minimum.+maximum/i.test(text);
+    if(mq.matches&&rangeWarning&&personalRangeLooksValid())return;
+    return mobileNativeAlert(message);
+  };
   function openMobileSheet(sheet){
     if(!sheet)return;
     if(!sheet.classList.contains('open')){
@@ -300,8 +325,8 @@
   function orientedReportHtml(html,orientation){
     const clean=cleanReportHtml(html),portrait=orientation==='portrait';
     const css=portrait
-      ?'<style id="mobilePrintOrientation">@page{size:A4 portrait;margin:8mm}body{font-size:8.4pt}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi:last-child{grid-column:1/-1}.overview{grid-template-columns:repeat(2,minmax(0,1fr))}.overview>div{border-right:1px solid #ddd!important;border-bottom:1px solid #ddd!important}.overview>div:nth-child(2n){border-right:none!important}.overview .wide{grid-column:1/-1!important;border-right:none!important}table.data{font-size:5.8pt}table.data th,table.data td{padding:2px}</style>'
-      :'<style id="mobilePrintOrientation">@page{size:A4 landscape;margin:8mm}</style>';
+      ?'<style id="mobilePrintOrientation">@page{size:A4 portrait;margin:8mm}html,body{background:#fff!important;color:#111!important}body{font-size:8.4pt}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi:last-child{grid-column:1/-1}.overview{grid-template-columns:repeat(2,minmax(0,1fr))}.overview>div{border-right:1px solid #ddd!important;border-bottom:1px solid #ddd!important}.overview>div:nth-child(2n){border-right:none!important}.overview .wide{grid-column:1/-1!important;border-right:none!important}table.data{font-size:5.8pt}table.data th,table.data td{padding:2px}</style>'
+      :'<style id="mobilePrintOrientation">@page{size:A4 landscape;margin:8mm}html,body{background:#fff!important;color:#111!important}</style>';
     return clean.includes('</head>')?clean.replace('</head>',css+'</head>'):css+clean;
   }
   function installReportBridge(){
@@ -346,9 +371,70 @@
       openMobileSheet(sheet);
     };
   }
+  function bytesToBase64(bytes){
+    let out='',step=0x8000;
+    for(let i=0;i<bytes.length;i+=step)out+=String.fromCharCode(...bytes.subarray(i,Math.min(i+step,bytes.length)));
+    return btoa(out);
+  }
+  async function reportPdfBase64(html){
+    if(typeof window.html2canvas!=='function'||!window.jspdf?.jsPDF)throw new Error(ru()?'Модуль PDF не загружен':'PDF module is not loaded');
+    const frame=document.createElement('iframe');
+    frame.setAttribute('aria-hidden','true');
+    frame.style.cssText='position:fixed;left:-12000px;top:0;width:794px;height:1123px;border:0;opacity:.01;pointer-events:none;background:#fff;z-index:-1';
+    document.body.appendChild(frame);
+    try{
+      await new Promise((resolve,reject)=>{
+        const timeout=setTimeout(()=>reject(new Error(ru()?'Тайм-аут подготовки отчёта':'Report rendering timeout')),5000);
+        frame.onload=()=>{clearTimeout(timeout);resolve()};
+        frame.srcdoc=orientedReportHtml(html,'portrait');
+      });
+      const doc=frame.contentDocument;
+      if(!doc?.documentElement||!doc.body)throw new Error(ru()?'Не удалось подготовить страницу отчёта':'Could not prepare report page');
+      try{await doc.fonts?.ready}catch(_){}
+      await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,120)));
+      doc.documentElement.style.background='#fff';
+      doc.body.style.background='#fff';
+      doc.body.style.color='#111';
+      const width=Math.max(794,doc.documentElement.scrollWidth,doc.body.scrollWidth);
+      const height=Math.max(1123,doc.documentElement.scrollHeight,doc.body.scrollHeight);
+      frame.style.width=width+'px';frame.style.height=height+'px';
+      const canvas=await window.html2canvas(doc.documentElement,{
+        backgroundColor:'#ffffff',
+        scale:2,
+        logging:false,
+        useCORS:false,
+        scrollX:0,
+        scrollY:0,
+        width,
+        height,
+        windowWidth:width,
+        windowHeight:height
+      });
+      if(!canvas.width||!canvas.height)throw new Error(ru()?'PDF получился пустым':'Generated PDF is empty');
+      const {jsPDF}=window.jspdf;
+      const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4',compress:true});
+      const pageW=pdf.internal.pageSize.getWidth(),pageH=pdf.internal.pageSize.getHeight(),margin=24;
+      const targetW=pageW-margin*2,scale=targetW/canvas.width;
+      const sourcePageHeight=Math.max(1,Math.floor((pageH-margin*2)/scale));
+      let page=0;
+      for(let y=0;y<canvas.height;y+=sourcePageHeight){
+        const h=Math.min(sourcePageHeight,canvas.height-y);
+        const slice=document.createElement('canvas');slice.width=canvas.width;slice.height=h;
+        const ctx=slice.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,slice.width,slice.height);
+        ctx.drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h);
+        if(page++)pdf.addPage('a4','portrait');
+        pdf.addImage(slice.toDataURL('image/png'),'PNG',margin,margin,targetW,h*scale,undefined,'FAST');
+      }
+      const bytes=new Uint8Array(pdf.output('arraybuffer'));
+      if(bytes.length<1000)throw new Error(ru()?'PDF получился пустым':'Generated PDF is empty');
+      return bytesToBase64(bytes);
+    }finally{frame.remove()}
+  }
   async function shareDoctorReportHtml(html){
     try{
-      await nativeCall('sharePdf',{html:orientedReportHtml(html,'portrait'),fileName:'BP-Diary-Doctor-Report.pdf',title:ru()?'Поделиться отчётом врача':'Share doctor report'});
+      const base64=await reportPdfBase64(html);
+      const date=new Date().toISOString().slice(0,10);
+      await nativeCall('sharePdfBase64',{base64,fileName:'BP-Diary-Doctor-Report-'+date+'.pdf',title:ru()?'Поделиться отчётом врача':'Share doctor report'});
     }catch(err){alert((ru()?'Не удалось поделиться отчётом: ':'Could not share report: ')+(err?.message||err))}
   }
   function requestShareDoctorReport(){
@@ -368,7 +454,7 @@
     const sheet=makeSheet('mobileAboutSheet',ru()?'О продукте':'About');
     q('.mobile-sheet-title',sheet).textContent=ru()?'О продукте':'About';
     const g=q('.mobile-sheet-grid',sheet);
-    g.innerHTML='<div class="mobile-about-card"><div class="mobile-about-icon">'+svgIcon('heart')+'</div><strong>BP Diary</strong><span>'+(ru()?'Дневник артериального давления':'Blood pressure diary')+'</span><small>'+(ru()?'Версия 5.5 · DEVELOPED BY YULDOSHEV TOKHIRJON':'Version 5.5 · DEVELOPED BY YULDOSHEV TOKHIRJON')+'</small></div>';
+    g.innerHTML='<div class="mobile-about-card"><div class="mobile-about-icon">'+brandHeartIcon()+'</div><strong>BP Diary</strong><span>'+(ru()?'Дневник артериального давления':'Blood pressure diary')+'</span><small>'+(ru()?'Версия 5.5 · DEVELOPED BY YULDOSHEV TOKHIRJON':'Version 5.5 · DEVELOPED BY YULDOSHEV TOKHIRJON')+'</small></div>';
     openMobileSheet(sheet);
   }
 
@@ -513,9 +599,12 @@
     },true);
   }
 
+  function brandHeartIcon(){
+    return '<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="bpHeart" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a55"/><stop offset="1" stop-color="#d51f2b"/></linearGradient></defs><path d="M32 55C26 49 10 39 10 24c0-9 6.6-15 15-15 4.9 0 8.7 2.2 11 6 2.3-3.8 6.1-6 11-6 8.4 0 15 6 15 15 0 15-16 25-30 31Z" fill="url(#bpHeart)"/><path d="M16 31h9l3-8 6 18 4-10 3 5h7" fill="none" stroke="#fff" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
   function appBar(){
     let bar=q('#mobileAppBar');if(!bar){bar=document.createElement('header');bar.id='mobileAppBar';document.body.prepend(bar)}
-    bar.innerHTML=`<div class="mobile-brand-mark">${svgIcon('heart')}</div><div class="mobile-brand-copy"><strong>BP Diary</strong><span>${ru()?'личный дневник здоровья':'personal health diary'}</span></div><div class="mobile-top-actions"><button type="button" data-top="about" aria-label="${ru()?'О продукте':'About'}">${svgIcon('info')}</button><button type="button" data-top="lang" aria-label="Language">${ru()?'EN':'RU'}</button><button type="button" data-top="theme" aria-label="Theme">${svgIcon(document.body.classList.contains('dark')?'sun':'moon')}</button></div>`;
+    bar.innerHTML=`<button type="button" class="mobile-brand-mark mobile-brand-button" data-top="about" aria-label="${ru()?'О продукте':'About'}">${brandHeartIcon()}</button><div class="mobile-brand-copy"><strong>BP Diary</strong><span>${ru()?'Дневник артериального давления':'Blood pressure diary'}</span></div><div class="mobile-top-actions"><button type="button" data-top="lang" aria-label="Language">${ru()?'EN':'RU'}</button><button type="button" data-top="theme" aria-label="Theme">${svgIcon(document.body.classList.contains('dark')?'sun':'moon')}</button></div>`;
     bar.onclick=e=>{const b=e.target.closest('button[data-top]');if(!b)return;if(b.dataset.top==='about'){showAboutSheet()}else if(b.dataset.top==='lang'){proxy('langSwitchBtn');setTimeout(()=>{try{window.updateAllAnalytics?.();window.updateUITexts?.()}catch(_){}setup(true);refreshText()},90)}else{document.body.classList.contains('dark')?proxy('lightThemeBtn'):proxy('darkThemeBtn');setTimeout(()=>{appBar();const ps=pages();if(ps[1])polishCharts(ps[1])},60)}};
     return bar;
   }
@@ -761,13 +850,25 @@
   }
   function setTab(tab,scroll=true){if(!['measure','analysis','archive'].includes(tab))tab='measure';currentTab=tab;try{localStorage.setItem('bp_mobile_tab',tab)}catch(_){}qa('.mobile-page').forEach(p=>p.classList.toggle('mobile-hidden',p.dataset.mobilePage!==tab));qa('#mobileBottomNav [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));document.body.dataset.mobileTab=tab;if(tab==='analysis'){const ps=pages();setTimeout(()=>{if(ps[1]){enhanceAnalysis(ps[1],ps[2]);refreshActiveChart(ps[1],true)}},80)}if(scroll)window.scrollTo({top:0,behavior:'smooth'})}
 
+  let lastRootBack=0,backHintTimer=null;
+  function showBackHint(){
+    let hint=q('#mobileBackHint');
+    if(!hint){hint=document.createElement('div');hint.id='mobileBackHint';document.body.appendChild(hint)}
+    hint.textContent=ru()?'Нажмите ещё раз для выхода':'Press Back again to exit';
+    hint.classList.add('show');
+    clearTimeout(backHintTimer);backHintTimer=setTimeout(()=>hint.classList.remove('show'),1700);
+  }
   function handleAndroidBack(){
-    const report=q('#mobileReportViewer.open');if(report){report.classList.remove('open');return true}
     const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open').at(-1);
-    if(open){closeMobileSheet(open);return true}
-    if(currentTab!=='measure'){setTab('measure');return true}
-    if(activeRound>0){activeRound--;try{localStorage.setItem('bp_mobile_round',String(activeRound))}catch(_){}const m=pages()[0];if(m)updateRound(m);return true}
-    return true;
+    if(open){closeMobileSheet(open);return 'handled'}
+    const report=q('#mobileReportViewer.open');if(report){report.classList.remove('open');return 'handled'}
+    const focused=document.activeElement;
+    if(focused&&/^(INPUT|TEXTAREA|SELECT)$/.test(focused.tagName)){focused.blur();return 'handled'}
+    if(currentTab!=='measure'){setTab('measure');return 'handled'}
+    if(activeRound>0){activeRound--;try{localStorage.setItem('bp_mobile_round',String(activeRound))}catch(_){}const m=pages()[0];if(m)updateRound(m);return 'handled'}
+    const now=Date.now();
+    if(now-lastRootBack<1800){lastRootBack=0;return 'exit'}
+    lastRootBack=now;showBackHint();return 'handled';
   }
   window.__bpHandleAndroidBack=handleAndroidBack;
 

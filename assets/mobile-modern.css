@@ -638,3 +638,27 @@
   .mobile-about-icon svg{width:29px!important;height:29px!important;stroke:#e53935!important}
   .mobile-about-card strong{font-size:1rem}.mobile-about-card span{font-size:.66rem;color:var(--m-muted)}.mobile-about-card small{font-size:.54rem;color:var(--m-muted);margin-top:4px}
 }
+
+
+/* Mobile V10 brand, back hint and report-share polish */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  .mobile-brand-button{
+    border:1px solid #ffd7d7!important;padding:0!important;cursor:pointer!important;
+    background:linear-gradient(145deg,#fff,#fff2f2)!important;color:#e53935!important;
+    box-shadow:0 6px 16px rgba(213,31,43,.13)!important
+  }
+  .mobile-brand-button svg{width:30px!important;height:30px!important;stroke:none!important}
+  .mobile-brand-button:focus-visible{outline:2px solid rgba(229,57,53,.35)!important;outline-offset:2px!important}
+  .mobile-brand-copy span{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.12!important}
+  .mobile-about-icon{background:linear-gradient(145deg,#fff,#fff2f2)!important}
+  .mobile-about-icon svg{width:38px!important;height:38px!important;stroke:none!important}
+  #mobileBackHint{
+    position:fixed;left:50%;bottom:calc(var(--m-nav-h) + 28px + env(safe-area-inset-bottom));
+    transform:translate(-50%,14px);z-index:25000;max-width:calc(100% - 42px);padding:9px 14px;
+    border-radius:999px;background:rgba(18,30,42,.94);color:#fff;font-size:.64rem;font-weight:760;
+    box-shadow:0 10px 28px rgba(0,0,0,.24);opacity:0;pointer-events:none;transition:.18s ease;
+    white-space:nowrap
+  }
+  #mobileBackHint.show{opacity:1;transform:translate(-50%,0)}
+  body.dark #mobileBackHint{background:rgba(235,244,249,.96);color:#10202d}
+}

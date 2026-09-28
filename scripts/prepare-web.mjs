@@ -45,6 +45,7 @@ await ensureDir(join(www, 'vendor', 'chart'));
 await ensureDir(join(www, 'vendor', 'fontawesome', 'css'));
 await ensureDir(join(www, 'vendor', 'fontawesome', 'webfonts'));
 await ensureDir(join(www, 'vendor', 'xlsx'));
+await ensureDir(join(www, 'vendor', 'pdf'));
 
 await cp(join(root, 'node_modules', 'chart.js', 'dist', 'chart.umd.js'), join(www, 'vendor', 'chart', 'chart.umd.js'));
 await cp(join(root, 'node_modules', '@fortawesome', 'fontawesome-free', 'css', 'all.min.css'), join(www, 'vendor', 'fontawesome', 'css', 'all.min.css'));
@@ -63,9 +64,14 @@ for (const [from, to] of replacements) html = html.split(from).join(to);
 
 await cp(join(root, 'assets', 'mobile-modern.css'), join(www, 'mobile-modern.css'));
 await cp(join(root, 'assets', 'mobile-modern.js'), join(www, 'mobile-modern.js'));
+await cp(join(root, 'node_modules', 'html2canvas', 'dist', 'html2canvas.min.js'), join(www, 'vendor', 'pdf', 'html2canvas.min.js'));
+await cp(join(root, 'node_modules', 'jspdf', 'dist', 'jspdf.umd.min.js'), join(www, 'vendor', 'pdf', 'jspdf.umd.min.js'));
 
 if (!html.includes('mobile-modern.css')) {
   html = injectBeforeRealHeadClose(html, '    <link rel="stylesheet" href="mobile-modern.css">');
+}
+if (!html.includes('vendor/pdf/html2canvas.min.js')) {
+  html = injectBeforeRealBodyClose(html, '    <script src="vendor/pdf/html2canvas.min.js"></script>\n    <script src="vendor/pdf/jspdf.umd.min.js"></script>');
 }
 if (!html.includes('mobile-modern.js')) {
   html = injectBeforeRealBodyClose(html, '    <script src="mobile-modern.js"></script>');
@@ -83,7 +89,9 @@ for (const file of [
   join(www, 'mobile-modern.js'),
   join(www, 'vendor', 'chart', 'chart.umd.js'),
   join(www, 'vendor', 'fontawesome', 'css', 'all.min.css'),
-  join(www, 'vendor', 'xlsx', 'xlsx.full.min.js')
+  join(www, 'vendor', 'xlsx', 'xlsx.full.min.js'),
+  join(www, 'vendor', 'pdf', 'html2canvas.min.js'),
+  join(www, 'vendor', 'pdf', 'jspdf.umd.min.js')
 ]) {
   const info = await stat(file);
   if (!info.size) throw new Error(`Prepared asset is empty: ${file}`);
@@ -94,6 +102,9 @@ for (const [from] of replacements) {
 }
 if (!html.includes('mobile-modern.css') || !html.includes('mobile-modern.js')) {
   throw new Error('Modern mobile shell was not injected');
+}
+if (!html.includes('vendor/pdf/html2canvas.min.js') || !html.includes('vendor/pdf/jspdf.umd.min.js')) {
+  throw new Error('Offline PDF share libraries were not injected');
 }
 
 const lower = html.toLowerCase();

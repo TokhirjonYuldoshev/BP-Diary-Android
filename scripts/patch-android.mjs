@@ -36,6 +36,7 @@ await writeFile(join(app,'build.gradle'),gradle,'utf8');
 const mainActivity=`package com.tokhirjonyuldoshev.bpdiary;
 
 import android.os.Bundle;
+import androidx.activity.OnBackPressedCallback;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -43,22 +44,31 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(NativeBridgePlugin.class);
         super.onCreate(savedInstanceState);
-    }
 
-    @Override
-    @SuppressWarnings("deprecation")
-    public void onBackPressed() {
-        try {
-            if (getBridge() != null && getBridge().getWebView() != null) {
-                getBridge().getWebView().evaluateJavascript(
-                    "window.__bpHandleAndroidBack ? window.__bpHandleAndroidBack() : true;",
-                    null
-                );
-                return;
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                try {
+                    if (getBridge() != null && getBridge().getWebView() != null) {
+                        getBridge().getWebView().evaluateJavascript(
+                            "window.__bpHandleAndroidBack ? window.__bpHandleAndroidBack() : 'exit';",
+                            value -> {
+                                if (value != null && value.contains("exit")) {
+                                    setEnabled(false);
+                                    getOnBackPressedDispatcher().onBackPressed();
+                                    setEnabled(true);
+                                }
+                            }
+                        );
+                        return;
+                    }
+                } catch (Exception ignored) {
+                }
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+                setEnabled(true);
             }
-        } catch (Exception ignored) {
-        }
-        super.onBackPressed();
+        });
     }
 }
 `;
@@ -67,6 +77,7 @@ await writeFile(join(pkgDir,'MainActivity.java'),mainActivity,'utf8');
 const plugin=`package com.tokhirjonyuldoshev.bpdiary;
 
 import android.app.Activity;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -75,15 +86,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
-import android.graphics.Canvas;
-import android.graphics.pdf.PdfDocument;
+import android.util.Base64;
 import android.print.PrintAttributes;
 import android.print.PrintManager;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.view.View;
 
 import androidx.activity.result.ActivityResult;
 import androidx.core.content.FileProvider;
@@ -108,7 +117,6 @@ import java.util.Locale;
 public class NativeBridgePlugin extends Plugin {
     private TextToSpeech tts;
     private WebView printWebView;
-    private WebView shareWebView;
 
     @PluginMethod
     public void recognizeSpeech(PluginCall call) {
@@ -313,106 +321,54 @@ public class NativeBridgePlugin extends Plugin {
     }
 
     @PluginMethod
-    public void sharePdf(PluginCall call) {
-        final String html = call.getString("html");
+    public void sharePdfBase64(PluginCall call) {
+        final String base64 = call.getString("base64");
         final String requestedName = call.getString("fileName");
         final String chooserTitle = call.getString("title");
-        if (html == null || html.isEmpty()) {
-            call.reject("No report HTML");
+        if (base64 == null || base64.trim().isEmpty()) {
+            call.reject("No PDF data");
             return;
         }
-        getActivity().runOnUiThread(() -> {
-            try {
-                shareWebView = new WebView(getContext());
-                shareWebView.getSettings().setJavaScriptEnabled(false);
-                shareWebView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-                shareWebView.setWebViewClient(new WebViewClient() {
-                    @Override
-                    public void onPageFinished(WebView view, String url) {
-                        PdfDocument document = null;
-                        try {
-                            String fileName = requestedName == null || requestedName.trim().isEmpty()
-                                ? "BP-Diary-Doctor-Report.pdf"
-                                : requestedName.replaceAll("[^A-Za-z0-9._-]", "_");
-                            if (!fileName.toLowerCase(Locale.ROOT).endsWith(".pdf")) fileName += ".pdf";
-                            File dir = new File(getContext().getCacheDir(), "shared");
-                            if (!dir.exists() && !dir.mkdirs()) throw new IllegalStateException("Could not create share directory");
-                            File pdf = new File(dir, fileName);
-                            if (pdf.exists() && !pdf.delete()) throw new IllegalStateException("Could not replace old report");
-
-                            final int webWidth = 794;
-                            int widthSpec = View.MeasureSpec.makeMeasureSpec(webWidth, View.MeasureSpec.EXACTLY);
-                            int heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
-                            view.measure(widthSpec, heightSpec);
-                            int contentHeight = Math.max(view.getMeasuredHeight(), view.getContentHeight());
-                            if (contentHeight <= 0) contentHeight = 1123;
-                            view.layout(0, 0, webWidth, contentHeight);
-
-                            final int pageWidth = 595;
-                            final int pageHeight = 842;
-                            final int margin = 24;
-                            final float scale = (pageWidth - margin * 2f) / webWidth;
-                            final int contentPerPage = Math.max(1, (int)Math.floor((pageHeight - margin * 2f) / scale));
-                            final int pageCount = Math.max(1, (int)Math.ceil(contentHeight / (double)contentPerPage));
-
-                            document = new PdfDocument();
-                            for (int i = 0; i < pageCount; i++) {
-                                PdfDocument.PageInfo info = new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, i + 1).create();
-                                PdfDocument.Page page = document.startPage(info);
-                                Canvas canvas = page.getCanvas();
-                                canvas.save();
-                                canvas.translate(margin, margin);
-                                canvas.scale(scale, scale);
-                                canvas.clipRect(0, 0, webWidth, contentPerPage);
-                                canvas.translate(0, -(i * contentPerPage));
-                                view.draw(canvas);
-                                canvas.restore();
-                                document.finishPage(page);
-                            }
-
-                            try (FileOutputStream out = new FileOutputStream(pdf)) {
-                                document.writeTo(out);
-                                out.flush();
-                            }
-                            document.close();
-                            document = null;
-
-                            Uri uri = FileProvider.getUriForFile(
-                                getContext(),
-                                getContext().getPackageName() + ".fileprovider",
-                                pdf
-                            );
-                            Intent send = new Intent(Intent.ACTION_SEND);
-                            send.setType("application/pdf");
-                            send.putExtra(Intent.EXTRA_STREAM, uri);
-                            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            getActivity().startActivity(Intent.createChooser(
-                                send,
-                                chooserTitle == null || chooserTitle.isEmpty() ? "Share doctor report" : chooserTitle
-                            ));
-                            call.resolve();
-                        } catch (Exception e) {
-                            if (document != null) {
-                                try { document.close(); } catch (Exception ignored) {}
-                            }
-                            call.reject("Could not create or share PDF", e);
-                        } finally {
-                            if (shareWebView != null) {
-                                shareWebView.destroy();
-                                shareWebView = null;
-                            }
-                        }
-                    }
-                });
-                shareWebView.loadDataWithBaseURL("https://localhost/", html, "text/html", "UTF-8", null);
-            } catch (Exception e) {
-                if (shareWebView != null) {
-                    shareWebView.destroy();
-                    shareWebView = null;
-                }
-                call.reject("Could not prepare PDF share", e);
+        try {
+            byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
+            if (bytes.length < 5 || bytes[0] != '%' || bytes[1] != 'P' || bytes[2] != 'D' || bytes[3] != 'F' || bytes[4] != '-') {
+                call.reject("Invalid PDF data");
+                return;
             }
-        });
+            String fileName = requestedName == null || requestedName.trim().isEmpty()
+                ? "BP-Diary-Doctor-Report.pdf"
+                : requestedName.replaceAll("[^A-Za-z0-9._-]", "_");
+            if (!fileName.toLowerCase(Locale.ROOT).endsWith(".pdf")) fileName += ".pdf";
+
+            File dir = new File(getContext().getCacheDir(), "shared");
+            if (!dir.exists() && !dir.mkdirs()) throw new IllegalStateException("Could not create share directory");
+            File pdf = new File(dir, fileName);
+            try (FileOutputStream out = new FileOutputStream(pdf, false)) {
+                out.write(bytes);
+                out.flush();
+            }
+
+            Uri uri = FileProvider.getUriForFile(
+                getContext(),
+                getContext().getPackageName() + ".fileprovider",
+                pdf
+            );
+            Intent send = new Intent(Intent.ACTION_SEND);
+            send.setType("application/pdf");
+            send.putExtra(Intent.EXTRA_STREAM, uri);
+            send.setClipData(ClipData.newRawUri("BP Diary doctor report", uri));
+            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            getActivity().startActivity(Intent.createChooser(
+                send,
+                chooserTitle == null || chooserTitle.isEmpty() ? "Share doctor report" : chooserTitle
+            ));
+            JSObject result = new JSObject();
+            result.put("name", fileName);
+            result.put("bytes", bytes.length);
+            call.resolve(result);
+        } catch (Exception e) {
+            call.reject("Could not share PDF", e);
+        }
     }
 
     private String displayName(Uri uri) {
@@ -442,10 +398,6 @@ public class NativeBridgePlugin extends Plugin {
             printWebView.destroy();
             printWebView = null;
         }
-        if (shareWebView != null) {
-            shareWebView.destroy();
-            shareWebView = null;
-        }
         super.handleOnDestroy();
     }
 }
@@ -467,15 +419,15 @@ await writeFile(join(resDrawable,'bp_diary_icon.xml'),`<?xml version="1.0" encod
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:fillColor="#FFF8F8" android:pathData="M54,4a50,50 0,1 0,0.1 0z" />
-    <path android:fillColor="#E53935" android:pathData="M54,92C49,87 20,68 20,40C20,22 42,17 54,32C66,17 88,22 88,40C88,68 59,87 54,92Z" />
+    <path android:fillColor="#FFF6F6" android:pathData="M0,0h108v108h-108z" />
+    <path android:fillColor="#E53935" android:pathData="M54,91C48,85 22,69 22,43C22,27 33,18 46,18C54,18 60,22 64,29C68,22 74,18 82,18C95,18 106,27 106,43C106,69 80,85 54,91Z" />
     <path
         android:fillColor="@android:color/transparent"
         android:strokeColor="#FFFFFF"
         android:strokeWidth="5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M29,54L40,54L46,42L55,66L62,49L69,54L80,54" />
+        android:pathData="M31,52L42,52L47,39L56,66L63,49L69,56L79,56" />
 </vector>
 `,'utf8');
 

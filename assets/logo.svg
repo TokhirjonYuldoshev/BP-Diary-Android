@@ -1,11 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1f4870"/>
-      <stop offset="1" stop-color="#2c7da0"/>
+    <linearGradient id="heart" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff5a55"/>
+      <stop offset="0.55" stop-color="#ef3739"/>
+      <stop offset="1" stop-color="#c9182b"/>
     </linearGradient>
+    <radialGradient id="bg" cx="35%" cy="25%" r="85%">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#fff0f0"/>
+    </radialGradient>
   </defs>
-  <rect width="1024" height="1024" rx="220" fill="url(#bg)"/>
-  <path d="M512 787C428 704 255 590 255 416c0-105 74-180 170-180 61 0 104 28 132 70 28-42 71-70 132-70 96 0 170 75 170 180 0 174-173 288-347 371z" fill="#fff" opacity=".96"/>
-  <path d="M290 503h135l46-111 77 226 52-115h134" fill="none" stroke="#2c7da0" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+  <path d="M512 816C440 748 236 620 236 402c0-128 92-210 204-210 71 0 124 34 158 91 34-57 87-91 158-91 112 0 204 82 204 210 0 218-204 346-448 414Z" fill="url(#heart)"/>
+  <path d="M306 500h137l47-126 82 252 63-154 42 73h111" fill="none" stroke="#ffffff" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
