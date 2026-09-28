@@ -371,6 +371,28 @@ public class NativeBridgePlugin extends Plugin {
         }
     }
 
+    @PluginMethod
+    public void openUrl(PluginCall call) {
+        String url = call.getString("url");
+        if (url == null || url.trim().isEmpty()) {
+            call.reject("No URL");
+            return;
+        }
+        try {
+            Uri uri = Uri.parse(url);
+            String scheme = uri.getScheme();
+            if (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)) {
+                call.reject("Unsupported URL scheme");
+                return;
+            }
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            getActivity().startActivity(intent);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Could not open URL", e);
+        }
+    }
+
     private String displayName(Uri uri) {
         Cursor cursor = null;
         try {
@@ -419,15 +441,18 @@ await writeFile(join(resDrawable,'bp_diary_icon.xml'),`<?xml version="1.0" encod
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:fillColor="#FFF6F6" android:pathData="M0,0h108v108h-108z" />
-    <path android:fillColor="#E53935" android:pathData="M54,91C48,85 22,69 22,43C22,27 33,18 46,18C54,18 60,22 64,29C68,22 74,18 82,18C95,18 106,27 106,43C106,69 80,85 54,91Z" />
+    <path android:fillColor="#FFF4F5" android:pathData="M0,0h108v108h-108z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M13,13h82a13,13 0,0 1,13 13v56a13,13 0,0 1,-13 13h-82a13,13 0,0 1,-13 -13v-56a13,13 0,0 1,13 -13z" />
+    <path android:fillColor="#FAD7DA" android:pathData="M54,13a41,41 0,1 0,0.1 0z" android:fillAlpha="0.32" />
+    <path android:fillColor="#D71932" android:pathData="M54,91C48,85 22,69 22,43C22,27 33,18 46,18C54,18 60,22 64,29C68,22 74,18 82,18C95,18 106,27 106,43C106,69 80,85 54,91Z" />
+    <path android:fillColor="#F35C62" android:pathData="M31,30C37,22 47,21 54,27C45,25 37,28 32,36z" android:fillAlpha="0.70" />
     <path
         android:fillColor="@android:color/transparent"
         android:strokeColor="#FFFFFF"
         android:strokeWidth="5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M31,52L42,52L47,39L56,66L63,49L69,56L79,56" />
+        android:pathData="M31,53L42,53L47,40L56,67L63,50L69,57L80,57" />
 </vector>
 `,'utf8');
 
