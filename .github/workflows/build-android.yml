@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main]
+    branches: [main, v11-ui-ux]
   workflow_dispatch:
 
 permissions:
@@ -46,6 +46,10 @@ jobs:
           grep -q 'mobileArchiveCards' www/mobile-modern.js
           grep -q 'mobileMeasureHero' www/mobile-modern.js
           grep -q 'sharePdfBase64' www/mobile-modern.js
+          grep -q 'mobileToast' www/mobile-modern.js
+          grep -q 'mobileConfirmSheet' www/mobile-modern.js
+          grep -q 'mobile-report-actions' www/mobile-modern.js
+          grep -q 'Android V11' www/mobile-modern.js
           grep -q 'vendor/pdf/html2canvas.min.js' www/index.html
           grep -q 'vendor/pdf/jspdf.umd.min.js' www/index.html
           grep -q 'vendor/chart/chart.umd.js' www/index.html
@@ -65,6 +69,7 @@ jobs:
           node scripts/patch-android.mjs
           grep -q 'OnBackPressedCallback' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/MainActivity.java
           grep -q 'sharePdfBase64' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
+          grep -q 'void openUrl' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
 
       - name: Sync Capacitor
         run: npx cap sync android
@@ -103,12 +108,12 @@ jobs:
           echo "Verified permanent signer: $KEY_FP"
 
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-V10.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-V11.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BP-Diary-5.5-V10-Android-APK
-          path: BP-Diary-5.5-V10.apk
+          name: BP-Diary-5.5-V11-Android-APK
+          path: BP-Diary-5.5-V11.apk
           if-no-files-found: error
           retention-days: 30
