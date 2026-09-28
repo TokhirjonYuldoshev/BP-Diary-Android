@@ -4,7 +4,7 @@ Android app packaging for **BP Diary / Дневник артериального
 
 ## Current mobile release track
 
-V12 keeps the validated diary/core logic and extends the Android mobile layer with:
+V13 keeps the validated diary/core logic, preserves the V12 feature set, and polishes the Android mobile layer with:
 
 - premium mobile UI with light/dark themes and RU/EN;
 - touch-first navigation: **Замер / Аналитика / Архив**;
@@ -31,9 +31,9 @@ The mobile shell is injected **outside the diary's validated inline JavaScript**
 
 GitHub Actions builds the Android APK on pushes to the active release branch and to `main`.
 
-For V12 the artifact is named:
+For V13 the artifact is named:
 
-`BP-Diary-5.5-V12-Android-APK`
+`BP-Diary-5.5-V13-Android-APK`
 
 The build verifies the permanent test signer before publishing the artifact so test releases can be installed over the previous version without removing user data.
 
@@ -41,7 +41,7 @@ The build verifies the permanent test signer before publishing the artifact so t
 
 Diary data remain stored in the Android WebView local storage, matching the existing app architecture.
 
-V12 adds app-internal automatic restore points while preserving the existing **Полный бэкап** JSON export. Automatic copies survive normal app updates, but uninstalling the application removes app-internal data, so a manual Full Backup is still recommended before uninstalling or moving to another device.
+V13 preserves the app-internal automatic restore points introduced in V12 while preserving the existing **Полный бэкап** JSON export. Automatic copies survive normal app updates, but uninstalling the application removes app-internal data, so a manual Full Backup is still recommended before uninstalling or moving to another device.
 
 ## Release safety
 
