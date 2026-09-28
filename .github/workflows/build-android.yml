@@ -95,12 +95,12 @@ jobs:
           echo "Verified permanent signer: $KEY_FP"
 
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-V8.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-V9.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BP-Diary-5.5-V8-Android-APK
-          path: BP-Diary-5.5-V8.apk
+          name: BP-Diary-5.5-V9-Android-APK
+          path: BP-Diary-5.5-V9.apk
           if-no-files-found: error
           retention-days: 30
