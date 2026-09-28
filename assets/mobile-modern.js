@@ -564,9 +564,14 @@
   function runDoctorReport(action='view',from='',to=''){
     const src=q('#reportDoctorBtn');
     if(!src){mobileToast(ru()?'Отчёт врача недоступен':'Doctor report unavailable','error');return}
+    const analysis=pages()[1],group=q('.filter-group',analysis),inputs=group?qa('input',group).slice(0,2):[];
+    const previous=inputs.length>=2?[inputs[0].value||'',inputs[1].value||'']:null;
     if(from||to)applyCoreDateFilter(from,to);else resetCoreDateFilter();
     reportNextAction=action==='share'?'share':'view';
-    setTimeout(()=>src.click(),140);
+    setTimeout(()=>{
+      src.click();
+      if(previous)setTimeout(()=>applyCoreDateFilter(previous[0],previous[1]),650);
+    },140);
   }
   function openCustomReportPeriod(action){
     const sheet=makeSheet('mobileCustomPeriodSheet',ru()?'Свой период':'Custom period');
@@ -640,6 +645,7 @@
       if(!ok)return;
       await nativeAutoBackup('before-auto-restore',true);
       if(!restoreBackupObject(obj))throw new Error(ru()?'Неверный формат бэкапа':'Invalid backup format');
+      try{localStorage.setItem('bp_v12_onboarding_done','1')}catch(_){}
       mobileToast(ru()?'Авто-бэкап восстановлен':'Auto-backup restored','success',1800);
       setTimeout(()=>location.reload(),850);
     }catch(err){mobileToast((ru()?'Не удалось восстановить авто-бэкап: ':'Could not restore auto-backup: ')+(err?.message||err),'error',4500)}
@@ -861,6 +867,7 @@
       }))return;
       await nativeAutoBackup('before-manual-restore',true);
       if(!restoreBackupObject(b))throw new Error(ru()?'Неверный формат бэкапа':'Invalid backup format');
+      try{localStorage.setItem('bp_v12_onboarding_done','1')}catch(_){}
       if(res?.uri)localStorage.setItem('bp_last_backup_uri',res.uri);
       if(res?.name)localStorage.setItem('bp_last_backup_name',res.name);
       mobileToast(ru()?'Бэкап восстановлен. Приложение будет перезапущено.':'Backup restored. The app will restart.','success',1800);
