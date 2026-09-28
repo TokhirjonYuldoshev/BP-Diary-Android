@@ -993,3 +993,138 @@
   body.dark #mobileAboutSheet .mobile-sheet-title{background:rgba(8,18,29,.94)!important}
   body.dark .mobile-record-avg{background:linear-gradient(135deg,#14364d,#102b3f)!important}
 }
+
+
+/* V12 — functional UI additions and Personal range card fix */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  .profile-section.target-row{
+    padding:0!important;
+    margin-top:0!important;
+    border:1px solid var(--m-line)!important;
+    border-radius:16px!important;
+    background:var(--m-surface)!important;
+    box-shadow:0 6px 18px rgba(19,70,97,.045)!important;
+    overflow:hidden!important
+  }
+  body.dark .profile-section.target-row{
+    border-color:#23364a!important;
+    background:var(--m-surface)!important;
+    box-shadow:0 7px 20px rgba(0,0,0,.13)!important
+  }
+
+  #mobileReportPeriodSheet,#mobileCustomPeriodSheet,#mobileAutoBackupSheet{
+    display:flex;position:fixed;inset:0;z-index:22000;background:rgba(5,12,20,.5);
+    align-items:flex-end;padding:10px 10px calc(10px + env(safe-area-inset-bottom));
+    opacity:0;pointer-events:none;transition:opacity .18s ease
+  }
+  #mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open{opacity:1;pointer-events:auto}
+  #mobileReportPeriodSheet .mobile-sheet-grid,#mobileCustomPeriodSheet .mobile-sheet-grid,#mobileAutoBackupSheet .mobile-sheet-grid{grid-template-columns:1fr!important}
+  #mobileReportPeriodSheet .mobile-sheet-panel,#mobileCustomPeriodSheet .mobile-sheet-panel,#mobileAutoBackupSheet .mobile-sheet-panel{
+    border-radius:24px 24px 19px 19px!important;box-shadow:0 -18px 48px rgba(0,0,0,.24)!important
+  }
+  .mobile-period-option{
+    display:flex!important;align-items:center!important;justify-content:space-between!important;
+    min-height:49px!important;padding:10px 12px!important;text-align:left!important;font-weight:760!important
+  }
+  .mobile-period-option svg{width:17px!important;height:17px!important;transform:rotate(-90deg)}
+  .mobile-custom-period{display:grid;gap:10px}
+  .mobile-custom-period label{display:grid;gap:5px;color:var(--m-muted);font-size:.62rem;font-weight:800}
+  .mobile-custom-period input{min-height:48px!important}
+  .mobile-custom-period-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:3px}
+  .mobile-custom-period-actions button{min-height:47px!important}
+  .mobile-backup-create{
+    display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;
+    min-height:49px!important;background:linear-gradient(135deg,#078dc7,#19b4d0)!important;color:#fff!important;border:0!important
+  }
+  .mobile-backup-item{
+    display:grid!important;grid-template-columns:1fr auto!important;align-items:center!important;gap:10px!important;
+    min-height:57px!important;padding:9px 11px!important;text-align:left!important
+  }
+  .mobile-backup-item b{display:block;color:var(--m-ink);font-size:.7rem}
+  .mobile-backup-item small{display:block;margin-top:3px;color:var(--m-muted);font-size:.57rem}
+  .mobile-backup-empty,.mobile-backup-loading{
+    padding:22px 13px;text-align:center;color:var(--m-muted);font-size:.69rem;border:1px dashed var(--m-line);border-radius:15px
+  }
+
+  #mobileArchiveTools{
+    display:grid;grid-template-columns:1fr auto;gap:7px;align-items:center;
+    margin:0 9px 9px;padding:8px;border:1px solid var(--m-line);border-radius:16px;background:var(--m-surface-2)
+  }
+  .mobile-archive-periods{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+  .mobile-archive-periods button{
+    min-width:0!important;min-height:36px!important;padding:5px 4px!important;border:1px solid transparent!important;
+    border-radius:10px!important;background:transparent!important;color:var(--m-muted)!important;font-size:.58rem!important;font-weight:820!important
+  }
+  .mobile-archive-periods button.active{
+    background:var(--m-surface)!important;color:var(--m-accent)!important;border-color:var(--m-line)!important;
+    box-shadow:0 3px 10px rgba(17,74,103,.07)!important
+  }
+  #mobileArchiveSort{
+    width:auto!important;min-height:36px!important;padding:5px 8px!important;display:flex!important;align-items:center!important;gap:5px!important;
+    font-size:.56rem!important;white-space:nowrap!important
+  }
+  #mobileArchiveSort svg{width:14px!important;height:14px!important}
+  .mobile-archive-count{grid-column:1/-1;color:var(--m-muted);font-size:.54rem;padding:0 2px 1px}
+
+  #mobileOnboarding{
+    position:fixed;inset:0;z-index:30000;display:none;align-items:center;justify-content:center;
+    padding:calc(18px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom));
+    background:
+      radial-gradient(circle at 16% 4%,rgba(29,169,216,.25),transparent 34%),
+      linear-gradient(155deg,#07131f 0%,#0b2032 58%,#0a1825 100%);
+    color:#fff
+  }
+  #mobileOnboarding.open{display:flex}
+  .mobile-onboarding-card{
+    position:relative;width:min(440px,100%);min-height:min(620px,calc(100vh - 40px));
+    display:flex;flex-direction:column;padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:28px;
+    background:rgba(10,27,42,.89);box-shadow:0 24px 70px rgba(0,0,0,.36);backdrop-filter:blur(20px)
+  }
+  .mobile-onboarding-skip{
+    align-self:flex-end;width:auto!important;min-height:36px!important;padding:5px 9px!important;border:0!important;
+    background:rgba(255,255,255,.08)!important;color:#dbeaf3!important;font-size:.61rem!important
+  }
+  .mobile-onboarding-visual{flex:1;min-height:200px;display:grid;place-items:center;padding:18px 0 8px}
+  .mobile-onboarding-icon{
+    width:118px;height:118px;display:grid;place-items:center;border-radius:35px;
+    background:
+      radial-gradient(circle at 28% 20%,rgba(255,255,255,.22),transparent 32%),
+      linear-gradient(145deg,#078fc7,#16bdd2);
+    box-shadow:0 24px 58px rgba(7,147,197,.29),inset 0 1px 0 rgba(255,255,255,.25)
+  }
+  .mobile-onboarding-icon svg{width:58px!important;height:58px!important;stroke:#fff!important}
+  .mobile-onboarding-copy{text-align:center;padding:4px 5px 12px}
+  .mobile-onboarding-step{color:#7fd8f1;font-size:.58rem;font-weight:850;letter-spacing:.1em;text-transform:uppercase}
+  .mobile-onboarding-copy h2{margin:8px 0 7px;color:#fff;font-size:1.3rem;line-height:1.08;letter-spacing:-.4px}
+  .mobile-onboarding-copy p{margin:0;color:#b8cddd;font-size:.72rem;line-height:1.5}
+  .mobile-onboarding-dots{display:flex;justify-content:center;gap:6px;margin:2px 0 15px}
+  .mobile-onboarding-dots span{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2)}
+  .mobile-onboarding-dots span.active{width:22px;border-radius:999px;background:#32c5e5}
+  .mobile-onboarding-actions{display:grid;grid-template-columns:.82fr 1.18fr;gap:8px}
+  .mobile-onboarding-actions button{min-height:49px!important;font-weight:820!important}
+  .mobile-onboarding-actions .outline{background:rgba(255,255,255,.05)!important;border-color:rgba(255,255,255,.2)!important;color:#dceaf2!important}
+  .mobile-onboarding-next{background:linear-gradient(135deg,#0d9fd4,#22c3d8)!important;color:#fff!important;border:0!important}
+
+  #mobileBottomNav button,.mobile-top-actions button,.mobile-record-actions button,.mobile-about-list button{
+    touch-action:manipulation
+  }
+  [aria-current="page"]{font-weight:850}
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}
+  }
+  @media (prefers-contrast:more){
+    :root{--m-line:#9dbac9}
+    body.dark{--m-line:#557088}
+    button.outline,input,select,textarea,.card,.profile-section,.mobile-record-card{border-width:2px!important}
+  }
+  @media (max-width:380px){
+    #mobileArchiveTools{grid-template-columns:1fr}
+    #mobileArchiveSort{width:100%!important;justify-content:center!important}
+    .mobile-onboarding-card{padding:15px;min-height:calc(100vh - 32px)}
+    .mobile-onboarding-visual{min-height:160px}
+    .mobile-onboarding-icon{width:98px;height:98px;border-radius:29px}
+    .mobile-onboarding-icon svg{width:49px!important;height:49px!important}
+  }
+}
