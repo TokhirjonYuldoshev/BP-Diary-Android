@@ -1,36 +1,56 @@
 # BP Diary Android
 
-Android app packaging for **Дневник артериального давления 5.5** using Capacitor 8.
+Android app packaging for **BP Diary / Дневник артериального давления 5.5** using Capacitor 8.
 
-## Modern mobile UI
+## Current mobile release track
 
-The Android build keeps the validated diary logic and adds a dedicated mobile application layer:
+V12 keeps the validated diary/core logic and extends the Android mobile layer with:
 
-- fixed app bar with quick language/theme controls;
-- premium mobile hero for the current reading;
-- bottom navigation: **Замер / Аналитика / Архив**;
-- only one main screen is shown at a time;
-- Cardio profile, SCORE2 and personal targets are compact expandable panels;
-- measurement cards and controls are optimized for touch;
-- analytics charts collapse into compact no-data states when there are no records;
-- the archive is rendered as modern measurement cards instead of a 1000px-wide table;
-- archive export/backup actions are available through a bottom action sheet;
-- light/dark themes and RU/EN remain supported;
-- Chart.js, Font Awesome and SheetJS are packaged locally for offline runtime use.
+- premium mobile UI with light/dark themes and RU/EN;
+- touch-first navigation: **Замер / Аналитика / Архив**;
+- doctor report preview with **Печать / Сохранить PDF / Поделиться**;
+- report periods: **7 / 14 / 30 days / all data / custom range**;
+- internal automatic backups: up to **5 local restore points**;
+- manual full JSON backup/restore remains available;
+- archive quick periods and newest/oldest sorting;
+- first-run onboarding that can be reopened from **О продукте**;
+- in-app toast notifications and confirmation dialogs;
+- Android Back handling for screens, sheets and onboarding;
+- accessibility polish: minimum touch targets, focus states, reduced-motion and increased-contrast support;
+- Voice/TTS and native Android share/print integrations.
 
-The mobile shell is injected **outside the diary's validated inline JavaScript**. CI checks the generated HTML positions and JavaScript syntax before Android compilation, preventing the prior failure where template source appeared as visible text.
+The mobile shell is injected **outside the diary's validated inline JavaScript**. Medical/core calculations are intentionally kept separate from mobile presentation changes.
 
 ## App identity
 
-- App name: `Дневник давления`
+- App name: `BP Diary`
 - Android application ID: `com.tokhirjonyuldoshev.bpdiary`
+- Mobile subtitle: `Дневник артериального давления`
 
 ## Build
 
-GitHub Actions builds `BP-Diary-5.5-WOW.apk` on every push to `main`.
+GitHub Actions builds the Android APK on pushes to the active release branch and to `main`.
 
-The test APK uses a repository-stored debug-only signing key so subsequent test builds can update one another. A Play Store release must use a separate private release key and signed AAB.
+For V12 the artifact is named:
 
-## Data
+`BP-Diary-5.5-V12-Android-APK`
 
-Diary data are stored in the Android WebView local storage, matching the web version. Use **Полный бэкап** regularly. Before uninstalling an older build signed with a different key, export a Full Backup and restore it after installation.
+The build verifies the permanent test signer before publishing the artifact so test releases can be installed over the previous version without removing user data.
+
+## Data and backups
+
+Diary data remain stored in the Android WebView local storage, matching the existing app architecture.
+
+V12 adds app-internal automatic restore points while preserving the existing **Полный бэкап** JSON export. Automatic copies survive normal app updates, but uninstalling the application removes app-internal data, so a manual Full Backup is still recommended before uninstalling or moving to another device.
+
+## Release safety
+
+Before treating a build as stable, verify on a real Android device:
+
+1. install over the previous version without uninstalling;
+2. open and edit an archived reading;
+3. test Android Back from each screen and sheet;
+4. save and share a doctor PDF;
+5. create and restore both manual and automatic backups;
+6. test RU/EN and light/dark themes;
+7. test Voice/TTS.
