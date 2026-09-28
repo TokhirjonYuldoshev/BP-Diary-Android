@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main, v11-ui-ux, v12-functional-upgrades]
+    branches: [main, v11-ui-ux, v12-functional-upgrades, v13-ui-polish]
   workflow_dispatch:
 
 permissions:
@@ -49,7 +49,7 @@ jobs:
           grep -q 'mobileToast' www/mobile-modern.js
           grep -q 'mobileConfirmSheet' www/mobile-modern.js
           grep -q 'mobile-report-actions' www/mobile-modern.js
-          grep -q 'Android V12' www/mobile-modern.js
+          grep -q 'Android V13' www/mobile-modern.js
           grep -q 'vendor/pdf/html2canvas.min.js' www/index.html
           grep -q 'vendor/pdf/jspdf.umd.min.js' www/index.html
           grep -q 'vendor/chart/chart.umd.js' www/index.html
@@ -108,12 +108,12 @@ jobs:
           echo "Verified permanent signer: $KEY_FP"
 
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-V12.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-V13.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BP-Diary-5.5-V12-Android-APK
-          path: BP-Diary-5.5-V12.apk
+          name: BP-Diary-5.5-V13-Android-APK
+          path: BP-Diary-5.5-V13.apk
           if-no-files-found: error
           retention-days: 30
