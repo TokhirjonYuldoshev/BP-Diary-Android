@@ -29,7 +29,7 @@
     if(wasOpen&&!fromHistory&&history.state?.bpMobileSheet===sheet.id){try{history.back()}catch(_){}}
   }
   window.addEventListener('popstate',()=>{
-    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open').at(-1);
+    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open').at(-1);
     if(open)closeMobileSheet(open,true);
   });
 
@@ -295,19 +295,27 @@
     };
   }
 
-  let reportArmed=false,nativeWindowOpen=null;
+  let reportArmed=false,nativeWindowOpen=null,reportNextAction='view';
+  function cleanReportHtml(html){return String(html||'').replace(/<script>[\s\S]*?window\.print\([\s\S]*?<\/script>/i,'')}
+  function orientedReportHtml(html,orientation){
+    const clean=cleanReportHtml(html),portrait=orientation==='portrait';
+    const css=portrait
+      ?'<style id="mobilePrintOrientation">@page{size:A4 portrait;margin:8mm}body{font-size:8.4pt}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi:last-child{grid-column:1/-1}.overview{grid-template-columns:repeat(2,minmax(0,1fr))}.overview>div{border-right:1px solid #ddd!important;border-bottom:1px solid #ddd!important}.overview>div:nth-child(2n){border-right:none!important}.overview .wide{grid-column:1/-1!important;border-right:none!important}table.data{font-size:5.8pt}table.data th,table.data td{padding:2px}</style>'
+      :'<style id="mobilePrintOrientation">@page{size:A4 landscape;margin:8mm}</style>';
+    return clean.includes('</head>')?clean.replace('</head>',css+'</head>'):css+clean;
+  }
   function installReportBridge(){
     if(window.__bpMobileReportBridge)return;window.__bpMobileReportBridge=true;nativeWindowOpen=window.open.bind(window);
-    document.addEventListener('click',e=>{if(e.target.closest?.('#reportDoctorBtn')){reportArmed=true;setTimeout(()=>{reportArmed=false},80)}},true);
+    document.addEventListener('click',e=>{if(e.target.closest?.('#reportDoctorBtn')){reportArmed=true;setTimeout(()=>{reportArmed=false},250)}},true);
     window.open=function(url,target,features){
       if(mq.matches&&reportArmed&&String(url||'')===''&&String(target||'')==='_blank'){
-        let html='';return{document:{write(s){html+=String(s||'')},close(){showMobileReport(html)}},close(){}};
+        let html='';return{document:{write(s){html+=String(s||'')},close(){const action=reportNextAction;reportNextAction='view';reportArmed=false;if(action==='share')shareDoctorReportHtml(html);else showMobileReport(html)}},close(){}};
       }
       return nativeWindowOpen(url,target,features);
     };
   }
   function showMobileReport(html){
-    const clean=String(html||'').replace(/<script>[\s\S]*?window\.print\([\s\S]*?<\/script>/i,'');
+    const clean=cleanReportHtml(html);
     let v=q('#mobileReportViewer');
     if(!v){
       v=document.createElement('div');v.id='mobileReportViewer';v.className='mobile-report-viewer';
@@ -330,15 +338,23 @@
         b.innerHTML=svgIcon(icon)+'<span>'+label+'</span>';
         b.onclick=async()=>{
           closeMobileSheet(sheet);
-          try{
-            const oriented=clean.replace('</head>','<style>@page{size:A4 '+val+';margin:8mm}</style></head>');
-            await nativeCall('printHtml',{html:oriented,orientation:val,jobName:ru()?'Отчёт давления':'BP Diary report'});
-          }catch(err){alert((ru()?'Не удалось открыть сохранение PDF: ':'Could not open PDF save: ')+(err?.message||err))}
+          try{await nativeCall('printHtml',{html:orientedReportHtml(clean,val),orientation:val,jobName:ru()?'Отчёт давления':'BP Diary report'})}
+          catch(err){alert((ru()?'Не удалось открыть сохранение PDF: ':'Could not open PDF save: ')+(err?.message||err))}
         };
         g.appendChild(b);
       });
       openMobileSheet(sheet);
     };
+  }
+  async function shareDoctorReportHtml(html){
+    try{
+      await nativeCall('sharePdf',{html:orientedReportHtml(html,'portrait'),fileName:'BP-Diary-Doctor-Report.pdf',title:ru()?'Поделиться отчётом врача':'Share doctor report'});
+    }catch(err){alert((ru()?'Не удалось поделиться отчётом: ':'Could not share report: ')+(err?.message||err))}
+  }
+  function requestShareDoctorReport(){
+    if(!nativeBridge()){alert(ru()?'Нативная функция недоступна':'Native feature unavailable');return}
+    const src=q('#reportDoctorBtn');if(!src){alert(ru()?'Отчёт врача недоступен':'Doctor report unavailable');return}
+    reportNextAction='share';src.click();
   }
 
 
@@ -346,6 +362,14 @@
     let s=q('#'+id);if(s)return s;
     s=document.createElement('div');s.id=id;s.innerHTML='<div class="mobile-sheet-panel"><div class="mobile-sheet-handle"></div><div class="mobile-sheet-title"></div><div class="mobile-sheet-grid"></div></div>';
     document.body.appendChild(s);s.addEventListener('click',e=>{if(e.target===s)closeMobileSheet(s)});q('.mobile-sheet-title',s).textContent=title;return s;
+  }
+
+  function showAboutSheet(){
+    const sheet=makeSheet('mobileAboutSheet',ru()?'О продукте':'About');
+    q('.mobile-sheet-title',sheet).textContent=ru()?'О продукте':'About';
+    const g=q('.mobile-sheet-grid',sheet);
+    g.innerHTML='<div class="mobile-about-card"><div class="mobile-about-icon">'+svgIcon('heart')+'</div><strong>BP Diary</strong><span>'+(ru()?'Дневник артериального давления':'Blood pressure diary')+'</span><small>'+(ru()?'Версия 5.5 · DEVELOPED BY YULDOSHEV TOKHIRJON':'Version 5.5 · DEVELOPED BY YULDOSHEV TOKHIRJON')+'</small></div>';
+    openMobileSheet(sheet);
   }
 
   function spokenNumbers(text){
@@ -491,8 +515,8 @@
 
   function appBar(){
     let bar=q('#mobileAppBar');if(!bar){bar=document.createElement('header');bar.id='mobileAppBar';document.body.prepend(bar)}
-    bar.innerHTML=`<div class="mobile-brand-mark">${svgIcon('heart')}</div><div class="mobile-brand-copy"><strong>${ru()?'Давление':'BP Diary'}</strong><span>${ru()?'личный дневник здоровья':'personal health diary'}</span></div><div class="mobile-top-actions"><button type="button" data-top="lang" aria-label="Language">${ru()?'EN':'RU'}</button><button type="button" data-top="theme" aria-label="Theme">${svgIcon(document.body.classList.contains('dark')?'sun':'moon')}</button></div>`;
-    bar.onclick=e=>{const b=e.target.closest('button[data-top]');if(!b)return;if(b.dataset.top==='lang'){proxy('langSwitchBtn');setTimeout(()=>{try{window.updateAllAnalytics?.();window.updateUITexts?.()}catch(_){}setup(true);refreshText()},90)}else{document.body.classList.contains('dark')?proxy('lightThemeBtn'):proxy('darkThemeBtn');setTimeout(()=>{appBar();const ps=pages();if(ps[1])polishCharts(ps[1])},60)}};
+    bar.innerHTML=`<div class="mobile-brand-mark">${svgIcon('heart')}</div><div class="mobile-brand-copy"><strong>BP Diary</strong><span>${ru()?'личный дневник здоровья':'personal health diary'}</span></div><div class="mobile-top-actions"><button type="button" data-top="about" aria-label="${ru()?'О продукте':'About'}">${svgIcon('info')}</button><button type="button" data-top="lang" aria-label="Language">${ru()?'EN':'RU'}</button><button type="button" data-top="theme" aria-label="Theme">${svgIcon(document.body.classList.contains('dark')?'sun':'moon')}</button></div>`;
+    bar.onclick=e=>{const b=e.target.closest('button[data-top]');if(!b)return;if(b.dataset.top==='about'){showAboutSheet()}else if(b.dataset.top==='lang'){proxy('langSwitchBtn');setTimeout(()=>{try{window.updateAllAnalytics?.();window.updateUITexts?.()}catch(_){}setup(true);refreshText()},90)}else{document.body.classList.contains('dark')?proxy('lightThemeBtn'):proxy('darkThemeBtn');setTimeout(()=>{appBar();const ps=pages();if(ps[1])polishCharts(ps[1])},60)}};
     return bar;
   }
 
@@ -533,9 +557,9 @@
   }
 
   function measureActions(measure){
-    const box=q('.action-buttons',measure);if(!box)return;let quick=q('#mobileMeasureQuickActions',measure);if(!quick){quick=document.createElement('div');quick.id='mobileMeasureQuickActions';quick.innerHTML=`<button type="button" class="outline mobile-secondary-btn" data-action="clear">${svgIcon('eraser')}<span></span></button><button type="button" class="outline mobile-secondary-btn" data-action="more">${svgIcon('more')}<span></span></button>`;box.after(quick);quick.onclick=e=>{const b=e.target.closest('[data-action]');if(!b)return;if(b.dataset.action==='clear')proxy('clearFormBtn');else q('#mobileMeasureActionSheet')?.classList.add('open')}}
+    const box=q('.action-buttons',measure);if(!box)return;let quick=q('#mobileMeasureQuickActions',measure);if(!quick){quick=document.createElement('div');quick.id='mobileMeasureQuickActions';quick.innerHTML=`<button type="button" class="outline mobile-secondary-btn" data-action="clear">${svgIcon('eraser')}<span></span></button><button type="button" class="outline mobile-secondary-btn" data-action="more">${svgIcon('more')}<span></span></button>`;box.after(quick);quick.onclick=e=>{const b=e.target.closest('[data-action]');if(!b)return;if(b.dataset.action==='clear')proxy('clearFormBtn');else openMobileSheet(q('#mobileMeasureActionSheet'))}}
     q('[data-action="clear"] span',quick).textContent=ru()?'Очистить':'Clear';q('[data-action="more"] span',quick).textContent=ru()?'Ещё':'More';
-    const sheet=makeSheet('mobileMeasureActionSheet',ru()?'Дополнительные действия':'More actions');q('.mobile-sheet-title',sheet).textContent=ru()?'Дополнительные действия':'More actions';const g=q('.mobile-sheet-grid',sheet);g.innerHTML='';['voiceBtn','speakRecordBtn','fillLastBtn'].forEach(id=>{const src=q('#'+id);if(!src)return;const b=document.createElement('button');b.type='button';b.className='outline';b.innerHTML=src.innerHTML;b.onclick=()=>{sheet.classList.remove('open');src.click()};g.appendChild(b)})
+    const sheet=makeSheet('mobileMeasureActionSheet',ru()?'Дополнительные действия':'More actions');q('.mobile-sheet-title',sheet).textContent=ru()?'Дополнительные действия':'More actions';const g=q('.mobile-sheet-grid',sheet);g.innerHTML='';['voiceBtn','speakRecordBtn','fillLastBtn'].forEach(id=>{const src=q('#'+id);if(!src)return;const b=document.createElement('button');b.type='button';b.className='outline';b.innerHTML=src.innerHTML;b.onclick=()=>{closeMobileSheet(sheet);src.click()};g.appendChild(b)})
   }
 
   function disclaimer(){
@@ -672,7 +696,7 @@
     rows.slice().reverse().forEach(row=>{const cells=qa('td',row);if(!cells.length)return;const strong=q('strong',cells[0]);const date=strong?.textContent.trim()||'';let time='';cells[0].childNodes.forEach(n=>{if(n.nodeType===3&&n.textContent.trim())time=n.textContent.trim()});const avg=parsePressure(cells[cells.length-2]?.textContent);const card=document.createElement('article');card.className='mobile-record-card';
       const details=cells.slice(1,-2).map((cell,i)=>{const p=parsePressure(cell.textContent);if(!p.bp||p.bp==='—')return '';return `<div class="mobile-record-item"><small>${headers[i+1]||''}</small><strong>${p.bp}</strong>${p.pulse?`<em>${ru()?'Пульс':'Pulse'} ${p.pulse}</em>`:''}</div>`}).filter(Boolean).join('');
       card.innerHTML=`<div class="mobile-record-head"><div class="mobile-record-date">${date}<span class="mobile-record-time">${time}</span></div><div class="mobile-record-avg"><strong>${avg.bp}</strong><small>${avg.pulse?(ru()?'Пульс ':'Pulse ')+avg.pulse:(ru()?'Среднее':'Average')}</small></div></div><div class="mobile-record-grid">${details}</div><div class="mobile-record-actions"></div>`;
-      const dest=q('.mobile-record-actions',card);qa('button',cells[cells.length-1]).forEach((src,i)=>{const b=document.createElement('button');b.type='button';b.className=i?'danger':'outline';b.innerHTML=svgIcon(i?'trash':'edit');b.setAttribute('aria-label',i?(ru()?'Удалить':'Delete'):(ru()?'Изменить':'Edit'));b.onclick=()=>src.click();dest.appendChild(b)});host.appendChild(card)});
+      const dest=q('.mobile-record-actions',card);qa('button',cells[cells.length-1]).forEach(src=>{const isDelete=src.classList.contains('delete-btn');const b=document.createElement('button');b.type='button';b.className=isDelete?'danger':'outline';b.innerHTML=svgIcon(isDelete?'trash':'edit');b.setAttribute('aria-label',isDelete?(ru()?'Удалить':'Delete'):(ru()?'Изменить':'Edit'));b.onclick=()=>{src.click();if(!isDelete){activeRound=0;try{localStorage.setItem('bp_mobile_round','0')}catch(_){}setTab('measure');setTimeout(()=>{const m=pages()[0];if(m){updateRound(m);updateHero(m)}},40)}};dest.appendChild(b)});host.appendChild(card)});
   }
 
   function archiveSheet(archive){
@@ -686,9 +710,9 @@
     q('.mobile-sheet-title',sheet).textContent=ru()?'Данные и действия':'Data & actions';
     const g=q('.mobile-sheet-grid',sheet);g.innerHTML='';
 
-    const share=document.createElement('button');share.type='button';share.className='outline';
+    const share=document.createElement('button');share.type='button';share.className='mobile-share-report';
     share.innerHTML=svgIcon('share')+'<span>'+(ru()?'Поделиться':'Share')+'</span>';
-    share.onclick=()=>{closeMobileSheet(sheet);nativeShare()};g.appendChild(share);
+    share.onclick=()=>{closeMobileSheet(sheet);requestShareDoctorReport()};g.appendChild(share);
 
     const allowed=['reminderBtn','reportDoctorBtn','fullBackupBtn','restoreBackupBtn','clearAllBtn'];
     allowed.forEach(id=>{
@@ -736,6 +760,16 @@
     let n=q('#mobileBottomNav');if(!n){n=document.createElement('nav');n.id='mobileBottomNav';document.body.appendChild(n)}const items=ru()?[['measure','stethoscope','Замер'],['analysis','chart','Аналитика'],['archive','archive','Архив']]:[['measure','stethoscope','Measure'],['analysis','chart','Analytics'],['archive','archive','Archive']];n.innerHTML=items.map(([k,i,l])=>`<button type="button" data-tab="${k}">${svgIcon(i)}<span>${l}</span></button>`).join('');n.onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)};return n
   }
   function setTab(tab,scroll=true){if(!['measure','analysis','archive'].includes(tab))tab='measure';currentTab=tab;try{localStorage.setItem('bp_mobile_tab',tab)}catch(_){}qa('.mobile-page').forEach(p=>p.classList.toggle('mobile-hidden',p.dataset.mobilePage!==tab));qa('#mobileBottomNav [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));document.body.dataset.mobileTab=tab;if(tab==='analysis'){const ps=pages();setTimeout(()=>{if(ps[1]){enhanceAnalysis(ps[1],ps[2]);refreshActiveChart(ps[1],true)}},80)}if(scroll)window.scrollTo({top:0,behavior:'smooth'})}
+
+  function handleAndroidBack(){
+    const report=q('#mobileReportViewer.open');if(report){report.classList.remove('open');return true}
+    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open').at(-1);
+    if(open){closeMobileSheet(open);return true}
+    if(currentTab!=='measure'){setTab('measure');return true}
+    if(activeRound>0){activeRound--;try{localStorage.setItem('bp_mobile_round',String(activeRound))}catch(_){}const m=pages()[0];if(m)updateRound(m);return true}
+    return true;
+  }
+  window.__bpHandleAndroidBack=handleAndroidBack;
 
   function refreshText(){if(!mq.matches)return;const ps=pages();if(ps.length<3)return;const [m,a,r]=ps;appBar();updateHero(m);mobilePlaceholders(m);customScoreApplicability();polishControls(m);disclaimer();const kick=q('.mobile-section-kicker',m);if(kick)kick.textContent=ru()?'● Измерения':'● Measurements';measureStepper(m);measureActions(m);nav();archiveSheet(r);archiveCards(r);enhanceAnalysis(a,r);setTab(currentTab,false)}
 
