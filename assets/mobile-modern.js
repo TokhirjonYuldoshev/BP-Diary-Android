@@ -953,12 +953,8 @@
 
   function accordions(measure){
     const sections=qa('.profile-section',measure);
-    sections.forEach((sec,index)=>{
-      sec.classList.toggle('mobile-profile-first',index===0);
-      if(sec.classList.contains('target-row')&&!sec.parentElement?.classList.contains('mobile-target-shell')){
-        const shell=document.createElement('div');shell.className='mobile-target-shell';
-        sec.before(shell);shell.appendChild(sec);
-      }
+    sections.forEach(sec=>{
+      sec.classList.remove('mobile-profile-first');
       if(sec.dataset.mobileAccordion)return;
       sec.dataset.mobileAccordion='1';const title=q('.profile-section-title',sec);if(!title)return;
       title.setAttribute('role','button');title.setAttribute('tabindex','0');title.setAttribute('aria-expanded','false');
@@ -966,6 +962,15 @@
       const toggle=()=>{if(sec.hidden)return;const c=sec.classList.toggle('mobile-collapsed');title.setAttribute('aria-expanded',String(!c))};
       title.addEventListener('click',toggle);title.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}});
     });
+
+    const cardioTitle=q('[data-i18n="cardiovascularProfile"]',measure);
+    const cardioRow=cardioTitle?.closest('.date-time-row');
+    if(cardioRow)cardioRow.classList.add('mobile-cardio-row');
+
+    const targetInput=q('#targetSysMinInput',measure);
+    const targetRow=targetInput?.closest('.target-row');
+    if(targetRow)targetRow.classList.add('mobile-target-shell');
+
     const grid=q('.measures-grid',measure);if(grid&&!grid.previousElementSibling?.classList.contains('mobile-section-kicker')){const k=document.createElement('div');k.className='mobile-section-kicker';k.textContent=ru()?'● Измерения':'● Measurements';grid.before(k)}
   }
 
