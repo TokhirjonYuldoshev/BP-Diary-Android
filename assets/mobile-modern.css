@@ -1128,3 +1128,58 @@
     .mobile-onboarding-icon svg{width:49px!important;height:49px!important}
   }
 }
+
+
+/* V13 — action sheet, reminder header and profile-card alignment */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  .mobile-top-actions{gap:5px!important}
+  .mobile-top-actions button{width:39px!important;height:39px!important;min-height:39px!important}
+  .mobile-top-actions button[data-top="reminder"] svg{width:19px!important;height:19px!important}
+
+  #mobileActionSheet .mobile-action-blue{
+    display:flex!important;align-items:center!important;gap:8px!important;
+    background:linear-gradient(135deg,#118fc2,#22b2cd)!important;
+    border:1px solid transparent!important;color:#fff!important;
+    box-shadow:0 7px 17px rgba(17,143,194,.18)!important;
+    font-weight:800!important
+  }
+  #mobileActionSheet .mobile-action-blue svg{width:17px!important;height:17px!important;stroke:#fff!important}
+  body.dark #mobileActionSheet .mobile-action-blue{
+    background:linear-gradient(135deg,#137fae,#1faac6)!important;
+    color:#fff!important;border-color:transparent!important
+  }
+  #mobileActionSheet button.danger{
+    background:linear-gradient(135deg,#d85b64,#e56a72)!important;
+    border-color:transparent!important;color:#fff!important
+  }
+  #mobileActionSheet button.danger svg{stroke:#fff!important}
+
+  .mobile-profile-first{margin-top:11px!important}
+
+  .mobile-target-shell{
+    width:100%;margin:11px 0 0;padding:10px;
+    border:1px solid var(--m-line);border-radius:22px;
+    background:var(--m-surface-2);
+    box-shadow:0 6px 18px rgba(19,70,97,.04);
+  }
+  .mobile-target-shell>.profile-section.target-row{
+    margin:0!important;padding:0!important;
+    border:1px solid var(--m-line)!important;
+    border-radius:18px!important;
+    background:var(--m-surface)!important;
+    box-shadow:none!important;overflow:hidden!important
+  }
+  body.dark .mobile-target-shell{
+    border-color:#23364a;background:#0b1521;
+    box-shadow:0 7px 20px rgba(0,0,0,.12)
+  }
+  body.dark .mobile-target-shell>.profile-section.target-row{
+    border-color:#23364a!important;background:#0d1723!important
+  }
+
+  @media (max-width:390px){
+    .mobile-top-actions{gap:4px!important}
+    .mobile-top-actions button{width:37px!important;height:37px!important;min-height:37px!important}
+    .mobile-brand-copy span{font-size:.49rem!important}
+  }
+}
