@@ -97,6 +97,7 @@ import android.webkit.WebViewClient;
 import androidx.activity.result.ActivityResult;
 import androidx.core.content.FileProvider;
 
+import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -106,11 +107,13 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 
 @CapacitorPlugin(name = "NativeBridge")
@@ -368,6 +371,116 @@ public class NativeBridgePlugin extends Plugin {
             call.resolve(result);
         } catch (Exception e) {
             call.reject("Could not share PDF", e);
+        }
+    }
+
+    private File autoBackupDir() {
+        File dir = new File(getContext().getFilesDir(), "auto-backups");
+        if (!dir.exists()) dir.mkdirs();
+        return dir;
+    }
+
+    private void pruneAutoBackups() {
+        try {
+            File[] files = autoBackupDir().listFiles((dir, name) -> name != null && name.endsWith(".json"));
+            if (files == null || files.length <= 5) return;
+            Arrays.sort(files, (a, b) -> Long.compare(b.lastModified(), a.lastModified()));
+            for (int i = 5; i < files.length; i++) files[i].delete();
+        } catch (Exception ignored) {
+        }
+    }
+
+    @PluginMethod
+    public void saveAutoBackup(PluginCall call) {
+        String content = call.getString("content");
+        String reason = call.getString("reason");
+        if (content == null || content.trim().isEmpty()) {
+            call.reject("No backup content");
+            return;
+        }
+        try {
+            byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
+            if (bytes.length > 12 * 1024 * 1024) {
+                call.reject("Backup is too large");
+                return;
+            }
+            String safeReason = reason == null ? "auto" : reason.replaceAll("[^A-Za-z0-9_-]", "-");
+            if (safeReason.isEmpty()) safeReason = "auto";
+            long ts = System.currentTimeMillis();
+            File outFile = new File(autoBackupDir(), "backup-" + ts + "-" + safeReason + ".json");
+            try (FileOutputStream out = new FileOutputStream(outFile, false)) {
+                out.write(bytes);
+                out.flush();
+            }
+            pruneAutoBackups();
+            JSObject out = new JSObject();
+            out.put("name", outFile.getName());
+            out.put("modified", outFile.lastModified());
+            out.put("size", outFile.length());
+            out.put("reason", safeReason);
+            call.resolve(out);
+        } catch (Exception e) {
+            call.reject("Could not create auto-backup", e);
+        }
+    }
+
+    @PluginMethod
+    public void listAutoBackups(PluginCall call) {
+        try {
+            File[] files = autoBackupDir().listFiles((dir, name) -> name != null && name.endsWith(".json"));
+            if (files == null) files = new File[0];
+            Arrays.sort(files, (a, b) -> Long.compare(b.lastModified(), a.lastModified()));
+            JSArray items = new JSArray();
+            for (File file : files) {
+                JSObject item = new JSObject();
+                item.put("name", file.getName());
+                item.put("modified", file.lastModified());
+                item.put("size", file.length());
+                String name = file.getName();
+                String reason = "auto";
+                int first = name.indexOf('-', 7);
+                int last = name.lastIndexOf(".json");
+                if (first >= 0 && last > first) reason = name.substring(first + 1, last);
+                item.put("reason", reason);
+                items.put(item);
+            }
+            JSObject out = new JSObject();
+            out.put("items", items);
+            call.resolve(out);
+        } catch (Exception e) {
+            call.reject("Could not list auto-backups", e);
+        }
+    }
+
+    @PluginMethod
+    public void readAutoBackup(PluginCall call) {
+        String name = call.getString("name");
+        if (name == null || name.trim().isEmpty() || !new File(name).getName().equals(name)) {
+            call.reject("Invalid backup name");
+            return;
+        }
+        File file = new File(autoBackupDir(), name);
+        if (!file.exists() || !file.isFile()) {
+            call.reject("Backup not found");
+            return;
+        }
+        try (FileInputStream is = new FileInputStream(file);
+             ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            byte[] buf = new byte[8192];
+            int n;
+            int total = 0;
+            while ((n = is.read(buf)) != -1) {
+                total += n;
+                if (total > 12 * 1024 * 1024) throw new IllegalStateException("Backup file is too large");
+                bos.write(buf, 0, n);
+            }
+            JSObject out = new JSObject();
+            out.put("content", bos.toString(StandardCharsets.UTF_8.name()));
+            out.put("name", file.getName());
+            out.put("modified", file.lastModified());
+            call.resolve(out);
+        } catch (Exception e) {
+            call.reject("Could not read auto-backup", e);
         }
     }
 
