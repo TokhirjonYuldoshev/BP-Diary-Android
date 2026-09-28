@@ -803,12 +803,12 @@
     background:linear-gradient(180deg,var(--m-surface),var(--m-surface-2))!important
   }
   .mobile-record-card{
-    background:linear-gradient(180deg,var(--m-surface),color-mix(in srgb,var(--m-surface) 94%,var(--m-accent-soft)))!important;
+    background:linear-gradient(180deg,var(--m-surface),var(--m-surface-2))!important;
     border-radius:17px!important
   }
   .mobile-record-avg{
-    background:linear-gradient(135deg,var(--m-accent-soft),color-mix(in srgb,var(--m-accent-soft) 75%,#fff))!important;
-    border:1px solid color-mix(in srgb,var(--m-accent) 18%,transparent)!important
+    background:linear-gradient(135deg,var(--m-accent-soft),#f6fcfe)!important;
+    border:1px solid rgba(17,140,196,.18)!important
   }
   body.dark .mobile-record-avg{
     background:linear-gradient(135deg,#14364d,#102b3f)!important;
@@ -852,7 +852,7 @@
   #mobileAboutSheet .mobile-sheet-title{
     position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;
     min-height:48px;margin:0 -2px 8px;padding:0 2px;
-    background:color-mix(in srgb,var(--m-surface-2) 92%,transparent);
+    background:rgba(244,249,252,.94);
     backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
     font-size:1.02rem!important;font-weight:900!important
   }
@@ -987,4 +987,9 @@
     .mobile-report-actions{grid-template-columns:.82fr 1.18fr 1fr}
     .mobile-report-actions button{font-size:.56rem!important;padding:5px!important}
   }
+}
+
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  body.dark #mobileAboutSheet .mobile-sheet-title{background:rgba(8,18,29,.94)!important}
+  body.dark .mobile-record-avg{background:linear-gradient(135deg,#14364d,#102b3f)!important}
 }
