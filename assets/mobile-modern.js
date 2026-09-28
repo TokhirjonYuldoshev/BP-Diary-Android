@@ -90,7 +90,8 @@
       restore:'<path d="M4 10a8 8 0 1 1 2 8"/><path d="M4 4v6h6"/>',
       document:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
       portrait:'<rect x="7" y="3" width="10" height="18" rx="1"/><path d="M10 18h4"/>',
-      landscape:'<rect x="3" y="7" width="18" height="10" rx="1"/><path d="M17 10v4"/>'
+      landscape:'<rect x="3" y="7" width="18" height="10" rx="1"/><path d="M17 10v4"/>',
+      bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>'
 
     }[name]||'';
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
@@ -367,10 +368,20 @@
   }
   function installReportBridge(){
     if(window.__bpMobileReportBridge)return;window.__bpMobileReportBridge=true;nativeWindowOpen=window.open.bind(window);
-    document.addEventListener('click',e=>{if(e.target.closest?.('#reportDoctorBtn')){reportArmed=true;setTimeout(()=>{reportArmed=false},250)}},true);
+    document.addEventListener('click',e=>{
+      if(e.target.closest?.('#reportDoctorBtn')){
+        reportArmed=true;
+        clearTimeout(window.__bpReportArmTimer);
+        window.__bpReportArmTimer=setTimeout(()=>{reportArmed=false},3000);
+      }
+    },true);
     window.open=function(url,target,features){
       if(mq.matches&&reportArmed&&String(url||'')===''&&String(target||'')==='_blank'){
-        let html='';return{document:{write(s){html+=String(s||'')},close(){const action=reportNextAction;reportNextAction='view';reportArmed=false;if(action==='share')shareDoctorReportHtml(html);else showMobileReport(html)}},close(){}};
+        let html='';return{document:{write(chunk){html+=String(chunk||'')},close(){
+          const action=reportNextAction;reportNextAction='view';reportArmed=false;
+          clearTimeout(window.__bpReportArmTimer);
+          if(action==='share')shareDoctorReportHtml(html);else showMobileReport(html)
+        }},close(){}};
       }
       return nativeWindowOpen(url,target,features);
     };
@@ -506,10 +517,10 @@
     const sheet=makeSheet('mobileAboutSheet',ru()?'О продукте':'About');
     q('.mobile-sheet-title',sheet).innerHTML='<span>'+(ru()?'О продукте':'About')+'</span><button type="button" class="mobile-about-close" aria-label="'+(ru()?'Закрыть':'Close')+'">×</button>';
     const g=q('.mobile-sheet-grid',sheet);
-    g.innerHTML='<section class="mobile-about-hero"><div class="mobile-about-icon">'+brandHeartIcon()+'</div><strong>BP Diary</strong><span>'+(ru()?'Дневник артериального давления':'Blood pressure diary')+'</span><small>'+(ru()?'Версия 5.5 · Android V12':'Version 5.5 · Android V12')+'</small></section>'+
+    g.innerHTML='<section class="mobile-about-hero"><div class="mobile-about-icon">'+brandHeartIcon()+'</div><strong>BP Diary</strong><span>'+(ru()?'Дневник артериального давления':'Blood pressure diary')+'</span><small>'+(ru()?'Версия 5.5 · Android V13':'Version 5.5 · Android V13')+'</small></section>'+
       '<section class="mobile-about-intro">'+(ru()?'Персональный дневник артериального давления с аналитикой, отчётами врачу, резервным копированием и голосовыми функциями.':'A personal blood pressure diary with analytics, doctor reports, backups and voice features.')+'</section>'+
       '<div class="mobile-about-list">'+
-        '<button type="button" data-about-action="guide"><span class="mobile-about-row-icon">▶</span><span><b>'+(ru()?'Краткое руководство':'Quick guide')+'</b><small>'+(ru()?'Показать введение V12 ещё раз':'Show the V12 introduction again')+'</small></span><span>›</span></button>'+
+        '<button type="button" data-about-action="guide"><span class="mobile-about-row-icon">▶</span><span><b>'+(ru()?'Краткое руководство':'Quick guide')+'</b><small>'+(ru()?'Показать введение V13 ещё раз':'Show the V13 introduction again')+'</small></span><span>›</span></button>'+
         '<button type="button" data-about-action="backups"><span class="mobile-about-row-icon">↻</span><span><b>'+(ru()?'Авто-бэкапы':'Auto-backups')+'</b><small>'+(ru()?'До пяти локальных резервных копий':'Up to five local backup copies')+'</small></span><span>›</span></button>'+
         '<button type="button" data-about-url="https://github.com/TokhirjonYuldoshev/BP-Diary-Android"><span class="mobile-about-row-icon">⌘</span><span><b>GitHub</b><small>TokhirjonYuldoshev/BP-Diary-Android</small></span><span>›</span></button>'+
         '<button type="button" data-about-url="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues"><span class="mobile-about-row-icon">?</span><span><b>'+(ru()?'Поддержка / обратная связь':'Support / feedback')+'</b><small>'+(ru()?'Сообщить об ошибке или предложить улучшение':'Report a bug or suggest an improvement')+'</small></span><span>›</span></button>'+
@@ -562,16 +573,20 @@
     return applyCoreDateFilter('','');
   }
   function runDoctorReport(action='view',from='',to=''){
-    const src=q('#reportDoctorBtn');
-    if(!src){mobileToast(ru()?'Отчёт врача недоступен':'Doctor report unavailable','error');return}
+    if(!q('#reportDoctorBtn')){mobileToast(ru()?'Отчёт врача недоступен':'Doctor report unavailable','error');return}
     const analysis=pages()[1],group=q('.filter-group',analysis),inputs=group?qa('input',group).slice(0,2):[];
     const previous=inputs.length>=2?[inputs[0].value||'',inputs[1].value||'']:null;
     if(from||to)applyCoreDateFilter(from,to);else resetCoreDateFilter();
     reportNextAction=action==='share'?'share':'view';
     setTimeout(()=>{
-      src.click();
-      if(previous)setTimeout(()=>applyCoreDateFilter(previous[0],previous[1]),650);
-    },140);
+      const live=q('#reportDoctorBtn');
+      if(!live){mobileToast(ru()?'Не удалось открыть отчёт':'Could not open report','error');return}
+      reportArmed=true;
+      clearTimeout(window.__bpReportArmTimer);
+      window.__bpReportArmTimer=setTimeout(()=>{reportArmed=false},3000);
+      live.click();
+      if(previous)setTimeout(()=>applyCoreDateFilter(previous[0],previous[1]),900);
+    },260);
   }
   function openCustomReportPeriod(action){
     const sheet=makeSheet('mobileCustomPeriodSheet',ru()?'Свой период':'Custom period');
@@ -918,8 +933,8 @@
 
   function appBar(){
     let bar=q('#mobileAppBar');if(!bar){bar=document.createElement('header');bar.id='mobileAppBar';document.body.prepend(bar)}
-    bar.innerHTML=`<button type="button" class="mobile-brand-mark mobile-brand-button" data-top="about" aria-label="${ru()?'О продукте':'About'}">${brandHeartIcon()}</button><div class="mobile-brand-copy"><strong>BP Diary</strong><span>${ru()?'Дневник артериального давления':'Blood pressure diary'}</span></div><div class="mobile-top-actions"><button type="button" data-top="lang" aria-label="Language">${ru()?'EN':'RU'}</button><button type="button" data-top="theme" aria-label="Theme">${svgIcon(document.body.classList.contains('dark')?'sun':'moon')}</button></div>`;
-    bar.onclick=e=>{const b=e.target.closest('button[data-top]');if(!b)return;if(b.dataset.top==='about'){showAboutSheet()}else if(b.dataset.top==='lang'){proxy('langSwitchBtn');setTimeout(()=>{try{window.updateAllAnalytics?.();window.updateUITexts?.()}catch(_){}setup(true);refreshText()},90)}else{document.body.classList.contains('dark')?proxy('lightThemeBtn'):proxy('darkThemeBtn');setTimeout(()=>{appBar();const ps=pages();if(ps[1])polishCharts(ps[1])},60)}};
+    bar.innerHTML=`<button type="button" class="mobile-brand-mark mobile-brand-button" data-top="about" aria-label="${ru()?'О продукте':'About'}">${brandHeartIcon()}</button><div class="mobile-brand-copy"><strong>BP Diary</strong><span>${ru()?'Дневник артериального давления':'Blood pressure diary'}</span></div><div class="mobile-top-actions"><button type="button" data-top="reminder" aria-label="${ru()?'Напоминание':'Reminder'}" title="${ru()?'Напоминание':'Reminder'}">${svgIcon('bell')}</button><button type="button" data-top="lang" aria-label="Language">${ru()?'EN':'RU'}</button><button type="button" data-top="theme" aria-label="Theme">${svgIcon(document.body.classList.contains('dark')?'sun':'moon')}</button></div>`;
+    bar.onclick=e=>{const b=e.target.closest('button[data-top]');if(!b)return;if(b.dataset.top==='about'){showAboutSheet()}else if(b.dataset.top==='reminder'){const reminder=q('#reminderBtn');if(reminder)reminder.click();else mobileToast(ru()?'Напоминание недоступно':'Reminder unavailable','error')}else if(b.dataset.top==='lang'){proxy('langSwitchBtn');setTimeout(()=>{try{window.updateAllAnalytics?.();window.updateUITexts?.()}catch(_){}setup(true);refreshText()},90)}else{document.body.classList.contains('dark')?proxy('lightThemeBtn'):proxy('darkThemeBtn');setTimeout(()=>{appBar();const ps=pages();if(ps[1])polishCharts(ps[1])},60)}};
     return bar;
   }
 
@@ -937,7 +952,20 @@
   }
 
   function accordions(measure){
-    qa('.profile-section',measure).forEach(sec=>{if(sec.dataset.mobileAccordion)return;sec.dataset.mobileAccordion='1';const title=q('.profile-section-title',sec);if(!title)return;title.setAttribute('role','button');title.setAttribute('tabindex','0');title.setAttribute('aria-expanded','false');if(!sec.hidden)sec.classList.add('mobile-collapsed');const toggle=()=>{if(sec.hidden)return;const c=sec.classList.toggle('mobile-collapsed');title.setAttribute('aria-expanded',String(!c))};title.addEventListener('click',toggle);title.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}})});
+    const sections=qa('.profile-section',measure);
+    sections.forEach((sec,index)=>{
+      sec.classList.toggle('mobile-profile-first',index===0);
+      if(sec.classList.contains('target-row')&&!sec.parentElement?.classList.contains('mobile-target-shell')){
+        const shell=document.createElement('div');shell.className='mobile-target-shell';
+        sec.before(shell);shell.appendChild(sec);
+      }
+      if(sec.dataset.mobileAccordion)return;
+      sec.dataset.mobileAccordion='1';const title=q('.profile-section-title',sec);if(!title)return;
+      title.setAttribute('role','button');title.setAttribute('tabindex','0');title.setAttribute('aria-expanded','false');
+      if(!sec.hidden)sec.classList.add('mobile-collapsed');
+      const toggle=()=>{if(sec.hidden)return;const c=sec.classList.toggle('mobile-collapsed');title.setAttribute('aria-expanded',String(!c))};
+      title.addEventListener('click',toggle);title.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}});
+    });
     const grid=q('.measures-grid',measure);if(grid&&!grid.previousElementSibling?.classList.contains('mobile-section-kicker')){const k=document.createElement('div');k.className='mobile-section-kicker';k.textContent=ru()?'● Измерения':'● Measurements';grid.before(k)}
   }
 
@@ -1114,23 +1142,22 @@
     q('.mobile-sheet-title',sheet).textContent=ru()?'Данные и действия':'Data & actions';
     const g=q('.mobile-sheet-grid',sheet);g.innerHTML='';
 
-    const share=document.createElement('button');share.type='button';share.className='mobile-share-report';
+    const share=document.createElement('button');share.type='button';share.className='mobile-action-blue';
     share.innerHTML=svgIcon('share')+'<span>'+(ru()?'Поделиться':'Share')+'</span>';
-    share.onclick=()=>{closeMobileSheet(sheet);requestShareDoctorReport()};g.appendChild(share);
+    share.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>requestShareDoctorReport(),100)};g.appendChild(share);
 
-    const auto=document.createElement('button');auto.type='button';auto.className='outline';auto.innerHTML=svgIcon('save')+'<span>'+(ru()?'Авто-бэкапы':'Auto-backups')+'</span>';auto.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>showAutoBackupSheet(),90)};g.appendChild(auto);
-    const allowed=['reminderBtn','reportDoctorBtn','fullBackupBtn','restoreBackupBtn','clearAllBtn'];
+    const auto=document.createElement('button');auto.type='button';auto.className='mobile-action-blue';auto.innerHTML=svgIcon('save')+'<span>'+(ru()?'Авто-бэкапы':'Auto-backups')+'</span>';auto.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>showAutoBackupSheet(),90)};g.appendChild(auto);
+    const allowed=['reportDoctorBtn','fullBackupBtn','restoreBackupBtn','clearAllBtn'];
     allowed.forEach(id=>{
       const src=q('#'+id,archive);if(!src)return;
-      const b=document.createElement('button');b.type='button';b.className=src.className;
+      const b=document.createElement('button');b.type='button';b.className=id==='clearAllBtn'?'danger':'mobile-action-blue';
       const labels={
-        reminderBtn:ru()?'Напоминание':'Reminder',
         reportDoctorBtn:ru()?'Отчёт врачу / PDF':'Doctor report / PDF',
         fullBackupBtn:ru()?'Полный бэкап':'Full backup',
         restoreBackupBtn:ru()?'Восстановить бэкап':'Restore backup',
         clearAllBtn:ru()?'Удалить всё':'Delete all'
       };
-      const icons={reminderBtn:'info',reportDoctorBtn:'document',fullBackupBtn:'save',restoreBackupBtn:'restore',clearAllBtn:'trash'};
+      const icons={reportDoctorBtn:'document',fullBackupBtn:'save',restoreBackupBtn:'restore',clearAllBtn:'trash'};
       b.innerHTML=svgIcon(icons[id])+'<span>'+labels[id]+'</span>';
       b.onclick=async()=>{closeMobileSheet(sheet);if(id==='reportDoctorBtn'){setTimeout(()=>openReportPeriodSheet('view'),90);return}if(id==='clearAllBtn'){await nativeAutoBackup('before-delete-all',true);const ok=await mobileConfirm({title:ru()?'Удалить все данные?':'Delete all data?',message:ru()?'Все сохранённые измерения будут удалены. Автоматическая резервная копия уже создана.':'All saved readings will be deleted. An automatic backup has already been created.',confirmLabel:ru()?'Удалить всё':'Delete all',danger:true});if(!ok)return}src.click()};
       g.appendChild(b);
