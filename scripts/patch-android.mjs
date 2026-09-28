@@ -73,19 +73,17 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.CancellationSignal;
-import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
-import android.print.PageRange;
+import android.graphics.Canvas;
+import android.graphics.pdf.PdfDocument;
 import android.print.PrintAttributes;
-import android.print.PrintDocumentAdapter;
-import android.print.PrintDocumentInfo;
 import android.print.PrintManager;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.view.View;
 
 import androidx.activity.result.ActivityResult;
 import androidx.core.content.FileProvider;
@@ -99,6 +97,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -326,9 +325,11 @@ public class NativeBridgePlugin extends Plugin {
             try {
                 shareWebView = new WebView(getContext());
                 shareWebView.getSettings().setJavaScriptEnabled(false);
+                shareWebView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
                 shareWebView.setWebViewClient(new WebViewClient() {
                     @Override
                     public void onPageFinished(WebView view, String url) {
+                        PdfDocument document = null;
                         try {
                             String fileName = requestedName == null || requestedName.trim().isEmpty()
                                 ? "BP-Diary-Doctor-Report.pdf"
@@ -339,93 +340,76 @@ public class NativeBridgePlugin extends Plugin {
                             File pdf = new File(dir, fileName);
                             if (pdf.exists() && !pdf.delete()) throw new IllegalStateException("Could not replace old report");
 
-                            PrintAttributes attrs = new PrintAttributes.Builder()
-                                .setMediaSize(PrintAttributes.MediaSize.ISO_A4.asPortrait())
-                                .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
-                                .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
-                                .build();
-                            PrintDocumentAdapter adapter = view.createPrintDocumentAdapter("BP Diary report");
-                            ParcelFileDescriptor pfd = ParcelFileDescriptor.open(
-                                pdf,
-                                ParcelFileDescriptor.MODE_CREATE | ParcelFileDescriptor.MODE_TRUNCATE | ParcelFileDescriptor.MODE_READ_WRITE
+                            final int webWidth = 794;
+                            int widthSpec = View.MeasureSpec.makeMeasureSpec(webWidth, View.MeasureSpec.EXACTLY);
+                            int heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+                            view.measure(widthSpec, heightSpec);
+                            int contentHeight = Math.max(view.getMeasuredHeight(), view.getContentHeight());
+                            if (contentHeight <= 0) contentHeight = 1123;
+                            view.layout(0, 0, webWidth, contentHeight);
+
+                            final int pageWidth = 595;
+                            final int pageHeight = 842;
+                            final int margin = 24;
+                            final float scale = (pageWidth - margin * 2f) / webWidth;
+                            final int contentPerPage = Math.max(1, (int)Math.floor((pageHeight - margin * 2f) / scale));
+                            final int pageCount = Math.max(1, (int)Math.ceil(contentHeight / (double)contentPerPage));
+
+                            document = new PdfDocument();
+                            for (int i = 0; i < pageCount; i++) {
+                                PdfDocument.PageInfo info = new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, i + 1).create();
+                                PdfDocument.Page page = document.startPage(info);
+                                Canvas canvas = page.getCanvas();
+                                canvas.save();
+                                canvas.translate(margin, margin);
+                                canvas.scale(scale, scale);
+                                canvas.clipRect(0, 0, webWidth, contentPerPage);
+                                canvas.translate(0, -(i * contentPerPage));
+                                view.draw(canvas);
+                                canvas.restore();
+                                document.finishPage(page);
+                            }
+
+                            try (FileOutputStream out = new FileOutputStream(pdf)) {
+                                document.writeTo(out);
+                                out.flush();
+                            }
+                            document.close();
+                            document = null;
+
+                            Uri uri = FileProvider.getUriForFile(
+                                getContext(),
+                                getContext().getPackageName() + ".fileprovider",
+                                pdf
                             );
-                            CancellationSignal signal = new CancellationSignal();
-
-                            adapter.onLayout(attrs, attrs, signal, new PrintDocumentAdapter.LayoutResultCallback() {
-                                @Override
-                                public void onLayoutFinished(PrintDocumentInfo info, boolean changed) {
-                                    adapter.onWrite(new PageRange[]{PageRange.ALL_PAGES}, pfd, signal, new PrintDocumentAdapter.WriteResultCallback() {
-                                        @Override
-                                        public void onWriteFinished(PageRange[] pages) {
-                                            try {
-                                                pfd.close();
-                                                adapter.onFinish();
-                                                Uri uri = FileProvider.getUriForFile(
-                                                    getContext(),
-                                                    getContext().getPackageName() + ".fileprovider",
-                                                    pdf
-                                                );
-                                                Intent send = new Intent(Intent.ACTION_SEND);
-                                                send.setType("application/pdf");
-                                                send.putExtra(Intent.EXTRA_STREAM, uri);
-                                                send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                                                getActivity().startActivity(Intent.createChooser(
-                                                    send,
-                                                    chooserTitle == null || chooserTitle.isEmpty() ? "Share doctor report" : chooserTitle
-                                                ));
-                                                call.resolve();
-                                            } catch (Exception e) {
-                                                call.reject("Could not share PDF", e);
-                                            } finally {
-                                                if (shareWebView != null) {
-                                                    shareWebView.destroy();
-                                                    shareWebView = null;
-                                                }
-                                            }
-                                        }
-
-                                        @Override
-                                        public void onWriteFailed(CharSequence error) {
-                                            try { pfd.close(); } catch (Exception ignored) {}
-                                            adapter.onFinish();
-                                            if (shareWebView != null) { shareWebView.destroy(); shareWebView = null; }
-                                            call.reject("Could not create PDF: " + String.valueOf(error));
-                                        }
-
-                                        @Override
-                                        public void onWriteCancelled() {
-                                            try { pfd.close(); } catch (Exception ignored) {}
-                                            adapter.onFinish();
-                                            if (shareWebView != null) { shareWebView.destroy(); shareWebView = null; }
-                                            call.reject("PDF creation cancelled");
-                                        }
-                                    });
-                                }
-
-                                @Override
-                                public void onLayoutFailed(CharSequence error) {
-                                    try { pfd.close(); } catch (Exception ignored) {}
-                                    adapter.onFinish();
-                                    if (shareWebView != null) { shareWebView.destroy(); shareWebView = null; }
-                                    call.reject("Could not layout PDF: " + String.valueOf(error));
-                                }
-
-                                @Override
-                                public void onLayoutCancelled() {
-                                    try { pfd.close(); } catch (Exception ignored) {}
-                                    adapter.onFinish();
-                                    if (shareWebView != null) { shareWebView.destroy(); shareWebView = null; }
-                                    call.reject("PDF layout cancelled");
-                                }
-                            }, new Bundle());
+                            Intent send = new Intent(Intent.ACTION_SEND);
+                            send.setType("application/pdf");
+                            send.putExtra(Intent.EXTRA_STREAM, uri);
+                            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            getActivity().startActivity(Intent.createChooser(
+                                send,
+                                chooserTitle == null || chooserTitle.isEmpty() ? "Share doctor report" : chooserTitle
+                            ));
+                            call.resolve();
                         } catch (Exception e) {
-                            if (shareWebView != null) { shareWebView.destroy(); shareWebView = null; }
-                            call.reject("Could not prepare PDF share", e);
+                            if (document != null) {
+                                try { document.close(); } catch (Exception ignored) {}
+                            }
+                            call.reject("Could not create or share PDF", e);
+                        } finally {
+                            if (shareWebView != null) {
+                                shareWebView.destroy();
+                                shareWebView = null;
+                            }
                         }
                     }
                 });
                 shareWebView.loadDataWithBaseURL("https://localhost/", html, "text/html", "UTF-8", null);
             } catch (Exception e) {
+                if (shareWebView != null) {
+                    shareWebView.destroy();
+                    shareWebView = null;
+                }
                 call.reject("Could not prepare PDF share", e);
             }
         });
