@@ -44,6 +44,22 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(NativeBridgePlugin.class);
         super.onCreate(savedInstanceState);
     }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public void onBackPressed() {
+        try {
+            if (getBridge() != null && getBridge().getWebView() != null) {
+                getBridge().getWebView().evaluateJavascript(
+                    "window.__bpHandleAndroidBack ? window.__bpHandleAndroidBack() : true;",
+                    null
+                );
+                return;
+            }
+        } catch (Exception ignored) {
+        }
+        super.onBackPressed();
+    }
 }
 `;
 await writeFile(join(pkgDir,'MainActivity.java'),mainActivity,'utf8');
@@ -56,9 +72,15 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.CancellationSignal;
+import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
+import android.print.PageRange;
 import android.print.PrintAttributes;
+import android.print.PrintDocumentAdapter;
+import android.print.PrintDocumentInfo;
 import android.print.PrintManager;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
@@ -66,6 +88,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import androidx.activity.result.ActivityResult;
+import androidx.core.content.FileProvider;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -75,6 +98,7 @@ import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -85,6 +109,7 @@ import java.util.Locale;
 public class NativeBridgePlugin extends Plugin {
     private TextToSpeech tts;
     private WebView printWebView;
+    private WebView shareWebView;
 
     @PluginMethod
     public void recognizeSpeech(PluginCall call) {
@@ -288,6 +313,124 @@ public class NativeBridgePlugin extends Plugin {
         });
     }
 
+    @PluginMethod
+    public void sharePdf(PluginCall call) {
+        final String html = call.getString("html");
+        final String requestedName = call.getString("fileName");
+        final String chooserTitle = call.getString("title");
+        if (html == null || html.isEmpty()) {
+            call.reject("No report HTML");
+            return;
+        }
+        getActivity().runOnUiThread(() -> {
+            try {
+                shareWebView = new WebView(getContext());
+                shareWebView.getSettings().setJavaScriptEnabled(false);
+                shareWebView.setWebViewClient(new WebViewClient() {
+                    @Override
+                    public void onPageFinished(WebView view, String url) {
+                        try {
+                            String fileName = requestedName == null || requestedName.trim().isEmpty()
+                                ? "BP-Diary-Doctor-Report.pdf"
+                                : requestedName.replaceAll("[^A-Za-z0-9._-]", "_");
+                            if (!fileName.toLowerCase(Locale.ROOT).endsWith(".pdf")) fileName += ".pdf";
+                            File dir = new File(getContext().getCacheDir(), "shared");
+                            if (!dir.exists() && !dir.mkdirs()) throw new IllegalStateException("Could not create share directory");
+                            File pdf = new File(dir, fileName);
+                            if (pdf.exists() && !pdf.delete()) throw new IllegalStateException("Could not replace old report");
+
+                            PrintAttributes attrs = new PrintAttributes.Builder()
+                                .setMediaSize(PrintAttributes.MediaSize.ISO_A4.asPortrait())
+                                .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                                .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
+                                .build();
+                            PrintDocumentAdapter adapter = view.createPrintDocumentAdapter("BP Diary report");
+                            ParcelFileDescriptor pfd = ParcelFileDescriptor.open(
+                                pdf,
+                                ParcelFileDescriptor.MODE_CREATE | ParcelFileDescriptor.MODE_TRUNCATE | ParcelFileDescriptor.MODE_READ_WRITE
+                            );
+                            CancellationSignal signal = new CancellationSignal();
+
+                            adapter.onLayout(attrs, attrs, signal, new PrintDocumentAdapter.LayoutResultCallback() {
+                                @Override
+                                public void onLayoutFinished(PrintDocumentInfo info, boolean changed) {
+                                    adapter.onWrite(new PageRange[]{PageRange.ALL_PAGES}, pfd, signal, new PrintDocumentAdapter.WriteResultCallback() {
+                                        @Override
+                                        public void onWriteFinished(PageRange[] pages) {
+                                            try {
+                                                pfd.close();
+                                                adapter.onFinish();
+                                                Uri uri = FileProvider.getUriForFile(
+                                                    getContext(),
+                                                    getContext().getPackageName() + ".fileprovider",
+                                                    pdf
+                                                );
+                                                Intent send = new Intent(Intent.ACTION_SEND);
+                                                send.setType("application/pdf");
+                                                send.putExtra(Intent.EXTRA_STREAM, uri);
+                                                send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                                getActivity().startActivity(Intent.createChooser(
+                                                    send,
+                                                    chooserTitle == null || chooserTitle.isEmpty() ? "Share doctor report" : chooserTitle
+                                                ));
+                                                call.resolve();
+                                            } catch (Exception e) {
+                                                call.reject("Could not share PDF", e);
+                                            } finally {
+                                                if (shareWebView != null) {
+                                                    shareWebView.destroy();
+                                                    shareWebView = null;
+                                                }
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onWriteFailed(CharSequence error) {
+                                            try { pfd.close(); } catch (Exception ignored) {}
+                                            adapter.onFinish();
+                                            if (shareWebView != null) { shareWebView.destroy(); shareWebView = null; }
+                                            call.reject("Could not create PDF: " + String.valueOf(error));
+                                        }
+
+                                        @Override
+                                        public void onWriteCancelled() {
+                                            try { pfd.close(); } catch (Exception ignored) {}
+                                            adapter.onFinish();
+                                            if (shareWebView != null) { shareWebView.destroy(); shareWebView = null; }
+                                            call.reject("PDF creation cancelled");
+                                        }
+                                    });
+                                }
+
+                                @Override
+                                public void onLayoutFailed(CharSequence error) {
+                                    try { pfd.close(); } catch (Exception ignored) {}
+                                    adapter.onFinish();
+                                    if (shareWebView != null) { shareWebView.destroy(); shareWebView = null; }
+                                    call.reject("Could not layout PDF: " + String.valueOf(error));
+                                }
+
+                                @Override
+                                public void onLayoutCancelled() {
+                                    try { pfd.close(); } catch (Exception ignored) {}
+                                    adapter.onFinish();
+                                    if (shareWebView != null) { shareWebView.destroy(); shareWebView = null; }
+                                    call.reject("PDF layout cancelled");
+                                }
+                            }, new Bundle());
+                        } catch (Exception e) {
+                            if (shareWebView != null) { shareWebView.destroy(); shareWebView = null; }
+                            call.reject("Could not prepare PDF share", e);
+                        }
+                    }
+                });
+                shareWebView.loadDataWithBaseURL("https://localhost/", html, "text/html", "UTF-8", null);
+            } catch (Exception e) {
+                call.reject("Could not prepare PDF share", e);
+            }
+        });
+    }
+
     private String displayName(Uri uri) {
         Cursor cursor = null;
         try {
@@ -315,11 +458,42 @@ public class NativeBridgePlugin extends Plugin {
             printWebView.destroy();
             printWebView = null;
         }
+        if (shareWebView != null) {
+            shareWebView.destroy();
+            shareWebView = null;
+        }
         super.handleOnDestroy();
     }
 }
 `;
 await writeFile(join(pkgDir,'NativeBridgePlugin.java'),plugin,'utf8');
+
+const resXml=join(app,'src','main','res','xml');
+const resDrawable=join(app,'src','main','res','drawable');
+await mkdir(resXml,{recursive:true});
+await mkdir(resDrawable,{recursive:true});
+await writeFile(join(resXml,'bp_diary_file_paths.xml'),`<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="shared_reports" path="shared/" />
+</paths>
+`,'utf8');
+await writeFile(join(resDrawable,'bp_diary_icon.xml'),`<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#FFF8F8" android:pathData="M54,4a50,50 0,1 0,0.1 0z" />
+    <path android:fillColor="#E53935" android:pathData="M54,92C49,87 20,68 20,40C20,22 42,17 54,32C66,17 88,22 88,40C88,68 59,87 54,92Z" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M29,54L40,54L46,42L55,66L62,49L69,54L80,54" />
+</vector>
+`,'utf8');
 
 const manifestPath=join(app,'src','main','AndroidManifest.xml');
 let manifest=await readFile(manifestPath,'utf8');
@@ -329,6 +503,20 @@ if(!manifest.includes('android.intent.action.TTS_SERVICE')){
         <intent><action android:name="android.speech.action.RECOGNIZE_SPEECH" /></intent>
     </queries>
     <application`);
+}
+manifest=manifest.replace(/android:icon="[^"]+"/,'android:icon="@drawable/bp_diary_icon"');
+manifest=manifest.replace(/android:roundIcon="[^"]+"/,'android:roundIcon="@drawable/bp_diary_icon"');
+if(!manifest.includes('.fileprovider')){
+  manifest=manifest.replace('</application>',`        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="\${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/bp_diary_file_paths" />
+        </provider>
+    </application>`);
 }
 await writeFile(manifestPath,manifest,'utf8');
 
