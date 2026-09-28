@@ -1,5 +1,5 @@
 /* BP Diary — mobile application shell v2. Desktop UI stays untouched. */
-#mobileAppBar,#mobileBottomNav,#mobileMeasureHero,#mobileArchiveCards,#mobileActionSheet,#mobileMeasureActionSheet,#mobileMeasureStepper,#mobileMeasureQuickActions,.mobile-section-kicker,.mobile-screen-subtitle{display:none}
+#mobileAppBar,#mobileBottomNav,#mobileMeasureHero,#mobileArchiveCards,#mobileActionSheet,#mobileMeasureActionSheet,#mobileAboutSheet,#mobileMeasureStepper,#mobileMeasureQuickActions,.mobile-section-kicker,.mobile-screen-subtitle{display:none}
 @media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
   :root{
     --m-accent:#1780a7;--m-accent-2:#29a9c2;--m-accent-soft:#e7f5f9;--m-ink:#102b3c;--m-muted:#728a9a;
@@ -20,7 +20,7 @@
 
   #mobileAppBar{position:fixed;left:0;right:0;top:0;z-index:12000;height:calc(var(--m-top-h) + env(safe-area-inset-top));padding:calc(7px + env(safe-area-inset-top)) 13px 7px;display:flex;align-items:center;gap:10px;background:rgba(248,252,253,.91);border-bottom:1px solid rgba(207,223,232,.82);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
   body.dark #mobileAppBar{background:rgba(7,15,25,.92);border-color:#213146}
-  .mobile-brand-mark{width:40px;height:40px;flex:none;border-radius:13px;display:grid;place-items:center;color:#fff;font-size:18px;background:linear-gradient(145deg,#126f98,#28a4c0);box-shadow:0 8px 20px rgba(18,111,152,.24)}
+  .mobile-brand-mark{width:40px;height:40px;flex:none;border-radius:13px;display:grid;place-items:center;color:#e53935;font-size:18px;background:#fff2f2;border:1px solid #ffd7d7;box-shadow:0 8px 20px rgba(229,57,53,.15)}
   .mobile-brand-copy{min-width:0;display:flex;flex:1;flex-direction:column;line-height:1.08}
   .mobile-brand-copy strong{font-size:.98rem;color:var(--m-ink);font-weight:850;letter-spacing:-.2px}
   .mobile-brand-copy span{margin-top:3px;font-size:.63rem;color:var(--m-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -191,8 +191,8 @@
   .mobile-record-date{font-size:.78rem}.mobile-record-time{font-size:.58rem}.mobile-record-avg{padding:5px 8px;border-radius:10px}.mobile-record-avg strong{font-size:.76rem}.mobile-record-avg small{font-size:.51rem}
   .mobile-record-grid{gap:6px;margin-top:8px}.mobile-record-item{padding:7px 8px;border-radius:11px}.mobile-record-item small{font-size:.5rem;margin-bottom:3px}.mobile-record-item strong{font-size:.67rem}.mobile-record-item em{font-size:.52rem}
   .mobile-record-actions{gap:6px;margin-top:8px}.mobile-record-actions button{width:36px!important;height:36px!important;min-height:36px!important;border-radius:11px!important}
-  #mobileActionSheet,#mobileMeasureActionSheet,#mobileChoiceSheet{display:flex;position:fixed;inset:0;z-index:15000;background:rgba(6,17,28,.44);align-items:flex-end;padding:10px 10px calc(10px + env(safe-area-inset-bottom));opacity:0;pointer-events:none;transition:opacity .18s}
-  #mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open{opacity:1;pointer-events:auto}
+  #mobileActionSheet,#mobileMeasureActionSheet,#mobileChoiceSheet,#mobileAboutSheet{display:flex;position:fixed;inset:0;z-index:15000;background:rgba(6,17,28,.44);align-items:flex-end;padding:10px 10px calc(10px + env(safe-area-inset-bottom));opacity:0;pointer-events:none;transition:opacity .18s}
+  #mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobileAboutSheet.open{opacity:1;pointer-events:auto}
   #mobileChoiceSheet .mobile-sheet-grid{grid-template-columns:1fr}
   .mobile-choice-trigger{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:8px 10px!important;text-align:left;white-space:normal;line-height:1.25;background:var(--m-surface)!important;border:1px solid #cfdee6!important;color:var(--m-ink)!important}
   body.dark .mobile-choice-trigger{background:#101b29!important;border-color:#304157!important;color:#eef7fb!important}
@@ -603,7 +603,7 @@
 /* Mobile V8 native actions */
 @media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
   #mobilePdfSheet{
-    display:flex;position:fixed;inset:0;z-index:16000;background:rgba(6,17,28,.46);
+    display:flex;position:fixed;inset:0;z-index:20000;background:rgba(6,17,28,.46);
     align-items:flex-end;padding:10px 10px calc(10px + env(safe-area-inset-bottom));
     opacity:0;pointer-events:none;transition:opacity .18s
   }
@@ -620,4 +620,21 @@
   }
   #mobileActionSheet .mobile-sheet-grid button svg{width:17px!important;height:17px!important}
   .mobile-report-toolbar .mobile-report-print svg{width:18px!important;height:18px!important}
+}
+
+
+/* Mobile V9 fixes */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  .mobile-brand-mark svg{stroke:#e53935!important}
+  .mobile-share-report{
+    display:flex!important;align-items:center!important;gap:8px!important;
+    background:var(--m-accent)!important;color:#fff!important;border:1px solid var(--m-accent)!important;
+    box-shadow:0 6px 15px rgba(23,128,167,.18)!important;font-weight:800!important
+  }
+  .mobile-share-report svg{width:17px!important;height:17px!important;stroke:#fff!important}
+  #mobileAboutSheet .mobile-sheet-grid{grid-template-columns:1fr!important}
+  .mobile-about-card{display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px;padding:14px 10px 18px;color:var(--m-ink)}
+  .mobile-about-icon{width:54px;height:54px;display:grid;place-items:center;border-radius:17px;background:#fff2f2;border:1px solid #ffd7d7;color:#e53935;margin-bottom:4px}
+  .mobile-about-icon svg{width:29px!important;height:29px!important;stroke:#e53935!important}
+  .mobile-about-card strong{font-size:1rem}.mobile-about-card span{font-size:.66rem;color:var(--m-muted)}.mobile-about-card small{font-size:.54rem;color:var(--m-muted);margin-top:4px}
 }
