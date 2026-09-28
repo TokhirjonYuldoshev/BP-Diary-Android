@@ -1154,27 +1154,40 @@
   }
   #mobileActionSheet button.danger svg{stroke:#fff!important}
 
-  .mobile-profile-first{margin-top:11px!important}
-
-  .mobile-target-shell{
-    width:100%;margin:11px 0 0;padding:10px;
-    border:1px solid var(--m-line);border-radius:22px;
-    background:var(--m-surface-2);
-    box-shadow:0 6px 18px rgba(19,70,97,.04);
+  .date-time-row.mobile-cardio-row{
+    margin-top:11px!important;
+    margin-bottom:11px!important;
+    align-items:stretch!important
   }
-  .mobile-target-shell>.profile-section.target-row{
-    margin:0!important;padding:0!important;
+
+  .date-time-row.target-row.mobile-target-shell{
+    width:100%!important;
+    margin:11px 0 11px!important;
+    padding:12px!important;
     border:1px solid var(--m-line)!important;
     border-radius:18px!important;
+    background:var(--m-surface-2)!important;
+    box-shadow:0 6px 18px rgba(19,70,97,.045)!important;
+    align-items:stretch!important
+  }
+  .date-time-row.target-row.mobile-target-shell>.profile-section{
+    width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    border:1px solid var(--m-line)!important;
+    border-radius:16px!important;
     background:var(--m-surface)!important;
-    box-shadow:none!important;overflow:hidden!important
+    box-shadow:none!important;
+    overflow:hidden!important
   }
-  body.dark .mobile-target-shell{
-    border-color:#23364a;background:#0b1521;
-    box-shadow:0 7px 20px rgba(0,0,0,.12)
+  body.dark .date-time-row.target-row.mobile-target-shell{
+    border-color:#23364a!important;
+    background:#0b1521!important;
+    box-shadow:0 7px 20px rgba(0,0,0,.13)!important
   }
-  body.dark .mobile-target-shell>.profile-section.target-row{
-    border-color:#23364a!important;background:#0d1723!important
+  body.dark .date-time-row.target-row.mobile-target-shell>.profile-section{
+    border-color:#23364a!important;
+    background:#0d1723!important
   }
 
   @media (max-width:390px){
