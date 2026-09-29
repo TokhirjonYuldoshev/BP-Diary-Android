@@ -1,4 +1,4 @@
 {
   "publish": false,
-  "notes": "Set publish=true only after the V16 candidate passes device regression."
+  "notes": "V16 candidate is CI/UI-complete; keep publish=false until real-device acceptance is confirmed."
 }
