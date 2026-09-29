@@ -863,11 +863,24 @@
     const theme=document.createElement('button');theme.type='button';theme.className='mobile-settings-row';theme.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon(document.body.classList.contains('dark')?'sun':'moon')+'</span><span><b>'+(ru()?'Тема':'Theme')+'</b><small>'+(document.body.classList.contains('dark')?(ru()?'Тёмная — переключить на светлую':'Dark — switch to light'):(ru()?'Светлая — переключить на тёмную':'Light — switch to dark'))+'</small></span><span>›</span>';
     theme.onclick=()=>{document.body.classList.contains('dark')?proxy('lightThemeBtn'):proxy('darkThemeBtn');setTimeout(()=>{closeMobileSheet(sheet);setup(true);refreshText();setTimeout(showSettingsSheet,120)},100)};
     appearance.append(lang,theme);
+
+    const privacy=section(ru()?'Приватность':'Privacy');
+    const biometric=document.createElement('button');biometric.type='button';biometric.className='mobile-settings-row';
+    biometric.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('lock')+'</span><span><b>'+(ru()?'Биометрическая блокировка':'Biometric lock')+'</b><small>'+(flagEnabled(V17_BIOMETRIC_KEY)?(ru()?'Включена · блокировка после 15 секунд в фоне':'Enabled · locks after 15 seconds in background'):(ru()?'Выключена':'Disabled'))+'</small></span><span class="mobile-settings-state '+(flagEnabled(V17_BIOMETRIC_KEY)?'on':'off')+'">'+(flagEnabled(V17_BIOMETRIC_KEY)?'ON':'OFF')+'</span>';
+    biometric.onclick=async()=>{const current=flagEnabled(V17_BIOMETRIC_KEY);const next=await toggleBiometricProtection();if(next!==current){closeMobileSheet(sheet);setTimeout(showSettingsSheet,120)}};
+    const shield=document.createElement('button');shield.type='button';shield.className='mobile-settings-row';
+    shield.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('shield')+'</span><span><b>'+(ru()?'Защита экрана':'Screen privacy')+'</b><small>'+(flagEnabled(V17_PRIVACY_SHIELD_KEY)?(ru()?'Скриншоты и превью Recent Apps заблокированы':'Screenshots and Recent Apps previews blocked'):(ru()?'Скриншоты разрешены':'Screenshots allowed'))+'</small></span><span class="mobile-settings-state '+(flagEnabled(V17_PRIVACY_SHIELD_KEY)?'on':'off')+'">'+(flagEnabled(V17_PRIVACY_SHIELD_KEY)?'ON':'OFF')+'</span>';
+    shield.onclick=async()=>{await togglePrivacyShield();closeMobileSheet(sheet);setTimeout(showSettingsSheet,120)};
+    privacy.append(biometric,shield);
+
     const system=section(ru()?'Android и данные':'Android & data');
     const reminder=document.createElement('button');reminder.type='button';reminder.className='mobile-settings-row';reminder.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('bell')+'</span><span><b>'+(ru()?'Напоминание':'Reminder')+'</b><small>'+(ru()?'Нативное ежедневное уведомление':'Native daily notification')+'</small></span><span>›</span>';reminder.onclick=()=>{closeMobileSheet(sheet);setTimeout(showReminderSheet,100)};
     const backups=document.createElement('button');backups.type='button';backups.className='mobile-settings-row';backups.innerHTML='<span class="mobile-settings-row-icon">↻</span><span><b>'+(ru()?'Авто-бэкапы':'Auto-backups')+'</b><small>'+(ru()?'До пяти локальных копий':'Up to five local copies')+'</small></span><span>›</span>';backups.onclick=()=>{closeMobileSheet(sheet);setTimeout(showAutoBackupSheet,100)};
-    const full=document.createElement('button');full.type='button';full.className='mobile-settings-row';full.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('save')+'</span><span><b>'+(ru()?'Полный бэкап':'Full backup')+'</b><small>'+(ru()?'Экспорт JSON для переноса':'JSON export for migration')+'</small></span><span>›</span>';full.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>q('#fullBackupBtn')?.click(),90)};
-    system.append(reminder,backups,full);
+    const full=document.createElement('button');full.type='button';full.className='mobile-settings-row';full.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('save')+'</span><span><b>'+(ru()?'Полный бэкап':'Full backup')+'</b><small>'+(ru()?'Обычный JSON для совместимости':'Plain JSON for compatibility')+'</small></span><span>›</span>';full.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>q('#fullBackupBtn')?.click(),90)};
+    const protectedSave=document.createElement('button');protectedSave.type='button';protectedSave.className='mobile-settings-row';protectedSave.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('key')+'</span><span><b>'+(ru()?'Защищённый бэкап':'Protected backup')+'</b><small>'+(ru()?'AES‑GCM + пароль · пароль не сохраняется':'AES-GCM + password · password is never stored')+'</small></span><span>›</span>';protectedSave.onclick=()=>{closeMobileSheet(sheet);setTimeout(nativeSaveProtectedBackup,100)};
+    const protectedRestore=document.createElement('button');protectedRestore.type='button';protectedRestore.className='mobile-settings-row';protectedRestore.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('restore')+'</span><span><b>'+(ru()?'Восстановить защищённый':'Restore protected backup')+'</b><small>'+(ru()?'Выбрать зашифрованный файл':'Choose an encrypted backup file')+'</small></span><span>›</span>';protectedRestore.onclick=()=>{closeMobileSheet(sheet);setTimeout(nativeRestoreProtectedBackup,100)};
+    system.append(reminder,backups,full,protectedSave,protectedRestore);
+
     const app=section(ru()?'Приложение':'App');
     const update=document.createElement('button');update.type='button';update.className='mobile-settings-row';update.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('update')+'</span><span><b>'+(ru()?'Проверить обновления':'Check for updates')+'</b><small>'+(ru()?'Только официальный GitHub Release':'Official GitHub Release only')+'</small></span><span>›</span>';update.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>checkForUpdates(),100)};
     const about=document.createElement('button');about.type='button';about.className='mobile-settings-row';about.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('info')+'</span><span><b>'+(ru()?'О продукте':'About')+'</b><small>BP Diary · '+APP_RELEASE+'</small></span><span>›</span>';about.onclick=()=>{closeMobileSheet(sheet);setTimeout(showAboutSheet,100)};
@@ -875,7 +888,6 @@
     q('.mobile-sheet-close',sheet).onclick=()=>closeMobileSheet(sheet);
     openMobileSheet(sheet);
   }
-
   function showAboutSheet(){
     const sheet=makeSheet('mobileAboutSheet',ru()?'О продукте':'About');
     q('.mobile-sheet-title',sheet).innerHTML='<span>'+(ru()?'О продукте':'About')+'</span><button type="button" class="mobile-about-close" aria-label="'+(ru()?'Закрыть':'Close')+'">×</button>';
@@ -1646,6 +1658,7 @@
   function setup(force=false){if(rebuilding||!mq.matches||!q('#app'))return;const ps=pages();if(ps.length<3)return;rebuilding=true;if(observer)observer.disconnect();try{const [m,a,r]=ps;[[m,'measure'],[a,'analysis'],[r,'archive']].forEach(([p,k])=>{p.classList.add('mobile-page','mobile-page-'+k);p.dataset.mobilePage=k});document.body.classList.add('mobile-shell-ready');installReportBridge();installNativeActions();appBar();hero(m);accordions(m);mobilePlaceholders(m);customScoreApplicability();polishControls(m);measureStepper(m);measureActions(m);disclaimer();nav();archiveSheet(r);archiveCards(r);archiveTools(r);enhanceAnalysis(a,r);updateHero(m);applyAccessibility(m,a,r);['recordDate','recordTime','patientSelect','bpContext','primaryArm'].forEach(id=>{const el=q('#'+id);if(el&&!el.dataset.mobileHeroBound){el.dataset.mobileHeroBound='1';el.addEventListener('change',()=>updateHero(m))}});setTab(currentTab,false);installV12Hooks()}finally{rebuilding=false;const app=q('#app');if(observer&&app)observer.observe(app,{childList:true,subtree:true,characterData:true})}}
   function schedule(){clearTimeout(timer);timer=setTimeout(()=>setup(),70)}
   document.addEventListener('DOMContentLoaded',async()=>{
+    await initPrivacyProtection();
     if(await migrateLegacyReminderToNative()){location.reload();return}
     setup(true);
     try{if(sessionStorage.getItem('bp_v16_reminder_migrated_now')==='1'){sessionStorage.removeItem('bp_v16_reminder_migrated_now');setTimeout(()=>mobileToast(ru()?'Напоминание перенесено в Android. Проверьте разрешение уведомлений через колокольчик.':'Reminder moved to Android. Check notification permission from the bell.', 'info',4300),450)}}catch(_){}
