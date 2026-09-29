@@ -80,6 +80,9 @@ await cp(join(root, 'node_modules', 'jspdf', 'dist', 'jspdf.umd.min.js'), join(w
 if (!html.includes('mobile-modern.css')) {
   html = injectBeforeRealHeadClose(html, '    <link rel="stylesheet" href="mobile-modern.css">');
 }
+if (!html.includes('bp_biometric_lock_v17')) {
+  html = injectBeforeRealHeadClose(html, '    <script>try{if(localStorage.getItem("bp_biometric_lock_v17")==="1")document.documentElement.classList.add("bp-prelocked")}catch(_){}</script>');
+}
 if (!html.includes('vendor/pdf/html2canvas.min.js')) {
   html = injectBeforeRealBodyClose(html, '    <script src="vendor/pdf/html2canvas.min.js"></script>\n    <script src="vendor/pdf/jspdf.umd.min.js"></script>');
 }
