@@ -1,0 +1,40 @@
+name: Feature request / Предложить улучшение
+description: Suggest an improvement / Предложить улучшение
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: User need / Потребность
+      description: What problem should this solve? / Какую проблему должно решить улучшение?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior / Предлагаемое поведение
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area / Раздел
+      options:
+        - Measure / Замер
+        - Analytics / Аналитика
+        - Archive / Архив
+        - Doctor report / Отчёт врачу
+        - Backup / Резервные копии
+        - Accessibility
+        - Android integration
+        - Build / CI / Repository
+        - Other / Другое
+    validations:
+      required: true
+  - type: checkboxes
+    id: core
+    attributes:
+      label: Medical/core impact / Влияние на medical/core
+      options:
+        - label: This request does not intentionally change medical formulas or risk calculations / Запрос не предполагает изменение медицинских формул или расчётов риска
