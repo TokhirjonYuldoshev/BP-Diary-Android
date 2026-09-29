@@ -99,16 +99,23 @@ jobs:
           See CHANGELOG.md and QA_V15.md in the repository for the detailed change and test matrix.
           EOF
 
-      - name: Create GitHub Release
+      - name: Create or update GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v5.5.150 \
-            BP-Diary-5.5-V15.apk \
-            BP-Diary-5.5-V15.apk.sha256 \
-            --target "$GITHUB_SHA" \
-            --title "BP Diary 5.5 V15" \
-            --notes-file /tmp/release-notes.md
+          TAG="v5.5.150"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "BP Diary 5.5 V15" --notes-file /tmp/release-notes.md --latest
+            gh release upload "$TAG" BP-Diary-5.5-V15.apk BP-Diary-5.5-V15.apk.sha256 --clobber
+          else
+            gh release create "$TAG" \
+              BP-Diary-5.5-V15.apk \
+              BP-Diary-5.5-V15.apk.sha256 \
+              --target "$GITHUB_SHA" \
+              --title "BP Diary 5.5 V15" \
+              --notes-file /tmp/release-notes.md \
+              --latest
+          fi
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
