@@ -61,7 +61,7 @@
     if(wasOpen&&!fromHistory&&history.state?.bpMobileSheet===sheet.id){try{history.back()}catch(_){}}
   }
   window.addEventListener('popstate',()=>{
-    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open,#mobileReminderSheet.open,#mobileSettingsSheet.open,#mobileUpdateSheet.open').at(-1);
+    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open,#mobileReminderSheet.open,#mobileSettingsSheet.open,#mobileUpdateSheet.open,#mobileSecretSheet.open').at(-1);
     if(open)closeMobileSheet(open,true);
   });
 
@@ -641,6 +641,212 @@
         closeMobileSheet(sheet);
       }catch(err){mobileToast((ru()?'Не удалось установить напоминание: ':'Could not set reminder: ')+(err?.message||err),'error',4200)}
     };
+  }
+
+  const V17_BIOMETRIC_KEY='bp_biometric_lock_v17';
+  const V17_PRIVACY_SHIELD_KEY='bp_privacy_shield_v17';
+  const V17_BACKUP_FORMAT='bp-diary-encrypted-backup';
+  const V17_BACKUP_ITERATIONS=310000;
+  let privacyPromptActive=false,privacyHiddenAt=0;
+
+  function flagEnabled(key){try{return localStorage.getItem(key)==='1'}catch(_){return false}}
+  function setFlag(key,value){try{value?localStorage.setItem(key,'1'):localStorage.removeItem(key)}catch(_){}}
+  function cryptoReady(){return !!(window.crypto&&crypto.subtle&&window.TextEncoder&&window.TextDecoder)}
+  function bytesToB64(bytes){
+    let out='';const chunk=0x8000;
+    for(let i=0;i<bytes.length;i+=chunk)out+=String.fromCharCode(...bytes.subarray(i,Math.min(bytes.length,i+chunk)));
+    return btoa(out);
+  }
+  function b64ToBytes(value){
+    const raw=atob(String(value||'')),out=new Uint8Array(raw.length);
+    for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);
+    return out;
+  }
+  async function protectedBackupKey(password,salt,iterations=V17_BACKUP_ITERATIONS){
+    const enc=new TextEncoder();
+    const material=await crypto.subtle.importKey('raw',enc.encode(password),'PBKDF2',false,['deriveKey']);
+    return crypto.subtle.deriveKey(
+      {name:'PBKDF2',salt,iterations,hash:'SHA-256'},
+      material,
+      {name:'AES-GCM',length:256},
+      false,
+      ['encrypt','decrypt']
+    );
+  }
+  async function encryptBackupPayload(payload,password){
+    if(!cryptoReady())throw new Error(ru()?'Шифрование недоступно на этом устройстве':'Encryption is unavailable on this device');
+    const salt=crypto.getRandomValues(new Uint8Array(16));
+    const iv=crypto.getRandomValues(new Uint8Array(12));
+    const key=await protectedBackupKey(password,salt);
+    const clear=new TextEncoder().encode(JSON.stringify(payload));
+    const cipher=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,clear));
+    return {
+      format:V17_BACKUP_FORMAT,
+      version:1,
+      createdAt:new Date().toISOString(),
+      cipher:'AES-GCM-256',
+      kdf:'PBKDF2-SHA-256',
+      iterations:V17_BACKUP_ITERATIONS,
+      salt:bytesToB64(salt),
+      iv:bytesToB64(iv),
+      ciphertext:bytesToB64(cipher)
+    };
+  }
+  async function decryptBackupEnvelope(envelope,password){
+    if(!cryptoReady())throw new Error(ru()?'Расшифровка недоступна на этом устройстве':'Decryption is unavailable on this device');
+    if(!envelope||envelope.format!==V17_BACKUP_FORMAT||Number(envelope.version)!==1)throw new Error(ru()?'Это не защищённый бэкап BP Diary':'This is not a protected BP Diary backup');
+    const iterations=Number(envelope.iterations);
+    if(!Number.isInteger(iterations)||iterations<100000||iterations>1000000)throw new Error(ru()?'Некорректные параметры шифрования':'Invalid encryption parameters');
+    const salt=b64ToBytes(envelope.salt),iv=b64ToBytes(envelope.iv),cipher=b64ToBytes(envelope.ciphertext);
+    if(salt.length!==16||iv.length!==12||!cipher.length)throw new Error(ru()?'Повреждённый защищённый бэкап':'Corrupted protected backup');
+    const key=await protectedBackupKey(password,salt,iterations);
+    try{
+      const clear=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,cipher);
+      return JSON.parse(new TextDecoder().decode(clear));
+    }catch(_){
+      throw new Error(ru()?'Неверный пароль или повреждённый файл':'Wrong password or corrupted file');
+    }
+  }
+
+  function askSecret({title,message,confirm=false,minLength=1}={}){
+    return new Promise(resolve=>{
+      const sheet=makeSheet('mobileSecretSheet',title||'');
+      q('.mobile-sheet-title',sheet).innerHTML='<span>'+(title||'')+'</span><button type="button" class="mobile-sheet-close" aria-label="'+(ru()?'Закрыть':'Close')+'">×</button>';
+      const g=q('.mobile-sheet-grid',sheet);g.innerHTML='';
+      const wrap=document.createElement('section');wrap.className='mobile-secret-card';
+      wrap.innerHTML='<p class="mobile-secret-message"></p><label class="mobile-settings-field"><span>'+(ru()?'Пароль':'Password')+'</span><input id="mobileSecretOne" type="password" autocomplete="new-password"></label>'+
+        (confirm?'<label class="mobile-settings-field"><span>'+(ru()?'Повторите пароль':'Repeat password')+'</span><input id="mobileSecretTwo" type="password" autocomplete="new-password"></label>':'')+
+        '<small class="mobile-secret-note">'+(confirm?(ru()?'Пароль нигде не сохраняется. Если его забыть, расшифровать файл будет невозможно.':'The password is never stored. If you forget it, the file cannot be decrypted.'):'')+'</small>';
+      q('.mobile-secret-message',wrap).textContent=message||'';
+      const actions=document.createElement('div');actions.className='mobile-reminder-actions';
+      const cancel=document.createElement('button');cancel.type='button';cancel.className='outline';cancel.textContent=ru()?'Отмена':'Cancel';
+      const ok=document.createElement('button');ok.type='button';ok.className='mobile-settings-primary';ok.textContent=ru()?'Продолжить':'Continue';
+      actions.append(cancel,ok);g.append(wrap,actions);
+      let settled=false;
+      const finish=value=>{if(settled)return;settled=true;sheet.__onDismiss=null;closeMobileSheet(sheet);resolve(value)};
+      sheet.__onDismiss=()=>{if(!settled){settled=true;resolve(null)}};
+      q('.mobile-sheet-close',sheet).onclick=()=>finish(null);cancel.onclick=()=>finish(null);
+      ok.onclick=()=>{
+        const one=q('#mobileSecretOne',sheet)?.value||'',two=q('#mobileSecretTwo',sheet)?.value||'';
+        if(one.length<minLength){mobileToast((ru()?'Минимум символов: ':'Minimum characters: ')+minLength,'error');return}
+        if(confirm&&one!==two){mobileToast(ru()?'Пароли не совпадают':'Passwords do not match','error');return}
+        finish(one);
+      };
+      openMobileSheet(sheet);setTimeout(()=>q('#mobileSecretOne',sheet)?.focus(),120);
+    });
+  }
+
+  async function nativeSaveProtectedBackup(){
+    try{
+      const password=await askSecret({
+        title:ru()?'Защищённый бэкап':'Protected backup',
+        message:ru()?'Придумайте пароль. Данные будут зашифрованы AES‑GCM перед сохранением.':'Choose a password. Data will be AES-GCM encrypted before saving.',
+        confirm:true,minLength:8
+      });
+      if(!password)return;
+      mobileToast(ru()?'Шифрую бэкап…':'Encrypting backup…','info',1400);
+      const envelope=await encryptBackupPayload(backupSnapshot(),password);
+      const fileName='BP-Diary-protected-'+new Date().toISOString().slice(0,10)+'.bpbackup.json';
+      const res=await nativeCall('saveTextFile',{content:JSON.stringify(envelope),fileName,mime:'application/json'});
+      mobileToast((ru()?'Защищённый бэкап сохранён: ':'Protected backup saved: ')+(res?.name||fileName),'success',3400);
+    }catch(err){if(!/cancel/i.test(String(err?.message||'')))mobileToast((ru()?'Не удалось создать защищённый бэкап: ':'Could not create protected backup: ')+(err?.message||err),'error',4700)}
+  }
+
+  async function nativeRestoreProtectedBackup(){
+    try{
+      const res=await nativeCall('openTextFile',{mime:'application/json',initialUri:''});
+      const envelope=JSON.parse(res?.content||'');
+      if(envelope?.format!==V17_BACKUP_FORMAT)throw new Error(ru()?'Выбранный файл не является защищённым бэкапом BP Diary':'Selected file is not a protected BP Diary backup');
+      const password=await askSecret({
+        title:ru()?'Расшифровать бэкап':'Decrypt backup',
+        message:ru()?'Введите пароль, которым защищён этот файл.':'Enter the password used to protect this file.',
+        confirm:false,minLength:1
+      });
+      if(!password)return;
+      mobileToast(ru()?'Проверяю и расшифровываю…':'Verifying and decrypting…','info',1500);
+      const backup=await decryptBackupEnvelope(envelope,password);
+      if(!await mobileConfirm({
+        title:ru()?'Восстановить защищённый бэкап?':'Restore protected backup?',
+        message:ru()?'Текущие данные приложения будут заменены расшифрованными данными из файла.':'Current app data will be replaced by decrypted data from the selected file.',
+        confirmLabel:ru()?'Восстановить':'Restore',danger:true
+      }))return;
+      await nativeAutoBackup('before-protected-restore',true);
+      if(!restoreBackupObject(backup))throw new Error(ru()?'Неверный формат данных внутри бэкапа':'Invalid data inside backup');
+      try{localStorage.setItem('bp_v12_onboarding_done','1')}catch(_){}
+      mobileToast(ru()?'Защищённый бэкап восстановлен. Перезапускаю приложение.':'Protected backup restored. Restarting the app.','success',1900);
+      setTimeout(()=>location.reload(),900);
+    }catch(err){if(!/cancel/i.test(String(err?.message||'')))mobileToast((ru()?'Не удалось восстановить защищённый бэкап: ':'Could not restore protected backup: ')+(err?.message||err),'error',4800)}
+  }
+
+  function privacyOverlay(){
+    let overlay=q('#mobilePrivacyLock');
+    if(!overlay){
+      overlay=document.createElement('div');overlay.id='mobilePrivacyLock';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+      overlay.innerHTML='<div class="mobile-privacy-lock-card"><div class="mobile-privacy-lock-icon">'+brandHeartIcon()+'</div><h2>BP Diary</h2><p></p><button type="button" class="mobile-settings-primary"></button></div>';
+      document.body.appendChild(overlay);
+    }
+    q('p',overlay).textContent=ru()?'Приложение защищено. Подтвердите биометрию, чтобы открыть дневник.':'App locked. Authenticate with biometrics to open your diary.';
+    q('button',overlay).innerHTML=svgIcon('lock')+'<span>'+(ru()?'Разблокировать':'Unlock')+'</span>';
+    return overlay;
+  }
+  async function biometricAuth(reason='unlock'){
+    const bridge=nativeBridge();
+    if(!bridge||typeof bridge.authenticateBiometric!=='function')throw new Error(ru()?'Биометрия недоступна':'Biometrics unavailable');
+    return nativeCall('authenticateBiometric',{
+      title:'BP Diary',
+      subtitle:reason==='settings'?(ru()?'Подтвердите изменение защиты':'Confirm privacy change'):(ru()?'Разблокируйте дневник':'Unlock your diary'),
+      cancel:ru()?'Отмена':'Cancel'
+    });
+  }
+  async function applyPrivacyShield(){
+    const bridge=nativeBridge();if(!bridge||typeof bridge.setPrivacyShield!=='function')return;
+    try{await nativeCall('setPrivacyShield',{enabled:flagEnabled(V17_PRIVACY_SHIELD_KEY)})}catch(_){}
+  }
+  async function lockApplication({automatic=true}={}){
+    if(!flagEnabled(V17_BIOMETRIC_KEY)){document.documentElement.classList.remove('bp-prelocked');return true}
+    const bridge=nativeBridge();
+    if(!bridge||typeof bridge.authenticateBiometric!=='function'){document.documentElement.classList.remove('bp-prelocked');return true}
+    const overlay=privacyOverlay();overlay.classList.add('open');document.documentElement.classList.remove('bp-prelocked');
+    const button=q('button',overlay);
+    const attempt=async()=>{
+      if(privacyPromptActive)return;
+      privacyPromptActive=true;button.disabled=true;
+      try{await biometricAuth('unlock');overlay.classList.remove('open');return true}
+      catch(_){return false}
+      finally{privacyPromptActive=false;button.disabled=false}
+    };
+    button.onclick=attempt;
+    if(automatic)setTimeout(attempt,140);
+    return false;
+  }
+  async function toggleBiometricProtection(){
+    const enabled=flagEnabled(V17_BIOMETRIC_KEY);
+    try{
+      const bridge=nativeBridge();if(!bridge||typeof bridge.getBiometricStatus!=='function')throw new Error(ru()?'Биометрия недоступна':'Biometrics unavailable');
+      const status=await nativeCall('getBiometricStatus',{});
+      if(!status?.available)throw new Error(ru()?'На устройстве нет доступной настроенной биометрии':'No enrolled biometric authentication is available');
+      await biometricAuth('settings');
+      setFlag(V17_BIOMETRIC_KEY,!enabled);
+      mobileToast(!enabled?(ru()?'Биометрическая блокировка включена':'Biometric lock enabled'):(ru()?'Биометрическая блокировка выключена':'Biometric lock disabled'),'success',2600);
+      return !enabled;
+    }catch(err){mobileToast((ru()?'Не удалось изменить биометрическую защиту: ':'Could not change biometric protection: ')+(err?.message||err),'error',4500);return enabled}
+  }
+  async function togglePrivacyShield(){
+    const next=!flagEnabled(V17_PRIVACY_SHIELD_KEY);setFlag(V17_PRIVACY_SHIELD_KEY,next);await applyPrivacyShield();
+    mobileToast(next?(ru()?'Скриншоты и превью Recent Apps заблокированы':'Screenshots and Recent Apps previews are blocked'):(ru()?'Защита скриншотов выключена':'Screenshot protection disabled'),'success',3000);
+    return next;
+  }
+  async function initPrivacyProtection(){
+    document.documentElement.classList.remove('bp-prelocked');
+    await applyPrivacyShield();
+    if(flagEnabled(V17_BIOMETRIC_KEY))await lockApplication({automatic:true});
+    if(!document.documentElement.dataset.bpPrivacyBound){
+      document.documentElement.dataset.bpPrivacyBound='1';
+      document.addEventListener('visibilitychange',()=>{
+        if(document.visibilityState==='hidden'){privacyHiddenAt=Date.now();return}
+        if(document.visibilityState==='visible'&&flagEnabled(V17_BIOMETRIC_KEY)&&Date.now()-privacyHiddenAt>15000)lockApplication({automatic:true});
+      });
+    }
   }
 
   async function showSettingsSheet(){
