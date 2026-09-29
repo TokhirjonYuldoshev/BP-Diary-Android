@@ -34,6 +34,15 @@ BP Diary хранит данные дневника локально в обла
 
 ---
 
+## V16 privacy notes
+
+- Native reminders store only reminder configuration (enabled/time/title/body) in Android app preferences.
+- Reminder notifications do not upload diary measurements.
+- The update checker performs a network request **only when the user explicitly taps “Check for updates”**.
+- That request goes to the official GitHub Releases API for this repository.
+- BP Diary does not silently download or install APK updates.
+- Existing diary measurements, backups and medical/profile data remain local unless the user explicitly exports or shares them.
+
 ## English
 
 ### Reporting a vulnerability
@@ -65,3 +74,13 @@ For Google Play or another production channel:
 5. publish an AAB when appropriate.
 
 Changing the signing lineage breaks direct upgrades from APKs signed by a different key, so such a migration must be planned explicitly.
+
+
+## V16 privacy notes — English
+
+- Native reminders store only reminder configuration (enabled/time/title/body) in Android app preferences.
+- Reminder notifications do not upload diary measurements.
+- The update checker makes a network request **only after the user explicitly chooses “Check for updates”**.
+- The request targets the official GitHub Releases API for this repository.
+- BP Diary does not silently download or install APK updates.
+- Diary measurements, backups and profile/medical data remain local unless the user explicitly exports or shares them.
