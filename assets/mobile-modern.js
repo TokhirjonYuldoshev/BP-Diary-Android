@@ -8,6 +8,9 @@
   const ru=()=>document.documentElement.lang!=='en';
   const pages=()=>qa('#app > .card');
   const proxy=id=>q('#'+id)?.click();
+  const APP_RELEASE='__BP_RELEASE__';
+  const APP_VERSION='__BP_VERSION_NAME__';
+  const APP_VERSION_CODE=Number('__BP_VERSION_CODE__');
 
   function nativeBridge(){return window.Capacitor?.Plugins?.NativeBridge||null}
   async function nativeCall(method,args={}){
@@ -93,7 +96,9 @@
       landscape:'<rect x="3" y="7" width="18" height="10" rx="1"/><path d="M17 10v4"/>',
       bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>',
       search:'<circle cx="11" cy="11" r="7"/><path d="m16.2 16.2 4 4"/>',
-      close:'<path d="M6 6l12 12M18 6 6 18"/>'
+      close:'<path d="M6 6l12 12M18 6 6 18"/>',
+      settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.1A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.1A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.1.36.31.7.6 1 .3.28.68.49 1.1.4h.1v4h-.1a1.7 1.7 0 0 0-1.7.6Z"/>',
+      update:'<path d="M20 11a8 8 0 1 0-2.34 5.66"/><path d="M20 4v7h-7"/>'
 
     }[name]||'';
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
