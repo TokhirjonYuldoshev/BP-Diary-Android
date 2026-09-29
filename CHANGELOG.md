@@ -1,5 +1,29 @@
 # Changelog
 
+## V17 — Privacy & Resilience — candidate
+
+### Added
+- Optional biometric application lock.
+- Automatic re-lock after the app remains in the background for 15 seconds.
+- Optional Android `FLAG_SECURE` protection for screenshots and Recent Apps previews.
+- Password-protected Full Backup format.
+- PBKDF2-SHA-256 password derivation with 310,000 iterations.
+- AES-GCM-256 authenticated encryption with random per-file salt and IV.
+- Protected-backup restore with wrong-password/corruption rejection.
+- Pre-paint privacy guard to reduce content exposure before the biometric layer starts.
+- V17 automated UI/privacy regression coverage.
+
+### Compatibility
+- Plain JSON Full Backup remains available.
+- V16 automatic backups remain unchanged.
+- V16 native reminders and update checker remain unchanged.
+- Package ID, application data schema and direct-update signing lineage remain unchanged.
+- Medical/core calculations are intentionally untouched.
+
+### Security note
+BP Diary does not store the protected-backup password. Losing the password means the encrypted file cannot be recovered by the application.
+
+
 ## V16 — Reliability & Android Integration — 5.6.0
 
 ### Added
