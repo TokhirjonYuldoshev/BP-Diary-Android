@@ -837,9 +837,9 @@
     return next;
   }
   async function initPrivacyProtection(){
-    document.documentElement.classList.remove('bp-prelocked');
     await applyPrivacyShield();
     if(flagEnabled(V17_BIOMETRIC_KEY))await lockApplication({automatic:true});
+    else document.documentElement.classList.remove('bp-prelocked');
     if(!document.documentElement.dataset.bpPrivacyBound){
       document.documentElement.dataset.bpPrivacyBound='1';
       document.addEventListener('visibilitychange',()=>{
