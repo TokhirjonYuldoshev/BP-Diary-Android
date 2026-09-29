@@ -2,24 +2,47 @@
 
 Android app packaging for **BP Diary / Дневник артериального давления 5.5** using Capacitor 8.
 
-## Current mobile release track
+## Current release: V15 finalization
 
-V14 keeps the validated diary/core logic, preserves the V12/V13 feature set, and includes the corrected mobile profile-card layout:
+V15 completes the staged V11 → V12 → V13 roadmap while preserving the validated medical/core logic.
+
+### Mobile experience
 
 - premium mobile UI with light/dark themes and RU/EN;
 - touch-first navigation: **Замер / Аналитика / Архив**;
-- doctor report preview with **Печать / Сохранить PDF / Поделиться**;
-- report periods: **7 / 14 / 30 days / all data / custom range**;
-- internal automatic backups: up to **5 local restore points**;
-- manual full JSON backup/restore remains available;
-- archive quick periods and newest/oldest sorting;
-- first-run onboarding that can be reopened from **О продукте**;
-- in-app toast notifications and confirmation dialogs;
-- Android Back handling for screens, sheets and onboarding;
-- accessibility polish: minimum touch targets, focus states, reduced-motion and increased-contrast support;
-- Voice/TTS and native Android share/print integrations.
+- corrected Cardio-profile spacing and Personal range & goals framing;
+- Reminder button in the top app bar;
+- unified Archive action buttons, with destructive Delete all kept red;
+- first-run onboarding and full About screen.
 
-The mobile shell is injected **outside the diary's validated inline JavaScript**. Medical/core calculations are intentionally kept separate from mobile presentation changes.
+### Archive
+
+- modern reading cards;
+- fast text search across rendered readings;
+- quick periods: **All / 7 / 30 / 90 days**;
+- newest/oldest sorting;
+- edit/delete actions with confirmation and safety backup behavior.
+
+### Reports and export
+
+- doctor report preview;
+- periods: **7 / 14 / 30 days / all data / custom range**;
+- **Print / Save PDF / Share** actions;
+- offline PDF generation libraries packaged with the app.
+
+### Data protection
+
+- up to five automatic local restore points;
+- manual Full Backup JSON export/restore remains available;
+- automatic safety copies are made before selected destructive/restore operations.
+
+### Accessibility
+
+- enlarged touch targets;
+- visible keyboard focus;
+- screen/region and dialog semantics;
+- accessible labels for navigation, archive search, record actions and form controls;
+- reduced-motion and increased-contrast support.
 
 ## App identity
 
@@ -27,30 +50,36 @@ The mobile shell is injected **outside the diary's validated inline JavaScript**
 - Android application ID: `com.tokhirjonyuldoshev.bpdiary`
 - Mobile subtitle: `Дневник артериального давления`
 
-## Build
+## Build and QA
 
-GitHub Actions builds the Android APK on pushes to the active release branch and to `main`.
+The normal GitHub Actions workflow builds both debug and release variants and verifies that both APKs use the same stable update signer.
 
-For V14 the artifact is named:
+V15 also includes:
 
-`BP-Diary-5.5-V14-Android-APK`
+- `npm run qa:v15` static regression smoke checks;
+- `QA_V15.md` final device regression matrix;
+- `CHANGELOG.md` release history.
 
-The build verifies the permanent test signer before publishing the artifact so test releases can be installed over the previous version without removing user data.
+The final direct-distribution GitHub Release is built as a **release APK** and published with a SHA-256 checksum.
 
-## Data and backups
+## Signing note
 
-Diary data remain stored in the Android WebView local storage, matching the existing app architecture.
+The V15 direct-distribution APK is signed with the same stable update key used by the recent V8–V14 test builds, so it can be installed over the current app without uninstalling.
 
-V14 preserves the app-internal automatic restore points introduced in V12 while preserving the existing **Полный бэкап** JSON export. Automatic copies survive normal app updates, but uninstalling the application removes app-internal data, so a manual Full Backup is still recommended before uninstalling or moving to another device.
+That stable direct-distribution key is **not a Play Store production signing key**. A future Google Play publication should use a dedicated private release key / Play App Signing and preferably an AAB.
+
+## Data note
+
+Diary data are stored inside the Android app/WebView data area. Automatic backups also live inside the app sandbox. Uninstalling the application removes that local app data, so create a **Full Backup** before uninstalling, changing devices or moving to a different signing lineage.
 
 ## Release safety
 
-Before treating a build as stable, verify on a real Android device:
+Before declaring the release fully device-verified, complete the checklist in `QA_V15.md`, especially:
 
-1. install over the previous version without uninstalling;
-2. open and edit an archived reading;
-3. test Android Back from each screen and sheet;
-4. save and share a doctor PDF;
-5. create and restore both manual and automatic backups;
-6. test RU/EN and light/dark themes;
-7. test Voice/TTS.
+1. install V15 over V14;
+2. verify existing readings and settings;
+3. test Archive search/filter/sort;
+4. test Save/Share PDF;
+5. test manual and automatic backup/restore;
+6. test Android Back, Voice/TTS, RU/EN and light/dark;
+7. check larger system text and TalkBack labels.
