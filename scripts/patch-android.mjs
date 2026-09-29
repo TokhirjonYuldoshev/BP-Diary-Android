@@ -675,6 +675,162 @@ public class NativeBridgePlugin extends Plugin {
         }
     }
 
+    private boolean notificationsAllowed() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+            && ContextCompat.checkSelfPermission(getContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            return false;
+        }
+        return NotificationManagerCompat.from(getContext()).areNotificationsEnabled();
+    }
+
+    @PluginMethod
+    public void scheduleDailyReminder(PluginCall call) {
+        String time = call.getString("time");
+        String title = call.getString("title");
+        String body = call.getString("body");
+        if (time == null || !time.matches("^(?:[01]\\d|2[0-3]):[0-5]\\d$")) {
+            call.reject("Invalid reminder time");
+            return;
+        }
+        try {
+            ReminderScheduler.schedule(getContext(), time, title, body);
+            JSObject out = new JSObject();
+            out.put("enabled", true);
+            out.put("time", time);
+            out.put("notificationsAllowed", notificationsAllowed());
+            out.put("nextTrigger", ReminderScheduler.nextTriggerMillis(time));
+            call.resolve(out);
+        } catch (Exception e) {
+            call.reject("Could not schedule reminder", e);
+        }
+    }
+
+    @PluginMethod
+    public void cancelDailyReminder(PluginCall call) {
+        try {
+            ReminderScheduler.cancel(getContext());
+            JSObject out = new JSObject();
+            out.put("enabled", false);
+            out.put("notificationsAllowed", notificationsAllowed());
+            call.resolve(out);
+        } catch (Exception e) {
+            call.reject("Could not cancel reminder", e);
+        }
+    }
+
+    @PluginMethod
+    public void getReminderStatus(PluginCall call) {
+        JSObject out = new JSObject();
+        out.put("enabled", ReminderScheduler.isEnabled(getContext()));
+        out.put("time", ReminderScheduler.getTime(getContext()));
+        out.put("notificationsAllowed", notificationsAllowed());
+        call.resolve(out);
+    }
+
+    @PluginMethod
+    public void requestNotificationPermission(PluginCall call) {
+        try {
+            boolean allowed = notificationsAllowed();
+            boolean requested = false;
+            if (!allowed && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ActivityCompat.requestPermissions(
+                    getActivity(),
+                    new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                    16003
+                );
+                requested = true;
+            }
+            JSObject out = new JSObject();
+            out.put("allowed", allowed);
+            out.put("requested", requested);
+            call.resolve(out);
+        } catch (Exception e) {
+            call.reject("Could not request notification permission", e);
+        }
+    }
+
+    @PluginMethod
+    public void openNotificationSettings(PluginCall call) {
+        try {
+            Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+            intent.putExtra(Settings.EXTRA_APP_PACKAGE, getContext().getPackageName());
+            getActivity().startActivity(intent);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Could not open notification settings", e);
+        }
+    }
+
+    @PluginMethod
+    public void getAppInfo(PluginCall call) {
+        try {
+            PackageInfo info = getContext().getPackageManager().getPackageInfo(getContext().getPackageName(), 0);
+            JSObject out = new JSObject();
+            out.put("versionName", info.versionName == null ? "" : info.versionName);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) out.put("versionCode", info.getLongVersionCode());
+            else out.put("versionCode", info.versionCode);
+            out.put("packageName", getContext().getPackageName());
+            call.resolve(out);
+        } catch (Exception e) {
+            call.reject("Could not read app info", e);
+        }
+    }
+
+    @PluginMethod
+    public void checkForUpdate(PluginCall call) {
+        new Thread(() -> {
+            HttpURLConnection connection = null;
+            try {
+                URL url = new URL("https://api.github.com/repos/TokhirjonYuldoshev/BP-Diary-Android/releases/latest");
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setConnectTimeout(8000);
+                connection.setReadTimeout(8000);
+                connection.setRequestProperty("Accept", "application/vnd.github+json");
+                connection.setRequestProperty("User-Agent", "BP-Diary-Android");
+                int code = connection.getResponseCode();
+                if (code < 200 || code >= 300) throw new IllegalStateException("GitHub returned HTTP " + code);
+                StringBuilder body = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        body.append(line);
+                        if (body.length() > 1024 * 1024) throw new IllegalStateException("Update response too large");
+                    }
+                }
+                JSONObject json = new JSONObject(body.toString());
+                String apkUrl = "";
+                JSONArray assets = json.optJSONArray("assets");
+                if (assets != null) {
+                    for (int i = 0; i < assets.length(); i++) {
+                        JSONObject asset = assets.optJSONObject(i);
+                        if (asset == null) continue;
+                        String name = asset.optString("name", "");
+                        if (name.toLowerCase(Locale.ROOT).endsWith(".apk")) {
+                            apkUrl = asset.optString("browser_download_url", "");
+                            break;
+                        }
+                    }
+                }
+                PackageInfo pkg = getContext().getPackageManager().getPackageInfo(getContext().getPackageName(), 0);
+                JSObject out = new JSObject();
+                out.put("tag", json.optString("tag_name", ""));
+                out.put("name", json.optString("name", ""));
+                out.put("htmlUrl", json.optString("html_url", ""));
+                out.put("apkUrl", apkUrl);
+                out.put("publishedAt", json.optString("published_at", ""));
+                out.put("currentVersion", pkg.versionName == null ? "" : pkg.versionName);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) out.put("currentCode", pkg.getLongVersionCode());
+                else out.put("currentCode", pkg.versionCode);
+                getActivity().runOnUiThread(() -> call.resolve(out));
+            } catch (Exception e) {
+                getActivity().runOnUiThread(() -> call.reject("Could not check GitHub release", e));
+            } finally {
+                if (connection != null) connection.disconnect();
+            }
+        }, "bp-diary-update-check").start();
+    }
+
     @PluginMethod
     public void openUrl(PluginCall call) {
         String url = call.getString("url");
