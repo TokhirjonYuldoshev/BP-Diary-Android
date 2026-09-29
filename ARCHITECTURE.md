@@ -79,6 +79,19 @@ BP Diary Android разделяет исходное приложение, мо�
 
 `android/` — generated build tree и не хранится в Git.
 
+### V16 Android integration
+
+V16 adds a native reliability layer without moving diary/medical calculations out of the existing application core.
+
+- `ReminderScheduler.java` — stores the daily reminder configuration and schedules the next Android alarm.
+- `ReminderReceiver.java` — receives the alarm, creates the system notification and schedules the following day.
+- `BOOT_COMPLETED`, device-time and timezone broadcasts restore/reschedule the reminder after system changes.
+- Android 13+ notification permission is requested only when the user chooses to enable notifications.
+- `NativeBridge.checkForUpdate` performs an explicit user-requested HTTPS request to the official GitHub Releases API; there is no background update polling.
+- `version.json` is the single source for release label, semantic version, Android versionCode, release tag and artifact basename.
+- `release-request.json` is a publication safety gate. A candidate cannot publish while `publish=false`.
+- `tests/ui-v16.spec.mjs` validates key mobile layouts and produces light/dark screenshots in CI.
+
 ### Data flow
 
 ```text
