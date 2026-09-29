@@ -81,16 +81,21 @@ await writeFile(join(pkgDir,'MainActivity.java'),mainActivity,'utf8');
 
 const plugin=`package com.tokhirjonyuldoshev.bpdiary;
 
+import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
+import android.provider.Settings;
 import android.util.Base64;
 import android.print.PrintAttributes;
 import android.print.PrintManager;
@@ -100,6 +105,9 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import androidx.activity.result.ActivityResult;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import com.getcapacitor.JSArray;
@@ -110,16 +118,23 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 @CapacitorPlugin(name = "NativeBridge")
 public class NativeBridgePlugin extends Plugin {
