@@ -12,6 +12,10 @@ on:
       - '.github/workflows/ui-regression.yml'
   workflow_dispatch:
 
+concurrency:
+  group: ui-regression-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
