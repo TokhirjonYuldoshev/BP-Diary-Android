@@ -1336,3 +1336,36 @@
   .mobile-update-card.available{border-color:rgba(23,128,167,.42);box-shadow:0 8px 24px rgba(23,128,167,.08)}
   body.dark #mobileSettingsSheet .mobile-sheet-panel{background:#08111c!important}
 }
+
+
+/* V16 final accessibility guard — keep critical touch targets usable after legacy compact overrides */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  .mobile-top-actions{gap:4px!important}
+  .mobile-top-actions button{
+    width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important
+  }
+  .mobile-brand-mark{
+    width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important
+  }
+  .mobile-sheet-close,
+  #mobileArchiveSearchClear,
+  .mobile-record-actions button,
+  .mobile-archive-more,
+  .patient-block #addPatientBtn,
+  .patient-block #editPatientBtn,
+  .patient-block #delPatientBtn,
+  #mobileMeasureStepper button,
+  #mobileAnalyticsTabs button,
+  #mobileChartSelector button{
+    min-width:44px!important;min-height:44px!important
+  }
+  .patient-block #addPatientBtn,
+  .patient-block #editPatientBtn,
+  .patient-block #delPatientBtn{
+    height:44px!important
+  }
+  .patient-block #editPatientBtn,
+  .patient-block #delPatientBtn{width:44px!important}
+  #mobileArchiveSearchClear{width:44px!important;height:44px!important}
+  .mobile-archive-search-wrap{grid-template-columns:22px minmax(0,1fr) 44px!important}
+}
