@@ -2,7 +2,7 @@ name: UI Regression
 
 on:
   push:
-    branches: [main, v16-android-integration]
+    branches: [main, v17-privacy-resilience]
     paths:
       - 'source/**'
       - 'assets/**'
@@ -57,13 +57,13 @@ jobs:
           exit 1
 
       - name: Run mobile UI regression
-        run: npx playwright test tests/ui-v16.spec.mjs --reporter=line
+        run: npx playwright test tests/ui-v17.spec.mjs --reporter=line
 
       - name: Upload visual snapshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: V16-Mobile-UI-Snapshots
-          path: artifacts/ui-v16
+          name: V17-Mobile-UI-Snapshots
+          path: artifacts/ui-v17
           if-no-files-found: warn
           retention-days: 30
