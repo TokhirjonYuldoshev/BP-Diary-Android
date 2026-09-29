@@ -11,36 +11,65 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    outputs:
+      publish: ${{ steps.meta.outputs.publish }}
+      app_release: ${{ steps.meta.outputs.app_release }}
+      version_name: ${{ steps.meta.outputs.version_name }}
+      version_code: ${{ steps.meta.outputs.version_code }}
+      release_tag: ${{ steps.meta.outputs.release_tag }}
+      artifact_base: ${{ steps.meta.outputs.artifact_base }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Load release metadata
+      - name: Read release gate and version metadata
+        id: meta
         shell: bash
         run: |
-          node <<'NODE' >> "$GITHUB_ENV"
-          const v=require('./version.json');
-          const r=require('./release-request.json');
-          for (const [k,val] of Object.entries({
-            APP_RELEASE:v.release,
-            VERSION_NAME:v.versionName,
-            VERSION_CODE:v.versionCode,
-            RELEASE_TAG:v.tag,
-            ARTIFACT_BASE:v.artifactBase,
-            RELEASE_REQUESTED:r.publish === true ? 'true' : 'false'
-          })) console.log(k+'='+val);
-          NODE
+          python3 <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          with open('version.json', encoding='utf-8') as f:
+              v=json.load(f)
+          with open('release-request.json', encoding='utf-8') as f:
+              r=json.load(f)
+          values={
+              'publish':'true' if r.get('publish') is True else 'false',
+              'app_release':v['release'],
+              'version_name':v['versionName'],
+              'version_code':str(v['versionCode']),
+              'release_tag':v['tag'],
+              'artifact_base':v['artifactBase'],
+          }
+          for key,value in values.items():
+              print(f"{key}={value}")
+          PY
 
-      - name: Require explicit release request
+      - name: Gate status
         run: |
-          if [ "$RELEASE_REQUESTED" != "true" ]; then
-            echo "release-request.json has publish=false; refusing to publish."
-            exit 1
+          if [ "${{ steps.meta.outputs.publish }}" = "true" ]; then
+            echo "Release explicitly requested."
+          else
+            echo "Release not requested (publish=false). Nothing will be published."
           fi
+
+  release:
+    needs: gate
+    if: needs.gate.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      APP_RELEASE: ${{ needs.gate.outputs.app_release }}
+      VERSION_NAME: ${{ needs.gate.outputs.version_name }}
+      VERSION_CODE: ${{ needs.gate.outputs.version_code }}
+      RELEASE_TAG: ${{ needs.gate.outputs.release_tag }}
+      ARTIFACT_BASE: ${{ needs.gate.outputs.artifact_base }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -69,6 +98,15 @@ jobs:
           npx cap sync android
           npx capacitor-assets generate --android --iconBackgroundColor '#126f96' --iconBackgroundColorDark '#08131f' --splashBackgroundColor '#eef6fa' --splashBackgroundColorDark '#08131f'
 
+      - name: Verify native V16 integration
+        run: |
+          grep -q 'void scheduleDailyReminder' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
+          grep -q 'void checkForUpdate' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
+          grep -q 'class ReminderReceiver' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/ReminderReceiver.java
+          grep -q 'class ReminderRestoreReceiver' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/ReminderRestoreReceiver.java
+          grep -q 'android.intent.action.BOOT_COMPLETED' android/app/src/main/AndroidManifest.xml
+          grep -q 'android.intent.action.MY_PACKAGE_REPLACED' android/app/src/main/AndroidManifest.xml
+
       - name: Configure release version
         run: |
           sed -i "s/versionCode 1/versionCode ${VERSION_CODE}/" android/app/build.gradle
@@ -87,9 +125,11 @@ jobs:
           APK="android/app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
+          test -x "$APKSIGNER"
           "$APKSIGNER" verify --verbose --print-certs "$APK" | tee /tmp/release-signature.txt
           KEY_FP="$(keytool -exportcert -keystore android/app/bp-diary-signing.p12 -storetype PKCS12 -storepass android -alias androiddebugkey | sha256sum | awk '{print $1}')"
           APK_FP="$(grep -m1 'certificate SHA-256 digest' /tmp/release-signature.txt | sed 's/.*digest: //' | tr '[:upper:]' '[:lower:]' | tr -d ':[:space:]')"
+          test -n "$APK_FP"
           test "$KEY_FP" = "$APK_FP"
           echo "Verified release signer: $KEY_FP"
 
@@ -104,12 +144,13 @@ jobs:
 
           Highlights:
           - persistent native Android daily reminders;
-          - reminder restoration after reboot/time changes;
+          - reminder restoration after reboot, device time/timezone changes, and app updates;
+          - Android notification permission handling;
           - dedicated Settings screen;
-          - in-app official GitHub Release update checker;
+          - explicit in-app check against the official GitHub Release;
           - single-source versioning via version.json;
-          - UI regression tests and visual snapshots;
-          - existing V15 archive, PDF, backup, accessibility, Voice/TTS and Android Back behavior preserved.
+          - UI regression and NativeBridge contract tests;
+          - V15 Archive, PDF, backup, accessibility, Voice/TTS and Android Back behavior preserved.
 
           Package: com.tokhirjonyuldoshev.bpdiary
           Version: ${VERSION_NAME} (versionCode ${VERSION_CODE})
