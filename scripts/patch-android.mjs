@@ -122,7 +122,7 @@ public final class ReminderScheduler {
     }
 
     public static long nextTriggerMillis(String time) {
-        if (time == null || !time.matches("^(?:[01]\\d|2[0-3]):[0-5]\\d$")) {
+        if (time == null || !time.matches("^(?:[01]\\\\d|2[0-3]):[0-5]\\\\d$")) {
             throw new IllegalArgumentException("Invalid reminder time");
         }
         String[] parts = time.split(":");
@@ -688,7 +688,7 @@ public class NativeBridgePlugin extends Plugin {
         String time = call.getString("time");
         String title = call.getString("title");
         String body = call.getString("body");
-        if (time == null || !time.matches("^(?:[01]\\d|2[0-3]):[0-5]\\d$")) {
+        if (time == null || !time.matches("^(?:[01]\\\\d|2[0-3]):[0-5]\\\\d$")) {
             call.reject("Invalid reminder time");
             return;
         }
