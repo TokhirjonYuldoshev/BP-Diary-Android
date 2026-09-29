@@ -46,6 +46,7 @@ await writeFile(join(app,'build.gradle'),gradle,'utf8');
 const mainActivity=`package com.tokhirjonyuldoshev.bpdiary;
 
 import android.os.Bundle;
+import android.view.WindowManager;
 import androidx.activity.OnBackPressedCallback;
 import com.getcapacitor.BridgeActivity;
 
@@ -54,6 +55,9 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(NativeBridgePlugin.class);
         super.onCreate(savedInstanceState);
+        if (getSharedPreferences("bp_diary_privacy", MODE_PRIVATE).getBoolean("screen_shield", false)) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        }
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
@@ -844,6 +848,10 @@ public class NativeBridgePlugin extends Plugin {
     @PluginMethod
     public void setPrivacyShield(PluginCall call) {
         boolean enabled = Boolean.TRUE.equals(call.getBoolean("enabled"));
+        getContext().getSharedPreferences("bp_diary_privacy", Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean("screen_shield", enabled)
+            .apply();
         getActivity().runOnUiThread(() -> {
             try {
                 if (enabled) getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
