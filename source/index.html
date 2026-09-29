@@ -1,0 +1,1739 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="referrer" content="no-referrer">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';">
+    <title>Дневник давления | FINAL VALIDATED 5.5</title>
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <script src="vendor/chart/chart.umd.js"></script>
+    <script src="vendor/xlsx/xlsx.full.min.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI', Roboto, sans-serif; padding:20px 16px; background:#eef2f7; color:#1e2f3e; transition: background 0.2s, color 0.2s; }
+        body.dark { background:#0b1120; color:#e9edf2; }
+        .container { max-width:1600px; margin:0 auto; }
+        .card { background:white; border-radius:28px; box-shadow:0 8px 24px rgba(0,0,0,0.05); margin-bottom:24px; border:1px solid #e2e8f0; overflow:hidden; }
+        body.dark .card { background:#111827; border-color:#1f2a3e; }
+        .card-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding:16px 24px 8px; border-bottom:1px solid #e2e8f0; }
+        body.dark .card-header { border-bottom-color:#1f2a3e; }
+        h1 { font-size:1.8rem; font-weight:700; background: linear-gradient(135deg,#1f4870,#2a6f8f); background-clip:text; -webkit-background-clip:text; color:transparent; }
+        body.dark h1 { background: linear-gradient(135deg,#5b9bc5,#7ec8e0); background-clip:text; }
+        h2 { font-size:1.3rem; font-weight:600; margin-bottom:12px; color:#1f4662; display:flex; align-items:center; gap:8px; }
+        body.dark h2 { color:#b9d4f0; }
+        button { background:#2c7da0; border:none; color:white; padding:8px 16px; border-radius:14px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; font-size:0.8rem; transition:0.2s; white-space:nowrap; }
+        button:hover { opacity:0.9; transform:scale(0.98); }
+        button.outline { background:transparent; border:1px solid #2c7da0; color:#1f6e8c; }
+        body.dark button.outline { border-color:#5b8cac; color:#b9defa; }
+        button.danger { background:#bc5a5a; }
+        .toolbar { display:flex; flex-wrap:nowrap; gap:8px; justify-content:flex-end; overflow-x:auto; white-space:nowrap; padding:6px 24px 16px; }
+        .form-panel { padding:16px 24px 0; }
+        .date-time-row { display:flex; flex-wrap:wrap; gap:12px; background:#f9fbfd; padding:10px 16px; border-radius:20px; margin-bottom:16px; align-items:flex-end; border:1px solid #e2e8f0; }
+        body.dark .date-time-row { background:#0f172a; border-color:#1f2a3e; }
+        .target-row { background:#f0f7fc; border-color:#b8d4e3; margin-top:4px; }
+        body.dark .target-row { background:#0f172a; border-color:#1f2a3e; }
+        .field { display:flex; flex-direction:column; gap:4px; }
+        .field label { font-size:0.7rem; font-weight:600; text-transform:uppercase; color:#5b7f9c; letter-spacing:0.3px; }
+        body.dark .field label { color:#8ba5c0; }
+        input, select { padding:8px 12px; border-radius:14px; border:1px solid #cbd5e1; background:white; font-family:inherit; font-size:0.85rem; }
+        body.dark input, body.dark select { background:#1e293b; border-color:#334155; color:#f1f5f9; }
+        .patient-block { display:flex; gap:6px; align-items:flex-end; background:#ffffffcc; padding:4px 12px; border-radius:20px; border:1px solid #cbd5e1; }
+        body.dark .patient-block { background:#0f172acc; border-color:#334155; }
+        .measures-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(340px,1fr)); gap:20px; margin-bottom:20px; }
+        .measure-card { background:white; border-radius:20px; padding:16px; border:1px solid #e2edf5; }
+        body.dark .measure-card { background:#0f172a; border-color:#1f2a3e; }
+        .bp-inputs { display:flex; flex-wrap:wrap; gap:8px; align-items:baseline; }
+        .bp-inputs input { width:100px; text-align:center; }
+        .action-buttons { display:flex; flex-wrap:wrap; gap:12px; justify-content:flex-end; margin:10px 0 16px; }
+        .measurement-bottom-row { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:10px 0 16px; flex-wrap:wrap; }
+        .measurement-flags { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .measurement-bottom-row .action-buttons { margin:0; margin-left:auto; }
+        .table-container { overflow-x:auto; padding:0 24px 20px; }
+        table { width:100%; border-collapse:collapse; font-size:0.8rem; min-width:1000px; border:1px solid #e2e8f0; border-radius:20px; overflow:hidden; }
+        body.dark table { border-color:#1f2a3e; }
+        th, td { padding:10px 6px; text-align:center; border-bottom:1px solid #e2e8f0; border-right:1px solid #e2e8f0; }
+        body.dark th, body.dark td { border-bottom-color:#1f2a3e; border-right-color:#1f2a3e; }
+        th { background:#eef3fc; font-weight:700; }
+        body.dark th { background:#0f172a; color:#c9e0f0; }
+        .record-badge { background:#f0f6fa; padding:4px 8px; border-radius:20px; font-family:monospace; display:inline-block; }
+        body.dark .record-badge { background:#1e293b; color:#e2e8f0; }
+        .bg-optimal { background:#d4edda !important; color:#155724 !important; }
+        .bg-normal { background:#cce5ff !important; color:#004085 !important; }
+        .bg-highNormal { background:#fff3cd !important; color:#856404 !important; }
+        .bg-hyper1 { background:#f8d7da !important; color:#721c24 !important; }
+        .bg-hyper2 { background:#dc3545 !important; color:#fff !important; }
+        body.dark .bg-optimal { background:#1e4620 !important; color:#a5d6a7 !important; }
+        body.dark .bg-normal { background:#0c325c !important; color:#90caf9 !important; }
+        body.dark .bg-highNormal { background:#5c4a0a !important; color:#ffe082 !important; }
+        body.dark .bg-hyper1 { background:#5c1c20 !important; color:#ef9a9a !important; }
+        body.dark .bg-hyper2 { background:#7f1d1d !important; color:#ffcdd2 !important; }
+        .avg-highlight { font-weight:700; border:2px solid #cbd5e1; }
+        body.dark .avg-highlight { border-color:#475569; }
+        .stats-bar { background:#f4f9fe; margin:0 24px 16px; border-radius:20px; padding:12px 20px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; border:1px solid #e2e8f0; }
+        body.dark .stats-bar { background:#0f172a; border-color:#1f2a3e; }
+        .filter-group { display:flex; gap:8px; flex-wrap:wrap; }
+        .stat-numbers { display:flex; flex-wrap:wrap; gap:12px; }
+        .stat-item { background:white; padding:4px 10px; border-radius:20px; font-size:0.75rem; border:1px solid #cbd5e1; }
+        body.dark .stat-item { background:#1e293b; border-color:#334155; }
+        .chart-panel { padding:0 24px 20px; }
+        canvas { max-height:260px; width:100%; background:transparent; }
+        .pro-analysis { background:#f0f7fc; margin:0 24px 16px; border-radius:24px; padding:16px 24px; border:1px solid #e2e8f0; }
+        body.dark .pro-analysis { background:#0f172a; border-color:#1f2a3e; }
+        .analysis-grid { display:flex; flex-wrap:wrap; gap:16px; margin-top:10px; }
+        .analysis-card { flex:1; min-width:190px; background:rgba(255,255,255,0.7); border-radius:20px; padding:14px 16px; border:1px solid #dce5ec; backdrop-filter:blur(2px); }
+        body.dark .analysis-card { background:#1e293b; border-color:#2d3a4a; }
+        .analysis-value { font-size:1.5rem; font-weight:700; margin-top:6px; }
+        .risk-low { color:#2e7d32; } .risk-moderate { color:#ed6c02; } .risk-high { color:#d32f2f; }
+        body.dark .risk-low { color:#6fbf4c; } body.dark .risk-moderate { color:#ffb74d; } body.dark .risk-high { color:#ff8a80; }
+        .progress-bar-container { background:#e0e0e0; border-radius:20px; height:10px; margin:8px 0; width:100%; overflow:hidden; }
+        body.dark .progress-bar-container { background:#334155; }
+        .progress-fill { background:#2c7da0; height:100%; width:0%; border-radius:20px; transition:width 0.3s; }
+        .achievement-badge { display:inline-flex; align-items:center; background:#ecf9ff; border-radius:30px; padding:2px 8px; margin:2px; font-size:0.7rem; }
+        body.dark .achievement-badge { background:#2d3a4a; color:#c9e0f0; }
+        .loading-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:9999; color:white; font-size:1.5rem; backdrop-filter:blur(4px); }
+        footer { text-align:center; font-size:0.8rem; margin:20px 0 10px; font-weight:500; letter-spacing:1px; opacity:0.7; }
+        button:focus-visible, input:focus-visible, select:focus-visible { outline:3px solid currentColor; outline-offset:2px; }
+        .clinical-note { margin:0 24px 16px; padding:12px 16px; border-radius:16px; border:1px solid #cbd5e1; background:#f8fafc; font-size:0.78rem; line-height:1.45; }
+        body.dark .clinical-note { background:#0f172a; border-color:#334155; color:#dbeafe; }
+        .check-field { display:flex; align-items:center; gap:8px; padding:7px 10px; border:1px solid #cbd5e1; border-radius:14px; background:white; font-size:0.78rem; min-height:36px; }
+        body.dark .check-field { background:#1e293b; border-color:#334155; }
+        .check-field input { width:auto; accent-color:#2c7da0; }
+        .profile-section { width:100%; border:1px solid #d6e2ec; border-radius:18px; padding:12px 14px; background:rgba(255,255,255,.58); }
+        body.dark .profile-section { background:rgba(15,23,42,.72); border-color:#334155; }
+        .profile-section-title { display:flex; align-items:center; gap:8px; font-size:.82rem; font-weight:800; color:#285b7a; margin-bottom:10px; }
+        body.dark .profile-section-title { color:#b9d4f0; }
+        .profile-fields { display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px; }
+        .conditional-panel[hidden] { display:none !important; }
+        .help-tip { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; margin-left:4px; border-radius:50%; border:1px solid #86a8bf; color:#2c6e91; font-size:.68rem; font-weight:800; cursor:help; vertical-align:middle; text-transform:none; }
+        body.dark .help-tip { border-color:#628aa5; color:#b9defa; }
+        .field-note { font-size:.68rem; line-height:1.35; color:#607d91; max-width:330px; }
+        body.dark .field-note { color:#9fb7ca; }
+        .data-recovery-warning { border-color:#d97706; background:#fff7ed; color:#7c2d12; }
+        body.dark .data-recovery-warning { border-color:#d97706; background:#3a2a13; color:#fde68a; }
+        .score-region-badge { min-height:34px; display:flex; align-items:center; padding:7px 11px; border-radius:12px; background:#e9f5fb; border:1px solid #b8d4e3; font-weight:700; font-size:.78rem; }
+        .score-row { align-items:flex-start; }
+        .score-row .profile-section { width:100%; max-width:none; }
+        .score-row .score-compact-fields { display:grid; grid-template-columns:minmax(500px,540px) minmax(220px,280px) 135px minmax(300px,390px); gap:10px 12px; align-items:end; width:max-content; max-width:100%; }
+        .score-row .score-compact-fields .field { min-width:0; }
+        .score-row .score-compact-fields select,
+        .score-row .score-compact-fields input { max-width:100%; }
+        .score-row #scoreEligibility { width:100%; min-width:0 !important; }
+        .score-row #scoreCountry { width:100%; min-width:0 !important; }
+        .score-row .score-sys-control { display:flex; align-items:center; gap:6px; flex-wrap:nowrap; }
+        .score-row #scoreSysFromDiaryBtn { padding:7px 11px; font-size:.76rem; }
+        .score-row .field-note { max-width:360px; }
+        .score-row .score-sys-field { align-self:end; }
+        .score-row .score-source-line { margin-top:5px; min-height:16px; }
+        .score-row .score-source-line .field-note { display:block; max-width:none; font-size:.68rem; color:#6b8297; }
+        body.dark .score-region-badge { background:#16273a; border-color:#35516b; color:#d9ebf7; }
+        .score-row { align-items:stretch; }
+        .advanced-score { margin-top:8px; font-size:.75rem; }
+        .advanced-score summary { cursor:pointer; color:#2c6e91; font-weight:700; }
+        body.dark .advanced-score summary { color:#b9defa; }
+        .status-note { font-size:0.72rem; opacity:0.82; display:block; margin-top:5px; line-height:1.3; }
+        .dependency-warning { color:#b45309; font-weight:600; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior:auto !important; transition:none !important; animation:none !important; } }
+        @media (max-width:1320px) {
+            .score-row .score-compact-fields { grid-template-columns:minmax(360px,1.5fr) minmax(220px,1fr) 135px; width:100%; }
+            .score-row .score-sys-field { grid-column:1 / -1; }
+        }
+        @media (max-width:860px) {
+            .analysis-grid { flex-direction:column; }
+            .bp-inputs input { width:80px; }
+            .date-time-row { padding:10px; }
+            .form-panel, .chart-panel { padding-left:12px; padding-right:12px; }
+            .pro-analysis, .stats-bar, .clinical-note { margin-left:12px; margin-right:12px; }
+            .score-row .profile-section { width:100%; max-width:none; }
+            .score-row .score-compact-fields { grid-template-columns:1fr 1fr; width:100%; }
+            .score-row .score-sys-field { grid-column:1 / -1; }
+        }
+        @media (max-width:520px) {
+            body { padding:10px 6px; }
+            .card { border-radius:18px; }
+            .patient-block { width:100%; flex-wrap:wrap; }
+            .measures-grid { grid-template-columns:1fr; }
+            .bp-inputs input { width:72px; }
+            .score-row .score-compact-fields { grid-template-columns:1fr; }
+            .score-row .score-sys-field { grid-column:1; }
+            .score-row .score-sys-control { flex-wrap:wrap; }
+            .score-row #scoreSysFromDiaryBtn { width:100%; }
+        }
+    
+        @media (max-width: 900px) {
+            .measurement-bottom-row { align-items:stretch; }
+            .measurement-flags { width:100%; }
+            .measurement-bottom-row .action-buttons { width:100%; margin-left:0; justify-content:flex-end; }
+        }
+</style>
+</head>
+<body>
+<div class="container" id="app"></div>
+
+<script>
+    // ---------------------- ПОЛНЫЙ ПЕРЕВОД ----------------------
+    const translations = {
+        ru: {
+            mainPatient: "Основной", appTitle: "Дневник артериального давления", save: "Сохранить", clear: "Очистить", voice: "Голосовой ввод",
+            speak: "Озвучить", fillLast: "Заполнить последними", filter: "Фильтр", reset: "Сброс", search: "Поиск по таблице",
+            excel: "Excel", csv: "CSV",
+            fhir: "FHIR JSON", reminder: "Напоминание", deleteAll: "Удалить всё",
+            reportDoctor: "Отчёт врачу / PDF", fullBackup: "Полный бэкап", restoreBackup: "Восстановить бэкап",
+            correlation: "Корреляция (Пирсона)", vascularStiffness: "Среднее пульсовое давление",
+            crisisRisk: "Проверка очень высокого АД", refCompare: "Порог гипертензии ESC 2024", achievements: "Достижения и прогресс",
+            regularity: "Макс. серия (дней подряд)", targetHit: "Попадание в персональный диапазон", totalMeasures: "Сеансов измерения",
+            badges: "Награды", crisisHigh: "КРИТИЧЕСКИЙ РИСК", crisisModerate: "Умеренный риск", crisisLow: "Низкий риск",
+            pulsePressure: "Пульсовое давление", whoClass: "Классификация АД (ESC 2024)", avg7days: "Среднее за 7 дней",
+            doctorAdvice: "Рекомендация врача", ttr: "Записи в целевом диапазоне (%)", variability: "Вариабельность (SD)",
+            forecast3d: "Прогноз на 3 дня", forecast7d: "Прогноз на 7 дней", ppTrend: "Динамика пульсового давления",
+            bmi: "ИМТ (кг/м²)", targetSys: "Персональный диапазон АД", score2: "SCORE2 / SCORE2-OP / SCORE2-Diabetes", arrhythmia: "Флаг нерегулярного пульса",
+            comparison: "Сравнение с прошлым периодом", lifestyle: "Рекомендации по образу жизни", date: "Дата", time: "Время",
+            id: "ID", patient: "Пациент", temperature: "Температура (°C)", weight: "Вес (кг)", height: "Рост (см)",
+            age: "Возраст (лет)", gender: "Пол", male: "Мужской", female: "Женский", smoking: "Курение", yes: "Да", no: "Нет",
+            cholesterolTotal: "Общ. Хол. (ммоль/л)", cholesterolHDL: "Хол. ЛПВП (ммоль/л)", diabetes: "Диабет", leftArm: "Левая рука",
+            rightArm: "Правая рука", sys: "систола", dia: "диастола", pulse: "пульс", measurement: "Замер",
+            archive: "Архив измерений", analysis: "Кардио-анализ + Продвинутые метрики", morning: "Утро (00-11)",
+            day: "День (12-17)", evening: "Вечер (18-23)", weekdayAvg: "Среднее по дням недели",
+            avgSystolic: "Среднее систолическое", measurementsCount: "Количество сеансов",
+            measurementL: "Л", measurementR: "П", avgLabel: "Среднее", actions: "Действия", unitMmHg: "мм рт.ст.",
+            unitKg: "кг", unitCelsius: "°C", unitPercent: "%", systolic: "Систолическое", diastolic: "Диастолическое",
+            pulseRate: "Пульс", temperatureLabel: "Температура", weightLabel: "Вес", dateFormat: "ДД.ММ.ГГГГ",
+            optimal: "Оптимальное", normal: "Норма", highNormal: "Высоко-нормальное", hypertension1: "Гипертония 1 ст.", hypertension2: "Гипертония 2+ ст.",
+            cardiologistConsult: "Консультация кардиолога", highPulsePressure: "Высокое пульсовое давление", normalState: "В норме",
+            systoleDiastole: "Систола-Диастола", escTarget: "Цель ESC",
+            customTargets: "Персонализированные цели", targetSYS: "Цель САД", targetDIA: "Цель ДАД", targetPulse: "Цель пульса", targetTTRlabel: "Цель: % измерений в диапазоне",
+            monday: "Пн", tuesday: "Вт", wednesday: "Ср", thursday: "Чт", friday: "Пт", saturday: "Сб", sunday: "Вс",
+            invalidValues: "Некорректные значения давления или пульса", fillOneArm: "Заполните хотя бы одну руку", deleteConfirm: "Вы уверены, что хотите удалить запись?",
+            noData: "Нет данных. Добавьте первое измерение.", noPrevRecords: "Нет предыдущих записей",
+            reminderSet: "Напоминание установлено на", reminderPrompt: "Введите время напоминания (ЧЧ:ММ)",
+            importSuccess: "Данные успешно импортированы", importError: "Ошибка при чтении файла", deleteAllConfirm: "Удалить все данные текущего пациента?",
+            pressureDynamics: "Динамика давления", pulseDynamics: "Динамика пульса", tempWeightDynamics: "Динамика температуры и веса",
+            timeOfDayAnalysis: "Анализ по времени суток", voiceNotSupported: "Ваш браузер не поддерживает голосовой ввод или доступ запрещён",
+            voiceNotRecognized: "Не удалось распознать три числа (систола, диастола, пульс)", noSelectedRecord: "Нет выбранной записи для озвучивания",
+            recordFrom: "Запись от", avgPressure: "Среднее давление", timeSec: "Время (ЧЧ:ММ:СС)",
+            criticalWarning: "КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ", auto: "авто",
+            bpWarningSysHigh: "Систолическое > 180", bpWarningSysLow: "Систолическое < 70",
+            bpWarningPulseHigh: "Пульс > 120 уд/мин", bpWarningPulseLow: "Пульс < 50 уд/мин",
+            delMainPatient: "Нельзя удалить профиль основного пациента.", delPatientConfirm: "Удалить пациента и все его данные?",
+            newPatientName: "Введите новое имя пациента:", patientNamePrefix: "Пациент ", reminderMsg: "Пора измерить давление!",
+            pulseUnit: "уд/мин", noTempData: "Нет данных температуры и веса",
+            addPatient: "Добавить пациента", editPatient: "Изменить", delPatient: "Удалить", fromDate: "С даты", toDate: "По дату",
+            restoreConfirm: "Восстановить данные из бэкапа? Текущие данные будут заменены.", backupRestored: "Бэкап успешно восстановлен",
+            loading: "Загрузка...", invalidFile: "Неверный формат файла", invalidBackup: "Структура бэкапа повреждена", dangerHigh: "Опасно!",
+            invalidNumeric: "Пожалуйста, введите корректные числовые значения",
+            insufficientData: "Недостаточно данных",
+            forecastInDays: "через",
+            days: "дн.",
+            approx: "≈",
+            reportTitle: "ОТЧЁТ ДЛЯ ВРАЧА",
+            patientNameLabel: "Пациент",
+            generated: "Сформирован",
+            summary: "Сводка",
+            avgBP: "Среднее АД",
+            targetBP: "Целевое АД",
+            bmiLabel: "ИМТ",
+            smokingStatus: "Курение",
+            cholesterolTotalShort: "Общ. холестерин",
+            cholesterolHDLShort: "ЛПВП",
+            diabetesStatus: "Диабет",
+            measurementsTableTitle: "Таблица измерений",
+            dateTime: "Дата/Время",
+            avgSYS: "Сред. САД",
+            avgDIA: "Сред. ДАД",
+            avgPULSE: "Сред. Пульс",
+            riskRegion: "Регион SCORE2", riskRegionChoose: "Выберите регион", riskLowRegion: "Низкий", riskModerateRegion: "Умеренный", riskHighRegion: "Высокий", riskVeryHighRegion: "Очень высокий",
+            scoreEligibility: "Применимость SCORE", scoreEligibilityChoose: "Выберите применимость", scoreEligible: "Нет установленного ССЗ, выраженной ХБП/FH или другого состояния высокого риска", scoreIneligible: "Есть ССЗ/ХБП/FH/другое состояние высокого риска или не уверен", scoreNeedsEligibility: "Подтвердите применимость SCORE перед расчётом",
+            bpContext: "Контекст измерения", homeBP: "Домашнее АД", officeBP: "Офисное АД", mixedBP: "Смешанный: домашнее + офисное", primaryArm: "Основная рука", primaryArmAuto: "Авто Л+П", primaryArmLeft: "Левая", primaryArmRight: "Правая", primaryArmAutoUnavailable: "Недостаточно парных измерений", primaryArmHelp: "Авто Л+П: сравниваются парные измерения левой и правой руки; выбирается рука с более высоким средним САД. Если измерялась только одна рука, используется она. Если измерялись обе руки, но парных замеров нет, автоопределение не выполняется — выберите руку вручную. Для сеанса берётся среднее последних двух валидных измерений выбранной руки.",
+            diabetesType: "Тип диабета", diabetesT2: "2 тип", diabetesOther: "Другой / не указан", diabetesAge: "Возраст диагноза диабета", hba1c: "HbA1c", hba1cUnit: "Ед. HbA1c", egfr: "eGFR (мл/мин/1,73 м²)", uacr: "UACR (мг/г)", uacrHelp: "Отношение альбумин/креатинин мочи. Используется вместе с eGFR для проверки тяжёлого поражения органов при диабете.",
+            irregularPulseFlag: "Тонометр показал нерегулярный пульс", emergencySymptoms: "Есть тревожные симптомы при высоком АД*",
+            targetSysMin: "Мин. САД", targetDiaMin: "Мин. ДАД", targetSysMax: "Макс. САД", targetDiaMax: "Макс. ДАД",
+            clinicalDisclaimer: "*Тревожные симптомы: боль в груди, одышка, боль в спине, онемение/слабость, нарушение зрения или речи. Дневник не ставит диагноз. SCORE-модели рассчитываются только в опубликованной области применимости. При очень высоком АД и тревожных симптомах требуется экстренная медицинская помощь. Для домашних измерений используется порог безопасности >180/120, для офисных также учитывается ESC-порог ≥180/110.",
+            severeBP: "Очень высокое АД", emergencyBP: "Экстренная ситуация", veryHighOfficeBP: "Очень высокое офисное АД", noSevereBP: "В последней записи нет значений выше порога безопасности", repeatBPAdvice: "Повторите измерение через ≥1 минуту; если очень высокое АД сохраняется, срочно свяжитесь с медицинским специалистом.", officeHighAdvice: "Повторите измерение и оцените наличие симптомов; при сохранении очень высокого офисного АД требуется срочная медицинская оценка.", emergencyAdvice: "Очень высокое АД сочетается с тревожными симптомами — обратитесь в местную экстренную службу сейчас.",
+            irregularFound: "Есть записи с флагом нерегулярного пульса тонометра", irregularNone: "Флаг нерегулярного пульса тонометра не отмечен", irregularNotDiagnosis: "Это не диагноз аритмии.",
+            scoreCountry: "Страна для SCORE2", scoreCountryChoose: "Выберите страну", scoreCountryManual: "Другая страна / выбрать регион вручную", scoreResolvedRegion: "Расчётный регион", scoreManualRegion: "Ручной выбор региона (резервный режим)",
+            scoreSys: "САД для SCORE2", scoreSysNote: "Для SCORE2 предпочтительно стандартизированное офисное/клиническое САД. Кнопка сначала использует офисные записи; если их нет, может подставить домашнее среднее как ориентировочное значение.", scoreUseDiaryAvg: "Использовать среднее САД из дневника", scoreDiaryAvgUnavailable: "В дневнике нет сохранённых измерений САД", scoreNeedsSys: "Введите САД для SCORE2", scoreSysSourceManual: "Источник: введено вручную", scoreSysSourceOffice: "Источник: среднее офисное САД из дневника", scoreSysSourceHome: "Источник: домашнее среднее САД (ориентировочно)", scoreCountryNote: "Страна автоматически определяет калибровочный регион SCORE2 по ESC 2021. Для стран вне списка используйте ручной режим.",
+            diabetesDetails: "Дополнительные данные при диабете", diabetesDetailsNote: "Поля нужны для SCORE2-Diabetes при сахарном диабете 2 типа.", cardiovascularProfile: "Кардио-профиль", scoreSettings: "SCORE2 — параметры расчёта", bpSettings: "Контекст давления", personalTargetsTitle: "Персональный диапазон и цели",
+            diabetesHelp: "Если диабета нет, дополнительные диабетические поля скрываются и не участвуют в расчёте.", scoreEligibilityHelp: "SCORE2 предназначен для первичной профилактики. Не отмечайте применимость при установленном ССЗ, значимой ХБП, семейной гиперхолестеринемии или другом уже известном состоянии высокого/очень высокого риска.", bpContextHelp: "Домашнее/офисное влияет на классификацию записей дневника, но не заменяет отдельное клиническое САД для SCORE2.", targetRangeHelp: "Это доля сохранённых измерений, попавших в заданный вами диапазон, а не классический time-in-therapeutic-range.",
+            scoreNeedsRegion: "Выберите страну или регион риска SCORE2", scoreNotApplicable: "Модель не применяется к указанным данным", scoreNeedsDiabetesData: "Для SCORE2-Diabetes нужны: диабет 2 типа, возраст диагноза, HbA1c и eGFR", scoreDiabetesAgeUnsupported: "Для диабета 2 типа в возрасте ≥70 лет эта версия дневника не подменяет SCORE2-Diabetes моделью SCORE2-OP; требуется индивидуальная оценка риска.", scoreHighRiskCondition: "Обнаружены признаки состояния высокого/очень высокого риска, при котором SCORE2-Diabetes не должен использоваться как основной классификатор.", profileValidationError: "Проверьте медицинские параметры: некорректная комбинация или диапазон значений.", targetRangeInvalid: "Минимальные границы персонального диапазона должны быть ниже максимальных.", scoreCategoryLowModerate: "низкий–умеренный риск", primaryArmUsed: "Основная рука", interArmDifference: "Средняя межрук. раз. САД", restoreFailedReverted: "Восстановление не завершено; исходные данные возвращены.", targetRangeNote: "Доля записей внутри заданного персонального диапазона; это не временной TTR.", forecastNote: "Линейный статистический тренд по реальным датам; не клинический прогноз.",
+            fhirExported: "FHIR R4 Bundle сформирован", dependencyMissing: "Не загружена внешняя библиотека", backupVersion: "Версия схемы бэкапа", dataRecovered: "Некорректные записи пропущены при загрузке", dataStorageCorrupt: "Локальные данные повреждены и не были загружены", filterRangeInvalid: "Дата «С даты» не может быть позже даты «По дату».",
+            bpNonElevated: "Не повышенное", bpElevated: "Повышенное", bpHypertension: "Гипертензия", bpSevere: "Очень высокое", bpMixedContext: "Смешанный контекст — классифицируйте домашние и офисные записи отдельно",
+            targetPulseDisplay: "Персональная цель пульса", scoreCategoryLow: "низкий риск", scoreCategoryModerate: "умеренный риск", scoreCategoryHigh: "высокий риск", scoreCategoryVeryHigh: "очень высокий риск"
+        },
+        en: {
+            mainPatient: "Main", appTitle: "Blood Pressure Diary", save: "Save", clear: "Clear", voice: "Voice input", speak: "Speak",
+            fillLast: "Fill last", filter: "Filter", reset: "Reset", search: "Search table",
+            excel: "Excel", csv: "CSV",
+            fhir: "FHIR JSON", reminder: "Reminder", deleteAll: "Delete all", reportDoctor: "Doctor report / PDF", fullBackup: "Full backup", restoreBackup: "Restore backup",
+            correlation: "Pearson correlation", vascularStiffness: "Average pulse pressure", crisisRisk: "Critical high-BP assessment",
+            refCompare: "ESC 2024 hypertension threshold", achievements: "Achievements & progress", regularity: "Best streak (consecutive days)",
+            targetHit: "Personal target-range hit rate", totalMeasures: "Measurement sessions", badges: "Badges",
+            crisisHigh: "CRITICAL RISK", crisisModerate: "Moderate risk", crisisLow: "Low risk", pulsePressure: "Pulse pressure",
+            whoClass: "BP classification (ESC 2024)", avg7days: "7-day average", doctorAdvice: "Doctor's advice", ttr: "Records in target range (%)",
+            variability: "Variability (SD)", forecast3d: "3-day forecast", forecast7d: "7-day forecast", ppTrend: "Pulse pressure trend",
+            bmi: "BMI (kg/m²)", targetSys: "Personal BP range", score2: "SCORE2 / SCORE2-OP / SCORE2-Diabetes", arrhythmia: "Irregular-pulse flag",
+            comparison: "Comparison vs previous period", lifestyle: "Lifestyle advice", date: "Date", time: "Time",
+            id: "ID", patient: "Patient", temperature: "Temperature (°C)", weight: "Weight (kg)", height: "Height (cm)",
+            age: "Age (years)", gender: "Gender", male: "Male", female: "Female", smoking: "Smoking", yes: "Yes", no: "No",
+            cholesterolTotal: "Total cholesterol (mmol/L)", cholesterolHDL: "HDL cholesterol (mmol/L)", diabetes: "Diabetes", leftArm: "Left arm",
+            rightArm: "Right arm", sys: "systolic", dia: "diastolic", pulse: "pulse", measurement: "Meas.",
+            archive: "Measurements archive", analysis: "Cardio analysis + Advanced metrics", morning: "Morning (00-11)",
+            day: "Afternoon (12-17)", evening: "Evening (18-23)", weekdayAvg: "Average by day of week",
+            avgSystolic: "Average systolic", measurementsCount: "Number of sessions",
+            measurementL: "L", measurementR: "R", avgLabel: "Average", actions: "Actions", unitMmHg: "mmHg",
+            unitKg: "kg", unitCelsius: "°C", unitPercent: "%", systolic: "Systolic", diastolic: "Diastolic",
+            pulseRate: "Pulse", temperatureLabel: "Temperature", weightLabel: "Weight", dateFormat: "MM/DD/YYYY",
+            optimal: "Optimal", normal: "Normal", highNormal: "High-Normal", hypertension1: "Hypertension 1", hypertension2: "Hypertension 2+",
+            cardiologistConsult: "Cardiologist consultation", highPulsePressure: "High pulse pressure", normalState: "Normal",
+            systoleDiastole: "Systole-Diastole", escTarget: "ESC target",
+            customTargets: "Personalized targets", targetSYS: "Target SBP", targetDIA: "Target DBP", targetPulse: "Target pulse", targetTTRlabel: "Target: % readings in range",
+            monday: "Mon", tuesday: "Tue", wednesday: "Wed", thursday: "Thu", friday: "Fri", saturday: "Sat", sunday: "Sun",
+            invalidValues: "Invalid blood pressure or pulse values", fillOneArm: "Fill at least one arm", deleteConfirm: "Are you sure you want to delete this record?",
+            noData: "No data available. Add the first measurement.", noPrevRecords: "No previous records found",
+            reminderSet: "Reminder successfully set for", reminderPrompt: "Enter reminder time (HH:MM)",
+            importSuccess: "Data imported successfully", importError: "Error reading the file", deleteAllConfirm: "Delete all data for the current patient?",
+            pressureDynamics: "Blood Pressure Dynamics", pulseDynamics: "Pulse Dynamics", tempWeightDynamics: "Temperature & Weight Dynamics",
+            timeOfDayAnalysis: "Time of Day Analysis", voiceNotSupported: "Voice input is not supported or permission denied",
+            voiceNotRecognized: "Could not recognize three numbers (systolic, diastolic, pulse)", noSelectedRecord: "No record selected to speak",
+            recordFrom: "Record from", avgPressure: "Average pressure", timeSec: "Time (HH:MM:SS)",
+            criticalWarning: "CRITICAL WARNING", auto: "auto",
+            bpWarningSysHigh: "Systolic > 180", bpWarningSysLow: "Systolic < 70",
+            bpWarningPulseHigh: "Pulse > 120 bpm", bpWarningPulseLow: "Pulse < 50 bpm",
+            delMainPatient: "Cannot delete the main patient profile.", delPatientConfirm: "Delete patient and all their data?",
+            newPatientName: "Enter new patient name:", patientNamePrefix: "Patient ", reminderMsg: "Time to measure your blood pressure!",
+            pulseUnit: "bpm", noTempData: "No temperature/weight data",
+            addPatient: "Add patient", editPatient: "Edit", delPatient: "Delete", fromDate: "From date", toDate: "To date",
+            restoreConfirm: "Restore backup? Current data will be replaced.", backupRestored: "Backup restored successfully",
+            loading: "Loading...", invalidFile: "Invalid file format", invalidBackup: "Backup structure corrupted", dangerHigh: "Danger!",
+            invalidNumeric: "Please enter valid numeric values",
+            insufficientData: "Insufficient data",
+            forecastInDays: "in",
+            days: "days",
+            approx: "≈",
+            reportTitle: "DOCTOR REPORT",
+            patientNameLabel: "Patient",
+            generated: "Generated",
+            summary: "Summary",
+            avgBP: "Average BP",
+            targetBP: "Target BP",
+            bmiLabel: "BMI",
+            smokingStatus: "Smoking",
+            cholesterolTotalShort: "Total chol.",
+            cholesterolHDLShort: "HDL chol.",
+            diabetesStatus: "Diabetes",
+            measurementsTableTitle: "Measurements Table",
+            dateTime: "Date/Time",
+            avgSYS: "Avg. SBP",
+            avgDIA: "Avg. DBP",
+            avgPULSE: "Avg. Pulse",
+            riskRegion: "SCORE2 region", riskRegionChoose: "Choose region", riskLowRegion: "Low", riskModerateRegion: "Moderate", riskHighRegion: "High", riskVeryHighRegion: "Very high",
+            scoreEligibility: "SCORE applicability", scoreEligibilityChoose: "Choose applicability", scoreEligible: "No established CVD, significant CKD/FH or other high-risk condition", scoreIneligible: "Known CVD/CKD/FH/other high-risk condition or unsure", scoreNeedsEligibility: "Confirm SCORE applicability before calculation",
+            bpContext: "Measurement context", homeBP: "Home BP", officeBP: "Office BP", mixedBP: "Mixed: home + office", primaryArm: "Primary arm", primaryArmAuto: "Auto L+R", primaryArmLeft: "Left", primaryArmRight: "Right", primaryArmAutoUnavailable: "Not enough paired readings", primaryArmHelp: "Auto L+R compares paired left/right readings and selects the arm with the higher mean SBP. If only one arm was measured, that arm is used. If both arms were measured but no paired readings exist, auto-selection is not performed — select an arm manually. The session value uses the mean of the last two valid readings from the selected arm.",
+            diabetesType: "Diabetes type", diabetesT2: "Type 2", diabetesOther: "Other / unspecified", diabetesAge: "Age at diabetes diagnosis", hba1c: "HbA1c", hba1cUnit: "HbA1c unit", egfr: "eGFR (mL/min/1.73 m²)", uacr: "UACR (mg/g)", uacrHelp: "Urine albumin-to-creatinine ratio. Used with eGFR to screen for severe target-organ damage in diabetes.",
+            irregularPulseFlag: "Monitor indicated irregular pulse", emergencySymptoms: "Concerning symptoms with high BP*",
+            targetSysMin: "Min SBP", targetDiaMin: "Min DBP", targetSysMax: "Max SBP", targetDiaMax: "Max DBP",
+            clinicalDisclaimer: "*Concerning symptoms: chest pain, shortness of breath, back pain, numbness/weakness, vision change or difficulty speaking. This diary does not diagnose disease. SCORE models are calculated only within their published scope. With very high BP plus concerning symptoms, seek emergency medical care. Home safety screening uses >180/120; office screening also applies the ESC ≥180/110 threshold.",
+            severeBP: "Severe high BP", emergencyBP: "Emergency situation", veryHighOfficeBP: "Very high office BP", noSevereBP: "No reading above the safety threshold in the latest record", repeatBPAdvice: "Repeat after ≥1 minute; if very high BP persists, promptly contact a healthcare professional.", officeHighAdvice: "Repeat the measurement and assess symptoms; persistent very high office BP warrants prompt medical assessment.", emergencyAdvice: "Very high BP with concerning symptoms — contact local emergency services now.",
+            irregularFound: "Records contain a monitor irregular-pulse flag", irregularNone: "No monitor irregular-pulse flag recorded", irregularNotDiagnosis: "This is not an arrhythmia diagnosis.",
+            scoreCountry: "Country for SCORE2", scoreCountryChoose: "Choose country", scoreCountryManual: "Other country / choose region manually", scoreResolvedRegion: "Calculated region", scoreManualRegion: "Manual region selection (fallback)",
+            scoreSys: "SBP for SCORE2", scoreSysNote: "Standardized office/clinical SBP is preferred for SCORE2. The button uses office records first; if none exist, it can insert the home mean as an approximate value.", scoreUseDiaryAvg: "Use mean SBP from diary", scoreDiaryAvgUnavailable: "No saved SBP readings are available in the diary", scoreNeedsSys: "Enter SBP for SCORE2", scoreSysSourceManual: "Source: entered manually", scoreSysSourceOffice: "Source: mean office SBP from diary", scoreSysSourceHome: "Source: home mean SBP (approximate)", scoreCountryNote: "Country automatically selects the ESC 2021 SCORE2 calibration region. Use manual mode for countries not listed.",
+            diabetesDetails: "Additional diabetes data", diabetesDetailsNote: "These fields are required for SCORE2-Diabetes in type 2 diabetes.", cardiovascularProfile: "Cardiovascular profile", scoreSettings: "SCORE2 — calculation settings", bpSettings: "Blood-pressure context", personalTargetsTitle: "Personal range and targets",
+            diabetesHelp: "If diabetes is set to No, diabetes-specific fields are hidden and excluded from the calculation.", scoreEligibilityHelp: "SCORE2 is for primary prevention. Do not mark it applicable with established CVD, significant CKD, familial hypercholesterolaemia, or another known high/very-high-risk condition.", bpContextHelp: "Home/office context changes diary BP classification but does not replace the separate clinical SBP used for SCORE2.", targetRangeHelp: "This is the share of saved readings inside your configured range, not classic time-in-therapeutic-range.",
+            scoreNeedsRegion: "Choose a country or SCORE2 risk region", scoreNotApplicable: "The model is not applicable to these inputs", scoreNeedsDiabetesData: "SCORE2-Diabetes requires type 2 diabetes, age at diagnosis, HbA1c and eGFR", scoreDiabetesAgeUnsupported: "For type 2 diabetes at age ≥70, this diary does not substitute SCORE2-OP for SCORE2-Diabetes; individualized risk assessment is required.", scoreHighRiskCondition: "Features of a high/very-high-risk condition were detected; SCORE2-Diabetes should not be used as the primary risk classifier.", profileValidationError: "Check the medical parameters: an invalid combination or value range was entered.", targetRangeInvalid: "Personal-range minimum values must be below the maximum values.", scoreCategoryLowModerate: "low-to-moderate risk", primaryArmUsed: "Primary arm", interArmDifference: "Mean inter-arm SBP diff.", restoreFailedReverted: "Restore did not complete; the original data were restored.", targetRangeNote: "Share of records inside the configured personal range; this is not time-based TTR.", forecastNote: "Linear statistical trend using real dates; not a clinical forecast.",
+            fhirExported: "FHIR R4 Bundle created", dependencyMissing: "External library not loaded", backupVersion: "Backup schema version", dataRecovered: "Invalid records were skipped during loading", dataStorageCorrupt: "Local data are corrupted and could not be loaded", filterRangeInvalid: "The From date cannot be later than the To date.",
+            bpNonElevated: "Non-elevated", bpElevated: "Elevated", bpHypertension: "Hypertension", bpSevere: "Severe high", bpMixedContext: "Mixed context — classify home and office records separately",
+            targetPulseDisplay: "Personal pulse target", scoreCategoryLow: "low risk", scoreCategoryModerate: "moderate risk", scoreCategoryHigh: "high risk", scoreCategoryVeryHigh: "very high risk"
+        }
+    };
+    let currentLang = (()=>{try{return localStorage.getItem('bp_lang')==='en'?'en':'ru';}catch(_){return 'ru';}})();
+    function t(key) { return (translations[currentLang] && translations[currentLang][key]) || key; }
+
+    function escapeHtml(str) {
+        if(str === null || str === undefined) return '';
+        return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+    function safeParseFloat(val) {
+        if (val === '' || val === null || val === undefined) return NaN;
+        const num = Number(val);
+        return Number.isFinite(num) ? num : NaN;
+    }
+    function safeJsonParse(raw, fallback) { try { const v = JSON.parse(raw); return v === null ? fallback : v; } catch(_) { return fallback; } }
+    function isPlainObject(v) { return !!v && typeof v === 'object' && !Array.isArray(v); }
+    function localDateISO(d = new Date()) { const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
+    function normalizeTime(time) { if(/^\d{2}:\d{2}$/.test(time||'')) return time+':00'; return /^\d{2}:\d{2}:\d{2}$/.test(time||'') ? time : ''; }
+    function isValidISODate(value) { const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(value||''); if(!m)return false; const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]),dt=new Date(Date.UTC(y,mo-1,d)); return dt.getUTCFullYear()===y&&dt.getUTCMonth()===mo-1&&dt.getUTCDate()===d; }
+    function isValidTime(time) { const m = /^(\d{2}):(\d{2}):(\d{2})$/.exec(normalizeTime(time)); return !!m && +m[1] < 24 && +m[2] < 60 && +m[3] < 60; }
+    function parseRecordDateTime(rec) { const tm = normalizeTime(rec?.time); if(!rec?.date || !tm) return null; const d = new Date(`${rec.date}T${tm}`); return Number.isNaN(d.getTime()) ? null : d; }
+    function timezoneOffsetForLocal(date,time) { const tm=normalizeTime(time); const d=new Date(`${date}T${tm}`); return Number.isNaN(d.getTime()) ? -new Date().getTimezoneOffset() : -d.getTimezoneOffset(); }
+    function offsetString(minutes) { const n=Number(minutes); if(!Number.isFinite(n))return ''; const sign=n>=0?'+':'-'; const a=Math.abs(Math.trunc(n)),h=String(Math.floor(a/60)).padStart(2,'0'),m=String(a%60).padStart(2,'0'); return `${sign}${h}:${m}`; }
+
+    function uuidv4() { if(window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID(); return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0,v=c==='x'?r:(r&3|8);return v.toString(16);}); }
+    function incomingSafeId(id) { const v=String(id ?? '').trim(); return /^[A-Za-z0-9._-]{1,64}$/.test(v) ? v : null; }
+    function safeRecordId(id) { return incomingSafeId(id) || uuidv4(); }
+    function downloadBlob(blob, filename) { const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 1500); }
+
+    let records = [];
+    let currentFilter = { start: null, end: null };
+    let editId = null;
+    let editBpContextBefore = null;
+    let dataWarningState = { parseFailed:false, invalid:0 };
+    let chartPressure = null, chartPulse = null, chartTempWeight = null, chartTimeOfDay = null, chartWeekday = null, calendarChart = null;
+    let patients = { "default": "Основной" };
+    let patientSettings = {};
+    let currentPatient = "default";
+    let reminderTimeout = null;
+    let timeAutoUpdateInterval = null;
+    let lastAutoDate = null;
+    let alertCheckInterval = null;
+    let lastAlertKey = '';
+    let profileSaveTimer = null;
+    let timeManuallySet = false;
+    let isLoading = false;
+
+    function formatDateRu(iso) { if(!iso) return ''; const p = iso.split('-'); return p.length===3 ? p[2]+'.'+p[1]+'.'+p[0] : iso; }
+    function formatDateEn(iso) { if(!iso) return ''; const p = iso.split('-'); return p.length===3 ? p[1]+'/'+p[2]+'/'+p[0] : iso; }
+    function formatDate(iso) { return currentLang === 'ru' ? formatDateRu(iso) : formatDateEn(iso); }
+    function parseLocalDateToIso(str) { return isValidISODate(str) ? str : null; }
+    function setDefaultDate() { const el=document.getElementById('recordDate'); if(el) el.value=localDateISO(); }
+    function updateAutoDateTime(now = new Date()) {
+        if(editId) return;
+
+        const timeField = document.getElementById("recordTime");
+        const dateField = document.getElementById("recordDate");
+        const today = localDateISO(now);
+
+        // Время обновляется автоматически, пока пользователь не менял его вручную.
+        if(timeField && !timeManuallySet) {
+            timeField.value = now.toLocaleTimeString([], {
+                hour:'2-digit', minute:'2-digit', second:'2-digit'
+            });
+        }
+
+        // Дату обновляем автоматически только если поле всё ещё содержит
+        // ранее автоматически установленную дату (или пусто).
+        // Поэтому вручную выбранная историческая дата не перезаписывается.
+        if(dateField) {
+            if(lastAutoDate === null) {
+                lastAutoDate = dateField.value || today;
+            }
+            if(!dateField.value || dateField.value === lastAutoDate) {
+                dateField.value = today;
+            }
+        }
+
+        lastAutoDate = today;
+    }
+    function formatPressure(s,d,p) { if(!(s>0) || !(d>0)) return '—'; return Math.round(s)+'/'+Math.round(d)+(p>0?'-'+Math.round(p):'-—'); }
+    function armValidReadings(measures, arm) {
+        return (measures||[]).map(m=>m?.[arm]).filter(v=>v?.sys>0&&v?.dia>0&&validateBP(Number(v.sys),Number(v.dia),Number(v.pulse)||0));
+    }
+    function getPrimaryArmSetting() { return document.getElementById('primaryArm')?.value || patientSettings[currentPatient]?.primaryArm || 'auto'; }
+    function getAutoPrimaryArm(sourceRecords=records) {
+        const paired=[]; let leftCount=0,rightCount=0;
+        (sourceRecords||[]).forEach(r=>(r.measures||[]).forEach(m=>{
+            const l=m?.left,rgt=m?.right,lok=l?.sys>0&&l?.dia>0,rok=rgt?.sys>0&&rgt?.dia>0;
+            if(lok)leftCount++; if(rok)rightCount++; if(lok&&rok)paired.push([Number(l.sys),Number(rgt.sys)]);
+        }));
+        if(paired.length){
+            const ml=paired.reduce((s,p)=>s+p[0],0)/paired.length;
+            const mr=paired.reduce((s,p)=>s+p[1],0)/paired.length;
+            return mr>ml?'right':'left';
+        }
+        if(leftCount && !rightCount) return 'left';
+        if(rightCount && !leftCount) return 'right';
+        return null;
+    }
+    function chooseSessionArm(measures, preference=getPrimaryArmSetting(), sourceRecords=records) {
+        if(preference==='left'||preference==='right') {
+            if(armValidReadings(measures,preference).length) return preference;
+            const other=preference==='left'?'right':'left';
+            return armValidReadings(measures,other).length?other:preference;
+        }
+        const autoArm=getAutoPrimaryArm(sourceRecords);
+        if(autoArm) {
+            if(armValidReadings(measures,autoArm).length) return autoArm;
+            const other=autoArm==='left'?'right':'left';
+            return armValidReadings(measures,other).length?other:autoArm;
+        }
+        const left=armValidReadings(measures,'left'), right=armValidReadings(measures,'right');
+        if(left.length && !right.length) return 'left';
+        if(right.length && !left.length) return 'right';
+        return null;
+    }
+    function computeSessionAverage(measures, preference=getPrimaryArmSetting(), sourceRecords=records) {
+        const arm=chooseSessionArm(measures,preference,sourceRecords);
+        if(!arm) return {sys:0,dia:0,pulse:0,str:'—',arm:null,count:0};
+        const vals=armValidReadings(measures,arm),used=vals.length>=2?vals.slice(-2):vals;
+        if(!used.length)return {sys:0,dia:0,pulse:0,str:'—',arm,count:0};
+        const sys=Math.round(used.reduce((s,v)=>s+Number(v.sys),0)/used.length),dia=Math.round(used.reduce((s,v)=>s+Number(v.dia),0)/used.length),pulses=used.map(v=>Number(v.pulse)||0).filter(v=>v>0),pulse=pulses.length?Math.round(pulses.reduce((a,b)=>a+b,0)/pulses.length):0;
+        return {sys,dia,pulse,str:`${sys}/${dia}-${pulse||'—'}`,arm,count:used.length};
+    }
+    // Compatibility name used throughout the UI; now follows a clinically safer session-average rule.
+    function computeGlobalAverage(measures) { return computeSessionAverage(measures,getPrimaryArmSetting(),records); }
+    function calculateInterArmDifference(f) {
+        const diffs=[]; (f||[]).forEach(r=>(r.measures||[]).forEach(m=>{if(m?.left?.sys>0&&m?.right?.sys>0)diffs.push(Math.abs(Number(m.left.sys)-Number(m.right.sys)));}));
+        return diffs.length?Math.round((diffs.reduce((a,b)=>a+b,0)/diffs.length)*10)/10:null;
+    }
+    function validateBP(s,d,p) {
+        if(s===0 && d===0 && p===0) return true;
+        if(!(s>0) || !(d>0)) return false;
+        if(!Number.isFinite(s)||!Number.isFinite(d)||!Number.isFinite(p)) return false;
+        if(s>300 || d>200 || p<0 || p>250) return false;
+        if(s<=d) return false;
+        return p===0 || p>=20;
+    }
+    function getBPContext() { return document.getElementById('bpContext')?.value || patientSettings[currentPatient]?.bpContext || 'home'; }
+    // ESC 2024 simplified classification. Home hypertension threshold is 135/85; office is 140/90.
+    function getBPClassification(sys,dia,context) {
+        if(!(sys>0) || !(dia>0)) return {key:'',css:''};
+        const home=(context||getBPContext())==='home';
+        if((home&&(sys>180||dia>120))||(!home&&(sys>=180||dia>=110))) return {key:'bpSevere',css:'bg-hyper2'};
+        const hSys=home?135:140, hDia=home?85:90;
+        if(sys>=hSys || dia>=hDia) return {key:'bpHypertension',css:'bg-hyper1'};
+        if(sys<120 && dia<70) return {key:'bpNonElevated',css:'bg-optimal'};
+        return {key:'bpElevated',css:'bg-highNormal'};
+    }
+    // Kept for backwards compatibility with existing rendering code.
+    function getWHOClass(sys,dia,context) { return getBPClassification(sys,dia,context).css; }
+    function showLoading(show) { let existing = document.querySelector('.loading-overlay'); if(show && !existing) { let div = document.createElement('div'); div.className = 'loading-overlay'; div.innerHTML = `<i class="fas fa-spinner fa-pulse"></i> ${t("loading")}`; document.body.appendChild(div); } else if(!show && existing) existing.remove(); }
+    function updateDataRecoveryWarning() {
+        const warning=document.getElementById('dataRecoveryWarning'); if(!warning)return;
+        if(dataWarningState.parseFailed){warning.hidden=false;warning.textContent='⚠️ '+t('dataStorageCorrupt');}
+        else if(dataWarningState.invalid){warning.hidden=false;warning.textContent='⚠️ '+t('dataRecovered')+': '+dataWarningState.invalid;}
+        else {warning.hidden=true;warning.textContent='';}
+    }
+
+    function isValidRecord(rec) {
+        if(!isPlainObject(rec)) return false;
+        if(rec.id!==undefined && incomingSafeId(rec.id)===null) return false;
+        if(rec.patientId!==undefined && incomingSafeId(rec.patientId)===null) return false;
+        if(!isValidISODate(rec.date)) return false;
+        if(!isValidTime(rec.time)) return false;
+        if(!Array.isArray(rec.measures) || rec.measures.length!==3) return false;
+        let hasBP=false;
+        for(const m of rec.measures) {
+            if(!isPlainObject(m)||!isPlainObject(m.left)||!isPlainObject(m.right)) return false;
+            for(const side of ['left','right']) {
+                const v=m[side];
+                for(const k of ['sys','dia','pulse']) if(typeof v[k]!=='number' || !Number.isFinite(v[k])) return false;
+                if(!validateBP(v.sys,v.dia,v.pulse)) return false;
+                if(v.sys>0 && v.dia>0) hasBP=true;
+            }
+        }
+        if(!hasBP) return false;
+        for(const k of ['temperature','weight','height','age','cholTotal','cholHDL']) if(rec[k]!==undefined && (typeof rec[k]!=='number'||!Number.isFinite(rec[k]))) return false;
+        if(rec.temperature!==undefined&&(rec.temperature<25||rec.temperature>45))return false; if(rec.weight!==undefined&&(rec.weight<1||rec.weight>500))return false; if(rec.height!==undefined&&(rec.height<30||rec.height>260))return false; if(rec.age!==undefined&&(rec.age<1||rec.age>120))return false; if(rec.cholTotal!==undefined&&(rec.cholTotal<0.1||rec.cholTotal>30))return false; if(rec.cholHDL!==undefined&&(rec.cholHDL<0.1||rec.cholHDL>10))return false; if(rec.cholTotal>0&&rec.cholHDL>0&&rec.cholHDL>=rec.cholTotal)return false;
+        if(rec.gender!==undefined && !['male','female'].includes(rec.gender)) return false;
+        if(rec.smoking!==undefined && !['0','1'].includes(String(rec.smoking))) return false;
+        if(rec.diabetes!==undefined && !['0','1'].includes(String(rec.diabetes))) return false;
+        if(rec.bpContext!==undefined && !['home','office'].includes(rec.bpContext)) return false;
+        if(rec.emergencySymptoms!==undefined && typeof rec.emergencySymptoms!=='boolean') return false;
+        if(rec.irregularPulseFlag!==undefined && typeof rec.irregularPulseFlag!=='boolean') return false;
+        if(rec.timezoneOffsetMinutes!==undefined && (!Number.isFinite(rec.timezoneOffsetMinutes)||rec.timezoneOffsetMinutes < -840||rec.timezoneOffsetMinutes > 840)) return false;
+        return true;
+    }
+    function sanitizeRecord(rec) {
+        const copy=JSON.parse(JSON.stringify(rec));
+        copy.id=safeRecordId(copy.id);
+        copy.time=normalizeTime(copy.time);
+        copy.patientId=safeRecordId(copy.patientId || currentPatient || 'default');
+        copy.emergencySymptoms=!!copy.emergencySymptoms;
+        copy.irregularPulseFlag=!!copy.irregularPulseFlag;
+        copy.bpContext=(copy.bpContext==='office')?'office':'home';
+        copy.timezoneOffsetMinutes=Number.isFinite(copy.timezoneOffsetMinutes)?copy.timezoneOffsetMinutes:undefined;
+        return copy;
+    }
+    function hasUniqueRecordIds(data) {
+        if(!Array.isArray(data)) return false;
+        const seen=new Set();
+        for(const rec of data) {
+            if(rec?.id===undefined || rec?.id===null || rec?.id==='') continue;
+            const id=incomingSafeId(rec.id); if(!id || seen.has(id)) return false; seen.add(id);
+        }
+        return true;
+    }
+    function ensureUniqueRecordIds(data) {
+        const seen=new Set();
+        return (data||[]).map(rec=>{const x=sanitizeRecord(rec); if(seen.has(x.id)) x.id=uuidv4(); seen.add(x.id); return x;});
+    }
+    function validateImportedData(data) { return Array.isArray(data) && data.every(isValidRecord) && hasUniqueRecordIds(data); }
+    function sanitizePatients(obj) {
+        const out={default:t('mainPatient')};
+        if(isPlainObject(obj)) for(const [id,name] of Object.entries(obj)) { const sid=incomingSafeId(id); if(sid) out[sid]=String(name||sid).slice(0,100); }
+        out.default=String(isPlainObject(obj)&&obj.default?obj.default:t('mainPatient')).slice(0,100); return out;
+    }
+    // ESC 2021 SCORE2/SCORE2-OP country calibration groups.
+    const SCORE_COUNTRY_REGION={
+        BE:'low',DK:'low',FR:'low',IL:'low',LU:'low',NO:'low',ES:'low',CH:'low',NL:'low',GB:'low',
+        AT:'moderate',CY:'moderate',FI:'moderate',DE:'moderate',GR:'moderate',IS:'moderate',IE:'moderate',IT:'moderate',MT:'moderate',PT:'moderate',SM:'moderate',SI:'moderate',SE:'moderate',
+        AL:'high',BA:'high',HR:'high',CZ:'high',EE:'high',HU:'high',KZ:'high',PL:'high',SK:'high',TR:'high',
+        DZ:'veryHigh',AM:'veryHigh',AZ:'veryHigh',BY:'veryHigh',BG:'veryHigh',EG:'veryHigh',GE:'veryHigh',KG:'veryHigh',LV:'veryHigh',LB:'veryHigh',LY:'veryHigh',LT:'veryHigh',ME:'veryHigh',MA:'veryHigh',MD:'veryHigh',RO:'veryHigh',RU:'veryHigh',RS:'veryHigh',SY:'veryHigh',MK:'veryHigh',TN:'veryHigh',UA:'veryHigh',UZ:'veryHigh'
+    };
+    function scoreRegionText(region){ const key={low:'riskLowRegion',moderate:'riskModerateRegion',high:'riskHighRegion',veryHigh:'riskVeryHighRegion'}[region]; return key?t(key):'—'; }
+    function updateConditionalProfileUI() {
+        const diabetic=document.getElementById('diabetes')?.value==='1';
+        const diabetesPanel=document.getElementById('diabetesDetailsPanel'); if(diabetesPanel) diabetesPanel.hidden=!diabetic;
+        const country=document.getElementById('scoreCountry')?.value||'';
+        const regionSelect=document.getElementById('riskRegion');
+        const mapped=SCORE_COUNTRY_REGION[country]||'';
+        if(regionSelect){ if(mapped){regionSelect.value=mapped; regionSelect.disabled=true;} else regionSelect.disabled=false; }
+        const manual=document.getElementById('manualRegionWrap'); if(manual) manual.hidden=!!mapped && country!=='manual';
+        const badge=document.getElementById('scoreRegionResolved'); if(badge) badge.textContent=mapped?scoreRegionText(mapped):(regionSelect?.value?scoreRegionText(regionSelect.value):'—');
+    }
+    function updateScoreSysSourceNote(source=patientSettings[currentPatient]?.scoreSysSource||'manual') {
+        const el=document.getElementById('scoreSysSourceNote'); if(!el)return; const key=source==='officeAvg'?'scoreSysSourceOffice':source==='homeAvg'?'scoreSysSourceHome':'scoreSysSourceManual'; el.textContent=t(key);
+    }
+    function getContextSummary(f=records) { const set=new Set((f||[]).filter(r=>r?.measures).map(r=>r.bpContext==='office'?'office':'home')); return set.size>1?'mixed':(set.values().next().value||getBPContext()); }
+    function contextText(ctx) { return ctx==='mixed'?t('mixedBP'):ctx==='office'?t('officeBP'):t('homeBP'); }
+    function fillScoreSysFromDiary() {
+        const office=(records||[]).filter(r=>(r.bpContext||'home')==='office'), home=(records||[]).filter(r=>(r.bpContext||'home')==='home');
+        const source=office.length?office:home, sourceType=office.length?'officeAvg':'homeAvg';
+        const values=source.map(r=>computeSessionAverage(r.measures,getPrimaryArmSetting(),records).sys).filter(v=>Number.isFinite(v)&&v>0);
+        if(!values.length){ alert(t('scoreDiaryAvgUnavailable')); return; }
+        const mean=Math.round(values.reduce((a,b)=>a+b,0)/values.length),input=document.getElementById('scoreSysInput'); if(!input)return;
+        input.value=mean; if(!patientSettings[currentPatient])patientSettings[currentPatient]={}; patientSettings[currentPatient].scoreSys=mean; patientSettings[currentPatient].scoreSysSource=sourceType; savePatientSettings(); updateScoreSysSourceNote(sourceType); updateAllAnalytics();
+    }
+
+    function sanitizePatientSetting(raw) {
+        if(!isPlainObject(raw)) return {};
+        const num=(v,min,max)=>{if(v===null||v===undefined||v==='')return undefined;const n=Number(v);return Number.isFinite(n)&&n>=min&&n<=max?n:undefined;};
+        const str=(v,allowed,fallback)=>allowed.includes(String(v))?String(v):fallback;
+        const out={
+            temperature:num(raw.temperature,25,45), weight:num(raw.weight,1,500), height:num(raw.height,30,260), age:num(raw.age,1,120),
+            gender:str(raw.gender,['male','female'],'male'), smoking:str(raw.smoking,['0','1'],'0'), cholTotal:num(raw.cholTotal,0.1,30), cholHDL:num(raw.cholHDL,0.1,10),
+            diabetes:str(raw.diabetes,['0','1'],'0'), diabetesType:str(raw.diabetesType,['t2','other'],'t2'), diabetesAge:num(raw.diabetesAge,1,100),
+            hba1c:num(raw.hba1c,1,250), hba1cUnit:str(raw.hba1cUnit,['mmolmol','percent'],'mmolmol'), egfr:num(raw.egfr,1,200), uacr:num(raw.uacr,0,10000),
+            scoreCountry:str(raw.scoreCountry,['',...Object.keys(SCORE_COUNTRY_REGION),'manual'],''), riskRegion:str(raw.riskRegion,['','low','moderate','high','veryHigh'],''), bpContext:str(raw.bpContext,['home','office'],'home'), primaryArm:str(raw.primaryArm,['auto','left','right'],'auto'), scoreSysSource:str(raw.scoreSysSource,['manual','officeAvg','homeAvg'],'manual'),
+            scoreEligibility:str(raw.scoreEligibility,['','eligible','ineligible'],''), scoreSys:num(raw.scoreSys,70,260),
+            targetSysMin:num(raw.targetSysMin,40,250), targetDiaMin:num(raw.targetDiaMin,20,150), targetSys:num(raw.targetSys,50,300), targetDia:num(raw.targetDia,30,200),
+            targetPulse:num(raw.targetPulse,20,250), targetTTR:num(raw.targetTTR,0,100)
+        };
+        if(out.cholTotal&&out.cholHDL&&out.cholHDL>=out.cholTotal)out.cholHDL=undefined;
+        if(out.diabetesAge&&out.age&&out.diabetesAge>out.age)out.diabetesAge=undefined;
+        if(out.hba1c!==undefined){if(out.hba1cUnit==='percent'&&(out.hba1c<3||out.hba1c>20))out.hba1c=undefined; if(out.hba1cUnit==='mmolmol'&&(out.hba1c<9||out.hba1c>195))out.hba1c=undefined;}
+        if(!(out.targetSysMin>0&&out.targetSys>out.targetSysMin)){out.targetSysMin=90;out.targetSys=130;} if(!(out.targetDiaMin>0&&out.targetDia>out.targetDiaMin)){out.targetDiaMin=60;out.targetDia=85;}
+        return out;
+    }
+    function sanitizeSettings(obj) { const out={}; if(isPlainObject(obj)) for(const [id,raw] of Object.entries(obj)){const sid=incomingSafeId(id);if(sid)out[sid]=sanitizePatientSetting(raw);} return out; }
+    function loadPatients() {
+        patients=sanitizePatients(safeJsonParse(localStorage.getItem('bp_patients'), {default:t('mainPatient')}));
+        patientSettings=sanitizeSettings(safeJsonParse(localStorage.getItem('bp_patient_settings'), {}));
+        if(!patients[currentPatient]) currentPatient='default';
+        savePatients(); renderPatientSelect();
+    }
+    function renderPatientSelect() {
+        let sel = document.getElementById("patientSelect");
+        if(!sel) return;
+        sel.innerHTML = "";
+        for(let id in patients) {
+            let opt = document.createElement("option");
+            opt.value = id;
+            opt.textContent = patients[id];
+            if(id === currentPatient) opt.selected = true;
+            sel.appendChild(opt);
+        }
+    }
+    function savePatients() { localStorage.setItem("bp_patients", JSON.stringify(patients)); }
+    function savePatientSettings() { localStorage.setItem("bp_patient_settings", JSON.stringify(patientSettings)); }
+    function addPatient() {
+        let id = "p_" + uuidv4();
+        patients[id] = t("patientNamePrefix") + (Object.keys(patients).length);
+        savePatients();
+        currentPatient = id;
+        renderPatientSelect();
+        loadData();
+    }
+    function editPatient() {
+        let nn = prompt(t("newPatientName"), patients[currentPatient]);
+        if(nn && nn.trim()) { patients[currentPatient] = nn.trim(); savePatients(); renderPatientSelect(); }
+    }
+    function deletePatient() {
+        if(currentPatient === "default") { alert(t("delMainPatient")); return; }
+        if(confirm(t("delPatientConfirm"))) {
+            localStorage.removeItem("bp_data_"+currentPatient);
+            delete patients[currentPatient];
+            delete patientSettings[currentPatient];
+            savePatients(); savePatientSettings();
+            currentPatient = "default";
+            renderPatientSelect(); loadData();
+        }
+    }
+    function autoSaveProfile(preserveBpContext=false) {
+        if(!currentPatient || isLoading) return;
+        const val=id=>document.getElementById(id)?.value ?? '';
+        patientSettings[currentPatient] = {
+            temperature: safeParseFloat(val('temperature')) || undefined,
+            weight: safeParseFloat(val('weight')) || undefined,
+            height: safeParseFloat(val('height')) || undefined,
+            age: safeParseFloat(val('age')) || undefined,
+            gender: val('gender') || 'male', smoking: val('smoking') || '0',
+            cholTotal: safeParseFloat(val('cholTotal')) || undefined, cholHDL: safeParseFloat(val('cholHDL')) || undefined,
+            diabetes: val('diabetes') || '0', diabetesType: val('diabetesType') || 't2', diabetesAge: safeParseFloat(val('diabetesAge')) || undefined,
+            hba1c: safeParseFloat(val('hba1c')) || undefined, hba1cUnit: val('hba1cUnit') || 'mmolmol', egfr: safeParseFloat(val('egfr')) || undefined, uacr: Number.isFinite(safeParseFloat(val('uacr')))?safeParseFloat(val('uacr')):undefined,
+            scoreCountry: val('scoreCountry') || '', riskRegion: val('riskRegion') || '', bpContext: preserveBpContext ? (patientSettings[currentPatient]?.bpContext || 'home') : (val('bpContext') || 'home'), primaryArm: val('primaryArm') || 'auto', scoreEligibility: val('scoreEligibility') || '', scoreSys: safeParseFloat(val('scoreSysInput')) || undefined, scoreSysSource: patientSettings[currentPatient]?.scoreSysSource || 'manual',
+            targetSysMin: val('targetSysMinInput'), targetDiaMin: val('targetDiaMinInput'),
+            targetSys: val('targetSysInput'), targetDia: val('targetDiaInput'), targetPulse: val('targetPulseInput'), targetTTR: val('targetTTRInput')
+        };
+        savePatientSettings();
+    }
+    function debouncedAutoSaveProfile() { clearTimeout(profileSaveTimer); profileSaveTimer=setTimeout(autoSaveProfile,300); }
+    function bindAutoSave() {
+        const ids=['temperature','weight','height','age','gender','smoking','cholTotal','cholHDL','diabetes','diabetesType','diabetesAge','hba1c','hba1cUnit','egfr','uacr','scoreEligibility','scoreCountry','riskRegion','scoreSysInput','bpContext','primaryArm','targetSysMinInput','targetDiaMinInput','targetSysInput','targetDiaInput','targetPulseInput','targetTTRInput'];
+        ids.forEach(id=>{
+            const el=document.getElementById(id); if(!el)return;
+            el.onchange=()=>{updateConditionalProfileUI(); debouncedAutoSaveProfile(); updateAllAnalytics();};
+        });
+        updateConditionalProfileUI();
+    }
+
+    function validateProfileInputs(showAlert=true) {
+        const num=id=>safeParseFloat(document.getElementById(id)?.value), raw=id=>document.getElementById(id)?.value??'';
+        const fail=()=>{if(showAlert)alert(t('profileValidationError'));return false;};
+        const temp=num('temperature'),weight=num('weight'),height=num('height'),age=num('age'),tc=num('cholTotal'),hdl=num('cholHDL'),dm=raw('diabetes')==='1',dmAge=num('diabetesAge'),hb=num('hba1c'),unit=raw('hba1cUnit'),egfr=num('egfr'),uacr=num('uacr'),scoreSys=num('scoreSysInput');
+        if(raw('temperature')!==''&&(!(temp>=25)||temp>45))return fail(); if(raw('weight')!==''&&(!(weight>=1)||weight>500))return fail(); if(raw('height')!==''&&(!(height>=30)||height>260))return fail();
+        if(raw('age')!==''&&(!(age>=1)||age>120))return fail();
+        if(raw('cholTotal')!==''&&(!(tc>0.1)||tc>30))return fail(); if(raw('cholHDL')!==''&&(!(hdl>0.1)||hdl>10))return fail(); if(tc>0&&hdl>0&&hdl>=tc)return fail();
+        if(dm){if(dmAge>0&&age>0&&dmAge>age)return fail(); if(raw('hba1c')!==''){if(unit==='percent'&&(!(hb>=3)||hb>20))return fail(); if(unit==='mmolmol'&&(!(hb>=9)||hb>195))return fail();} if(raw('egfr')!==''&&(!(egfr>=1)||egfr>200))return fail(); if(raw('uacr')!==''&&(!(uacr>=0)||uacr>10000))return fail();}
+        if(raw('scoreSysInput')!==''&&(!(scoreSys>=70)||scoreSys>260))return fail();
+        const minS=num('targetSysMinInput'),minD=num('targetDiaMinInput'),maxS=num('targetSysInput'),maxD=num('targetDiaInput');
+        if(!(minS>0&&minD>0&&maxS>0&&maxD>0&&minS<maxS&&minD<maxD)){if(showAlert)alert(t('targetRangeInvalid'));return false;}
+        const tp=num('targetPulseInput'),tt=num('targetTTRInput'); if(raw('targetPulseInput')!==''&&(!(tp>=20)||tp>250))return fail(); if(raw('targetTTRInput')!==''&&(!(tt>=0)||tt>100))return fail();
+        return true;
+    }
+    function loadData() {
+        isLoading=true;
+        const stored=localStorage.getItem('bp_data_'+currentPatient);
+        let raw=[],parseFailed=false;
+        if(stored){
+            try{raw=JSON.parse(stored);}catch(_){raw=[];parseFailed=true;}
+        }
+        let invalid=0;
+        records=Array.isArray(raw) ? ensureUniqueRecordIds(raw.filter(r=>{const ok=isValidRecord(r); if(!ok) invalid++; return ok;})) : [];
+        if(!Array.isArray(raw) && !parseFailed){parseFailed=true;records=[];}
+        const set=isPlainObject(patientSettings[currentPatient])?patientSettings[currentPatient]:{};
+        const put=(id,v)=>{const el=document.getElementById(id); if(el) el.value=v ?? '';};
+        put('temperature',set.temperature); put('weight',set.weight); put('height',set.height); put('age',set.age); put('gender',set.gender||'male'); put('smoking',set.smoking||'0');
+        put('cholTotal',set.cholTotal); put('cholHDL',set.cholHDL); put('diabetes',set.diabetes||'0'); put('diabetesType',set.diabetesType||'t2'); put('diabetesAge',set.diabetesAge); put('hba1c',set.hba1c); put('hba1cUnit',set.hba1cUnit||'mmolmol'); put('egfr',set.egfr); put('uacr',set.uacr);
+        put('scoreEligibility',set.scoreEligibility||''); put('scoreCountry',set.scoreCountry||''); put('riskRegion',set.riskRegion||''); put('scoreSysInput',set.scoreSys); put('bpContext',set.bpContext||'home'); put('primaryArm',set.primaryArm||'auto'); updateScoreSysSourceNote(set.scoreSysSource||'manual');
+        updateConditionalProfileUI();
+        put('targetSysMinInput',set.targetSysMin||90); put('targetDiaMinInput',set.targetDiaMin||60); put('targetSysInput',set.targetSys||130); put('targetDiaInput',set.targetDia||85); put('targetPulseInput',set.targetPulse||''); put('targetTTRInput',set.targetTTR||70);
+        setDefaultDate(); applyFilterAndRender(); updateAllAnalytics(); timeManuallySet=false; isLoading=false;
+        dataWarningState={parseFailed,invalid};
+        updateDataRecoveryWarning();
+        if(parseFailed) console.warn(t('dataStorageCorrupt'));
+        else if(invalid) console.warn(t('dataRecovered')+': '+invalid);
+    }
+    function saveData(preserveBpContext=false) {
+        let key = "bp_data_"+currentPatient;
+        try { localStorage.setItem(key, JSON.stringify(records)); } catch(e) { alert(currentLang==='ru'?"Ошибка: превышен лимит хранилища браузера. Сохраните полный бэкап и удалите старые записи.":"Browser storage limit exceeded. Save a full backup and remove old records."); }
+        autoSaveProfile(preserveBpContext);
+    }
+
+    function clearFormMeasurements() {
+        for(let i=1;i<=3;i++) {
+            document.getElementById('m'+i+'_left_sys').value = "";
+            document.getElementById('m'+i+'_left_dia').value = "";
+            document.getElementById('m'+i+'_left_pulse').value = "";
+            document.getElementById('m'+i+'_right_sys').value = "";
+            document.getElementById('m'+i+'_right_dia').value = "";
+            document.getElementById('m'+i+'_right_pulse').value = "";
+        }
+        editId = null;
+        document.getElementById("editIdField").value = "";
+        if(editBpContextBefore!==null){
+            const ctx=document.getElementById('bpContext'); if(ctx)ctx.value=editBpContextBefore;
+            editBpContextBefore=null;
+        }
+        const irr=document.getElementById('irregularPulseFlag'); if(irr) irr.checked=false;
+        const em=document.getElementById('emergencySymptoms'); if(em) em.checked=false;
+        setDefaultDate();
+        timeManuallySet = false;
+        document.getElementById("recordTime").value = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+        lastAutoDate = localDateISO();
+    }
+    function clearForm() { clearFormMeasurements(); }
+    function buildForm() {
+        let cont = document.getElementById("measuresContainer");
+        let html = '';
+        for(let i=1;i<=3;i++) {
+            html += `<div class="measure-card">
+                <div><i class="fas fa-stethoscope"></i> ${t("measurement")}-${i}</div>
+                <div><i class="fas fa-hand-peace"></i> ${t("leftArm")}
+                    <div class="bp-inputs">
+                        <input type="number" id="m${i}_left_sys" placeholder="${t("sys")}" step="1" min="1" max="300" data-i18n-placeholder="sys">
+                        <span>/</span>
+                        <input type="number" id="m${i}_left_dia" placeholder="${t("dia")}" step="1" min="1" max="200" data-i18n-placeholder="dia">
+                        <span>-</span>
+                        <input type="number" id="m${i}_left_pulse" placeholder="${t("pulse")}" step="1" min="0" max="250" data-i18n-placeholder="pulse">
+                    </div>
+                </div>
+                <div><i class="fas fa-hand-peace fa-flip-horizontal"></i> ${t("rightArm")}
+                    <div class="bp-inputs">
+                        <input type="number" id="m${i}_right_sys" placeholder="${t("sys")}" step="1" min="1" max="300" data-i18n-placeholder="sys">
+                        <span>/</span>
+                        <input type="number" id="m${i}_right_dia" placeholder="${t("dia")}" step="1" min="1" max="200" data-i18n-placeholder="dia">
+                        <span>-</span>
+                        <input type="number" id="m${i}_right_pulse" placeholder="${t("pulse")}" step="1" min="0" max="250" data-i18n-placeholder="pulse">
+                    </div>
+                </div>
+            </div>`;
+        }
+        cont.innerHTML = html;
+        updatePlaceholders();
+    }
+    function updatePlaceholders() {
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            let key = el.getAttribute('data-i18n-placeholder');
+            if(translations[currentLang] && translations[currentLang][key]) el.placeholder = translations[currentLang][key];
+        });
+        let searchInput = document.getElementById("searchInput");
+        if(searchInput) searchInput.placeholder = t("search");
+    }
+    function getFormMeasures() {
+        let measures = [];
+        for(let i=1;i<=3;i++) {
+            measures.push({
+                left: { sys: Math.round(safeParseFloat(document.getElementById('m'+i+'_left_sys').value) || 0), dia: Math.round(safeParseFloat(document.getElementById('m'+i+'_left_dia').value) || 0), pulse: Math.round(safeParseFloat(document.getElementById('m'+i+'_left_pulse').value) || 0) },
+                right: { sys: Math.round(safeParseFloat(document.getElementById('m'+i+'_right_sys').value) || 0), dia: Math.round(safeParseFloat(document.getElementById('m'+i+'_right_dia').value) || 0), pulse: Math.round(safeParseFloat(document.getElementById('m'+i+'_right_pulse').value) || 0) }
+            });
+        }
+        return measures;
+    }
+    function fillFormWithRecord(rec) {
+        document.getElementById('recordDate').value=rec.date; document.getElementById('recordTime').value=rec.time; document.getElementById('editIdField').value=rec.id;
+        const irr=document.getElementById('irregularPulseFlag'); if(irr)irr.checked=!!rec.irregularPulseFlag; const em=document.getElementById('emergencySymptoms'); if(em)em.checked=!!rec.emergencySymptoms; const ctx=document.getElementById('bpContext'); if(ctx&&rec.bpContext)ctx.value=rec.bpContext;
+        for(let i=1;i<=3;i++){const m=rec.measures[i-1]; for(const side of ['left','right'])for(const p of ['sys','dia','pulse'])document.getElementById(`m${i}_${side}_${p}`).value=m?.[side]?.[p]||'';}
+        timeManuallySet=true;
+    }
+
+    function saveRecord() {
+        if(!validateProfileInputs(true))return;
+        const dateIso=document.getElementById('recordDate').value; if(!isValidISODate(dateIso)){alert(t('dateFormat'));return;}
+        let time=normalizeTime(document.getElementById('recordTime').value||new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'})); if(!isValidTime(time)){alert(t('invalidValues'));return;} document.getElementById('recordTime').value=time;
+        const measures=getFormMeasures(); let hasData=false; for(const m of measures)for(const side of ['left','right']){const v=m[side];if(v.sys>0&&v.dia>0)hasData=true;if(!validateBP(v.sys,v.dia,v.pulse)){alert(t('invalidValues'));return;}} if(!hasData){alert(t('fillOneArm'));return;}
+        const idx=editId!==null?records.findIndex(r=>String(r.id)===String(editId)):-1,original=idx>=0?records[idx]:null;
+        const editingExisting=idx>=0;
+        const defaultBpContextBeforeEdit=patientSettings[currentPatient]?.bpContext||'home';
+        const currentSnapshot={temperature:safeParseFloat(document.getElementById('temperature').value)||undefined,weight:safeParseFloat(document.getElementById('weight').value)||undefined,height:safeParseFloat(document.getElementById('height').value)||undefined,age:safeParseFloat(document.getElementById('age').value)||undefined,gender:document.getElementById('gender').value,smoking:document.getElementById('smoking').value,cholTotal:safeParseFloat(document.getElementById('cholTotal').value)||undefined,cholHDL:safeParseFloat(document.getElementById('cholHDL').value)||undefined,diabetes:document.getElementById('diabetes').value};
+        const snap=original?{temperature:original.temperature,weight:original.weight,height:original.height,age:original.age,gender:original.gender,smoking:original.smoking,cholTotal:original.cholTotal,cholHDL:original.cholHDL,diabetes:original.diabetes}:currentSnapshot;
+        const record={id:original?safeRecordId(original.id):uuidv4(),date:dateIso,time,measures,patientId:currentPatient,...snap,irregularPulseFlag:!!document.getElementById('irregularPulseFlag')?.checked,emergencySymptoms:!!document.getElementById('emergencySymptoms')?.checked,bpContext:getBPContext(),timezoneOffsetMinutes:original&&Number.isFinite(original.timezoneOffsetMinutes)?original.timezoneOffsetMinutes:timezoneOffsetForLocal(dateIso,time)};
+        if(idx>=0){records[idx]=record;editId=null;}else records.push(record);
+        if(editingExisting && editBpContextBefore===null) editBpContextBefore=defaultBpContextBeforeEdit;
+        saveData(editingExisting);
+        applyFilterAndRender();updateAllAnalytics();checkAlerts(true,record);clearFormMeasurements();
+        if(editingExisting){
+            if(!patientSettings[currentPatient]) patientSettings[currentPatient]={};
+            patientSettings[currentPatient].bpContext=defaultBpContextBeforeEdit;
+            savePatientSettings();
+        }
+    }
+
+    function deleteRecord(id) { if(confirm(t("deleteConfirm"))) { records = records.filter(r => String(r.id) !== String(id)); saveData(); applyFilterAndRender(); updateAllAnalytics(); } }
+    function editRecord(id) {
+        let rec=records.find(r=>String(r.id)===String(id));
+        if(rec){
+            editBpContextBefore=patientSettings[currentPatient]?.bpContext||'home';
+            fillFormWithRecord(rec);
+            editId=id;
+            window.scrollTo({top:0,behavior:'smooth'});
+        }
+    }
+
+    function getFilteredRecords() {
+        let f = records.slice();
+        if(currentFilter.start) f = f.filter(r => r.date >= currentFilter.start);
+        if(currentFilter.end) f = f.filter(r => r.date <= currentFilter.end);
+        let s = (document.getElementById("searchInput")?.value || '').trim().toLowerCase();
+        if(s) f = f.filter(r => JSON.stringify(r).toLowerCase().indexOf(s) !== -1);
+        return f;
+    }
+    function updateStats(filtered) {
+        let sumSys=0, sumDia=0, cnt=0;
+        filtered.forEach(r => { let a = computeGlobalAverage(r.measures); if(a.sys>0) { sumSys+=a.sys; sumDia+=a.dia; cnt++; } });
+        let avgSys = cnt ? Math.round(sumSys/cnt) : "—";
+        let avgDia = cnt ? Math.round(sumDia/cnt) : "—";
+        document.getElementById("statPanel").innerHTML =
+            `<span class="stat-item"><i class="fas fa-database"></i> ${t("totalMeasures")}: ${filtered.length}</span>
+             <span class="stat-item"><i class="fas fa-heart"></i> ${t("systolic")}: ${avgSys} ${t("unitMmHg")}</span>
+             <span class="stat-item"><i class="fas fa-heartbeat"></i> ${t("diastolic")}: ${avgDia} ${t("unitMmHg")}</span>`;
+    }
+    function renderTable(filtered) {
+        const tbody=document.getElementById('tableBody');
+        if(!filtered.length) { tbody.innerHTML=`<tr><td colspan="9">${t('noData')}</td></tr>`; return; }
+        const sorted=filtered.slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)); let html='';
+        for(const rec of sorted) {
+            const avg=computeGlobalAverage(rec.measures), ctx=rec.bpContext||getBPContext(), sid=safeRecordId(rec.id);
+            html+=`<tr data-id="${sid}"><td><strong>${escapeHtml(formatDate(rec.date))}</strong><br>${escapeHtml(rec.time)}</td>`;
+            for(let j=0;j<3;j++) { const m=rec.measures[j];
+                html+=`<td><span class="record-badge ${getWHOClass(m.left.sys,m.left.dia,ctx)}">${escapeHtml(formatPressure(m.left.sys,m.left.dia,m.left.pulse))}</span></td><td><span class="record-badge ${getWHOClass(m.right.sys,m.right.dia,ctx)}">${escapeHtml(formatPressure(m.right.sys,m.right.dia,m.right.pulse))}</span></td>`;
+            }
+            html+=`<td><span class="record-badge avg-highlight ${getWHOClass(avg.sys,avg.dia,ctx)}">${escapeHtml(avg.str)}</span></td><td><button class="edit-btn" aria-label="${escapeHtml(t('editPatient'))}" title="${escapeHtml(t('editPatient'))}"><i class="fas fa-edit"></i></button> <button class="delete-btn" aria-label="${escapeHtml(t('deleteAll'))}" title="${escapeHtml(t('deleteAll'))}"><i class="fas fa-trash-alt"></i></button></td></tr>`;
+        }
+        tbody.innerHTML=html;
+        tbody.onclick=e=>{const row=e.target.closest('tr'); if(!row)return; const id=row.getAttribute('data-id'); if(e.target.closest('.edit-btn'))editRecord(id); else if(e.target.closest('.delete-btn'))deleteRecord(id);};
+    }
+
+    function applyFilterAndRender() { let f = getFilteredRecords(); renderTable(f); updateStats(f); renderCharts(f); updateAllAnalytics(); }
+    function setFilter() {
+        const startIso = document.getElementById("filterStart").value || null;
+        const endIso = document.getElementById("filterEnd").value || null;
+        if((startIso&&!isValidISODate(startIso))||(endIso&&!isValidISODate(endIso))||(startIso&&endIso&&startIso>endIso)) { alert(t('filterRangeInvalid')); return; }
+        currentFilter = { start: startIso, end: endIso };
+        applyFilterAndRender();
+    }
+    function resetFilter() {
+        document.getElementById("filterStart").value = "";
+        document.getElementById("filterEnd").value = "";
+        currentFilter = {start:null, end:null};
+        applyFilterAndRender();
+    }
+
+    function destroyAllCharts() {
+        if(chartPressure) { chartPressure.destroy(); chartPressure = null; }
+        if(chartPulse) { chartPulse.destroy(); chartPulse = null; }
+        if(chartTempWeight) { chartTempWeight.destroy(); chartTempWeight = null; }
+        if(chartTimeOfDay) { chartTimeOfDay.destroy(); chartTimeOfDay = null; }
+        if(chartWeekday) { chartWeekday.destroy(); chartWeekday = null; }
+        if(calendarChart) { calendarChart.destroy(); calendarChart = null; }
+    }
+    function renderCharts(filtered) {
+        destroyAllCharts();
+        if(typeof Chart === 'undefined') { console.warn(t('dependencyMissing')+': Chart.js'); return; }
+        let sorted = filtered.slice().sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+        if(!sorted.length) return;
+        let labels = sorted.map(r => formatDate(r.date)+' '+r.time.slice(0,5));
+        let sys = sorted.map(r => computeGlobalAverage(r.measures).sys);
+        let dia = sorted.map(r => computeGlobalAverage(r.measures).dia);
+        let pulse = sorted.map(r => computeGlobalAverage(r.measures).pulse);
+
+        // Улучшенный тренд САД только по валидным точкам
+        let trendSysData = [];
+        let validIndicesSys = [], validValuesSys = []; const baseTs=sorted.length?parseRecordDateTime(sorted[0])?.getTime():0;
+        sys.forEach((v, i) => { const dt=parseRecordDateTime(sorted[i]); if(v>0 && dt && baseTs) { validIndicesSys.push((dt.getTime()-baseTs)/86400000); validValuesSys.push(v); } });
+        if(validIndicesSys.length >= 2) {
+            let n = validIndicesSys.length, sx = 0, sy = 0, sxy = 0, sx2 = 0;
+            for(let i=0; i<n; i++) {
+                let xi = validIndicesSys[i], yi = validValuesSys[i];
+                sx += xi; sy += yi; sxy += xi * yi; sx2 += xi * xi;
+            }
+            let slope = (n * sxy - sx * sy) / (n * sx2 - sx * sx);
+            let intercept = (sy - slope * sx) / n;
+            trendSysData = sorted.map(r => { const dt=parseRecordDateTime(r); return dt&&baseTs ? intercept+slope*((dt.getTime()-baseTs)/86400000) : null; });
+        } else {
+            trendSysData = new Array(sys.length).fill(null);
+        }
+
+        // Улучшенный тренд пульса
+        let trendPulseData = [];
+        let validIndicesPulse = [], validValuesPulse = [];
+        pulse.forEach((v, i) => { const dt=parseRecordDateTime(sorted[i]); if(v>0 && dt && baseTs) { validIndicesPulse.push((dt.getTime()-baseTs)/86400000); validValuesPulse.push(v); } });
+        if(validIndicesPulse.length >= 2) {
+            let n = validIndicesPulse.length, sx = 0, sy = 0, sxy = 0, sx2 = 0;
+            for(let i=0; i<n; i++) {
+                let xi = validIndicesPulse[i], yi = validValuesPulse[i];
+                sx += xi; sy += yi; sxy += xi * yi; sx2 += xi * xi;
+            }
+            let slope = (n * sxy - sx * sy) / (n * sx2 - sx * sx);
+            let intercept = (sy - slope * sx) / n;
+            trendPulseData = sorted.map(r => { const dt=parseRecordDateTime(r); return dt&&baseTs ? intercept+slope*((dt.getTime()-baseTs)/86400000) : null; });
+        } else {
+            trendPulseData = new Array(pulse.length).fill(null);
+        }
+
+        chartPressure = new Chart(document.getElementById('pressureChart'), { type:'line', data:{ labels, datasets:[ { label:t("systolic")+' ('+t("unitMmHg")+')', data:sys, borderColor:'#d9534f', tension:0.2, pointRadius:2 }, { label:t("diastolic")+' ('+t("unitMmHg")+')', data:dia, borderColor:'#2c7da0', tension:0.2, pointRadius:2 }, { label:currentLang==='ru'?'тренд САД':'SBP trend', data:trendSysData, borderColor:'#555', borderDash:[5,5], pointRadius:0, fill:false, spanGaps:false } ] }, options:{ responsive:true, scales:{ y:{ title:{ display:true, text:t("unitMmHg") } } } } });
+        chartPulse = new Chart(document.getElementById('pulseChart'), { type:'line', data:{ labels, datasets:[ { label:t("pulseRate")+' ('+t("pulseUnit")+')', data:pulse, borderColor:'#ff8c42', tension:0.2, pointRadius:2 }, { label:currentLang==='ru'?'тренд пульса':'pulse trend', data:trendPulseData, borderColor:'#555', borderDash:[5,5], pointRadius:0, fill:false, spanGaps:false } ] }, options:{ responsive:true, scales:{ y:{ title:{ display:true, text:t("pulseUnit") } } } } });
+        let ctxTW = document.getElementById('tempWeightChart').getContext('2d');
+        let temp = sorted.map(r => r.temperature ?? null);
+        let weight = sorted.map(r => r.weight ?? null);
+        let hasTemp = temp.some(v => v !== null), hasWeight = weight.some(v => v !== null);
+        if(hasTemp || hasWeight) {
+            chartTempWeight = new Chart(ctxTW, { type:'line', data:{ labels, datasets:[ { label:t("temperatureLabel")+' ('+t("unitCelsius")+')', data:temp, borderColor:'#4caf50', tension:0.2, yAxisID:'y' }, { label:t("weightLabel")+' ('+t("unitKg")+')', data:weight, borderColor:'#ff9800', tension:0.2, yAxisID:'y1' } ] }, options:{ responsive:true, scales:{ y:{ title:{ display:true, text:t("unitCelsius") } }, y1:{ display:true, position:'right', title:{ text:t("unitKg") } } } } });
+        } else { ctxTW.clearRect(0,0,ctxTW.canvas.width,ctxTW.canvas.height); ctxTW.font = "16px 'Segoe UI'"; ctxTW.fillStyle = '#888'; ctxTW.textAlign = "center"; ctxTW.fillText(t("noTempData"), ctxTW.canvas.width/2, ctxTW.canvas.height/2); }
+        let morning=[], day=[], evening=[];
+        sorted.forEach(r => { let h = parseInt(r.time); let a = computeGlobalAverage(r.measures).sys; if(h<12) morning.push(a); else if(h<18) day.push(a); else evening.push(a); });
+        let avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+        chartTimeOfDay = new Chart(document.getElementById('timeOfDayChart'), { type:'bar', data:{ labels:[t("morning"),t("day"),t("evening")], datasets:[{ label:t("avgSystolic")+' ('+t("unitMmHg")+')', data:[avg(morning),avg(day),avg(evening)], backgroundColor:'#3f51b5' }] }, options:{ responsive:true, scales:{ y:{ title:{ display:true, text:t("unitMmHg") } } } } });
+        let days = [t("monday"),t("tuesday"),t("wednesday"),t("thursday"),t("friday"),t("saturday"),t("sunday")];
+        let daySum=[0,0,0,0,0,0,0], dayCnt=[0,0,0,0,0,0,0];
+        sorted.forEach(r => { let d = new Date(r.date+'T12:00:00'); let dow = (d.getDay()+6)%7; let a = computeGlobalAverage(r.measures).sys; if(a>0){ daySum[dow]+=a; dayCnt[dow]++; } });
+        let weekdayAvg = daySum.map((s,i) => dayCnt[i] ? Math.round(s/dayCnt[i]) : 0);
+        chartWeekday = new Chart(document.getElementById('weekdayChart'), { type:'bar', data:{ labels:days, datasets:[{ label:t("avgSystolic")+' ('+t("unitMmHg")+')', data:weekdayAvg, backgroundColor:'#3f51b5' }] }, options:{ responsive:true, scales:{ y:{ title:{ display:true, text:t("unitMmHg") } } } } });
+    }
+
+    function getTargetRange() {
+        const minS=safeParseFloat(document.getElementById('targetSysMinInput')?.value),minD=safeParseFloat(document.getElementById('targetDiaMinInput')?.value),maxS=safeParseFloat(document.getElementById('targetSysInput')?.value),maxD=safeParseFloat(document.getElementById('targetDiaInput')?.value);
+        return minS>0&&minD>0&&maxS>minS&&maxD>minD?{minS,minD,maxS,maxD}:null;
+    }
+    // Record-based target-range hit rate; not true time-in-therapeutic-range.
+    function calculateTTR(f) { const tr=getTargetRange(); if(!tr)return 0; let hit=0,total=0;(f||[]).forEach(r=>{const a=computeGlobalAverage(r.measures);if(a.sys>0&&a.dia>0){total++;if(a.sys>=tr.minS&&a.sys<=tr.maxS&&a.dia>=tr.minD&&a.dia<=tr.maxD)hit++;}});return total?Math.round(hit/total*100):0; }
+    function calculateVariability(f) { const vals=f.map(r=>computeGlobalAverage(r.measures).sys).filter(v=>v>0); if(vals.length<2)return 0; const mean=vals.reduce((a,b)=>a+b,0)/vals.length; return Math.sqrt(vals.reduce((s,v)=>s+(v-mean)**2,0)/(vals.length-1)).toFixed(1); }
+    function forecastTrend(f,days) {
+        const pts=(f||[]).map(r=>({d:parseRecordDateTime(r),y:computeGlobalAverage(r.measures).sys})).filter(p=>p.d&&p.y>0).sort((a,b)=>a.d-b.d);
+        if(pts.length<3)return t('insufficientData'); const base=pts[0].d.getTime(); const xs=pts.map(p=>(p.d.getTime()-base)/86400000), ys=pts.map(p=>p.y);
+        const n=xs.length,sx=xs.reduce((a,b)=>a+b,0),sy=ys.reduce((a,b)=>a+b,0),sxy=xs.reduce((a,x,i)=>a+x*ys[i],0),sx2=xs.reduce((a,x)=>a+x*x,0),den=n*sx2-sx*sx;
+        if(!den)return t('insufficientData'); const slope=(n*sxy-sx*sy)/den, intercept=(sy-slope*sx)/n, targetX=xs[xs.length-1]+days, pred=intercept+slope*targetX;
+        return Number.isFinite(pred)?`${t('forecastInDays')} ${days} ${t('days')} ${t('approx')} ${Math.round(pred)} ${t('unitMmHg')}`:t('insufficientData');
+    }
+    function detectArrhythmia(f) { const flagged=(f||[]).filter(r=>r.irregularPulseFlag===true).length; return (flagged?`⚠️ ${t('irregularFound')}: ${flagged}`:`✅ ${t('irregularNone')}`)+` — ${t('irregularNotDiagnosis')}`; }
+    function calculateBMI(w,h) { if(!w||!h)return null; return (w/Math.pow(h/100,2)).toFixed(1); }
+    function getBMICategory(b) { if(b<18.5)return currentLang==='ru'?'Недостаток веса':'Underweight'; if(b<25)return currentLang==='ru'?'Норма':'Normal'; if(b<30)return currentLang==='ru'?'Избыточный вес':'Overweight'; return currentLang==='ru'?'Ожирение':'Obesity'; }
+    function getTargetBP() { const tr=getTargetRange(); return tr?`${tr.minS}–${tr.maxS}/${tr.minD}–${tr.maxD} ${t('unitMmHg')}`:'—'; }
+    const SCORE2_SCALES={low:{male:[-0.5699,0.7476],female:[-0.7380,0.7019]},moderate:{male:[-0.1565,0.8009],female:[-0.3143,0.7701]},high:{male:[0.3207,0.9360],female:[0.5710,0.9369]},veryHigh:{male:[0.5836,0.8294],female:[0.9412,0.8329]}};
+    const SCORE2OP_SCALES={low:{male:[-0.34,1.19],female:[-0.52,1.01]},moderate:{male:[0.01,1.25],female:[-0.10,1.10]},high:{male:[0.08,1.15],female:[0.38,1.09]},veryHigh:{male:[0.05,0.70],female:[0.38,0.69]}};
+    function recalibrateRisk(uncal,scale) { if(!(uncal>0&&uncal<1)||!scale)return null; return 1-Math.exp(-Math.exp(scale[0]+scale[1]*Math.log(-Math.log(1-uncal)))); }
+    function scoreCategory(value,model,age) { if(model==='SCORE2-Diabetes') return value<5?'low':value<10?'moderate':value<20?'high':'veryHigh'; if(age<50)return value<2.5?'lowModerate':value<7.5?'high':'veryHigh'; if(age<70)return value<5?'lowModerate':value<10?'high':'veryHigh'; return value<7.5?'lowModerate':value<15?'high':'veryHigh'; }
+    function calculateScore2(age,gender,smoking,sys,tc,hdl,region) {
+        if(age<40||age>69||!SCORE2_SCALES[region]?.[gender])return null; const a=(age-60)/5,sm=smoking==='1'?1:0,s=(sys-120)/20,c=tc-6,h=(hdl-1.3)/0.5;
+        const male=gender==='male'; const lp=male?(0.3742*a+0.6012*sm+0.2777*s+0.1458*c-0.2698*h-0.0755*a*sm-0.0255*a*s-0.0281*a*c+0.0426*a*h):(0.4648*a+0.7744*sm+0.3131*s+0.1002*c-0.2606*h-0.1088*a*sm-0.0277*a*s-0.0226*a*c+0.0613*a*h);
+        const uncal=1-Math.pow(male?0.9605:0.9776,Math.exp(lp)); const risk=recalibrateRisk(uncal,SCORE2_SCALES[region][gender]); return risk===null?null:risk*100;
+    }
+    function calculateScore2OP(age,gender,smoking,sys,tc,hdl,diabetes,region) {
+        if(age<70||age>89||!SCORE2OP_SCALES[region]?.[gender])return null; const a=age-73,sm=smoking==='1'?1:0,dm=diabetes==='1'?1:0,s=sys-150,c=tc-6,h=hdl-1.4,male=gender==='male';
+        const lp=male?(0.0634*a+0.4245*dm+0.3524*sm+0.0094*s+0.0850*c-0.3564*h-0.0174*a*dm-0.0247*a*sm-0.0005*a*s+0.0073*a*c+0.0091*a*h):(0.0789*a+0.6010*dm+0.4921*sm+0.0102*s+0.0605*c-0.3040*h-0.0107*a*dm-0.0255*a*sm-0.0004*a*s-0.0009*a*c+0.0154*a*h);
+        const uncal=male?(1-Math.pow(0.7576,Math.exp(lp-0.0929))):(1-Math.pow(0.8082,Math.exp(lp-0.229))); const risk=recalibrateRisk(uncal,SCORE2OP_SCALES[region][gender]); return risk===null?null:risk*100;
+    }
+    function hba1cToMmolMol(value,unit) { if(!(value>0))return null; return unit==='percent' ? 10.929*(value-2.15) : value; }
+    function calculateScore2Diabetes(age,gender,smoking,sys,tc,hdl,region,diabetesAge,hba1c,hba1cUnit,egfr) {
+        if(age<40||age>69||!(diabetesAge>0)||!(egfr>0)||!SCORE2_SCALES[region]?.[gender])return null; const hb=hba1cToMmolMol(hba1c,hba1cUnit); if(!(hb>0))return null;
+        const a=(age-60)/5,sm=smoking==='1'?1:0,s=(sys-120)/20,c=tc-6,h=(hdl-1.3)/0.5,da=(diabetesAge-50)/5,hbS=(hb-31)/9.34,le=(Math.log(egfr)-4.5)/0.15,male=gender==='male';
+        const lp=male?(0.5368*a+0.4774*sm+0.1322*s+0.6457+0.1102*c-0.1087*h-0.0672*a*sm-0.0268*a*s-0.0983*a-0.0181*a*c+0.0095*a*h-0.0998*da+0.0955*hbS-0.0591*le+0.0058*le*le-0.0134*hbS*a+0.0115*le*a):(0.6624*a+0.6139*sm+0.1421*s+0.8096+0.1127*c-0.1568*h-0.1122*a*sm-0.0167*a*s-0.1272*a-0.0200*a*c+0.0186*a*h-0.118*da+0.1173*hbS-0.0640*le+0.0062*le*le-0.0196*hbS*a+0.0169*le*a);
+        const uncal=1-Math.pow(male?0.9605:0.9776,Math.exp(lp)); const risk=recalibrateRisk(uncal,SCORE2_SCALES[region][gender]); return risk===null?null:risk*100;
+    }
+    function hasSevereDiabetesTOD(egfr,uacr) { if(egfr>0&&egfr<45)return true; if(egfr>=45&&egfr<60&&uacr>=30)return true; if(uacr>300)return true; return false; }
+    function calculateScoreRisk(age,gender,smoking,_diarySys,cholT,cholHDL,diab) {
+        const eligibility=document.getElementById('scoreEligibility')?.value||''; if(eligibility==='ineligible')return {status:'notApplicable'}; if(eligibility!=='eligible')return {status:'needsEligibility'}; updateConditionalProfileUI();
+        const region=document.getElementById('riskRegion')?.value||''; if(!region)return {status:'needsRegion'}; const sys=safeParseFloat(document.getElementById('scoreSysInput')?.value); if(!(sys>=70&&sys<=260))return {status:'needsScoreSys'}; if(!(age>0&&cholT>0&&cholHDL>0)||cholHDL>=cholT)return {status:'missing'};
+        let value=null,model='';
+        if(diab==='1') {
+            const type=document.getElementById('diabetesType')?.value||'other'; if(type!=='t2')return {status:'notApplicable'}; if(age>=70)return {status:'diabetesAgeUnsupported'}; if(age<40)return {status:'notApplicable'};
+            const da=safeParseFloat(document.getElementById('diabetesAge')?.value),hb=safeParseFloat(document.getElementById('hba1c')?.value),unit=document.getElementById('hba1cUnit')?.value||'mmolmol',egfr=safeParseFloat(document.getElementById('egfr')?.value),uacr=safeParseFloat(document.getElementById('uacr')?.value);
+            if(!(da>0&&da<=age&&egfr>0&&hb>0))return {status:'needsDiabetesData',model:'SCORE2-Diabetes'}; if(unit==='percent'&&(hb<3||hb>20))return {status:'missing'}; if(unit==='mmolmol'&&(hb<9||hb>195))return {status:'missing'}; if(hasSevereDiabetesTOD(egfr,Number.isFinite(uacr)?uacr:0))return {status:'highRiskCondition',model:'SCORE2-Diabetes'};
+            value=calculateScore2Diabetes(age,gender,smoking,sys,cholT,cholHDL,region,da,hb,unit,egfr); model='SCORE2-Diabetes'; if(value===null)return {status:'needsDiabetesData',model};
+        } else if(age>=70&&age<=89) { value=calculateScore2OP(age,gender,smoking,sys,cholT,cholHDL,'0',region); model='SCORE2-OP'; }
+        else if(age>=40&&age<=69) { value=calculateScore2(age,gender,smoking,sys,cholT,cholHDL,region); model='SCORE2'; }
+        else return {status:'notApplicable'};
+        if(value===null||!Number.isFinite(value))return {status:'missing',model}; value=Math.round(value*10)/10; return {status:'ok',value,model,category:scoreCategory(value,model,age)};
+    }
+    function regressionSlopeByDate(f,selector) { const pts=(f||[]).map(r=>({d:parseRecordDateTime(r),y:selector(r)})).filter(p=>p.d&&Number.isFinite(p.y)).sort((a,b)=>a.d-b.d); if(pts.length<2)return null; const base=pts[0].d.getTime(),xs=pts.map(p=>(p.d-base)/86400000),ys=pts.map(p=>p.y),n=xs.length,sx=xs.reduce((a,b)=>a+b,0),sy=ys.reduce((a,b)=>a+b,0),sxy=xs.reduce((s,x,i)=>s+x*ys[i],0),sx2=xs.reduce((s,x)=>s+x*x,0),den=n*sx2-sx*sx; return den?(n*sxy-sx*sy)/den:null; }
+    function getPulsePressureTrend(f) { const slope=regressionSlopeByDate(f,r=>{const a=computeGlobalAverage(r.measures);return a.sys>0&&a.dia>0?a.sys-a.dia:NaN;}); if(slope===null)return t('insufficientData'); const arrow=slope>0.05?'↗':slope<-0.05?'↘':'→'; return `${arrow} ${slope>=0?'+':''}${slope.toFixed(2)} ${t('unitMmHg')}/${currentLang==='ru'?'день':'day'}`; }
+    function getLifestyleAdvice(bmi,smoking,avgSys,avgDia,pp,f=[]) { const adv=[]; if(bmi&&parseFloat(bmi)>=30)adv.push(currentLang==='ru'?'⚖️ ИМТ ≥30: обсудите безопасную стратегию снижения массы тела':'⚖️ BMI ≥30: discuss a safe weight-management strategy'); if(smoking==='1')adv.push(currentLang==='ru'?'🚭 Отказ от курения снижает сердечно-сосудистый риск':'🚭 Smoking cessation lowers cardiovascular risk');
+        const subsets={home:(f||[]).filter(r=>(r.bpContext||'home')==='home'),office:(f||[]).filter(r=>r.bpContext==='office')}; let above=false; for(const [ctx,arr] of Object.entries(subsets)){if(!arr.length)continue;const vals=arr.map(r=>computeGlobalAverage(r.measures)).filter(a=>a.sys>0&&a.dia>0);if(!vals.length)continue;const s=vals.reduce((x,a)=>x+a.sys,0)/vals.length,d=vals.reduce((x,a)=>x+a.dia,0)/vals.length;if((ctx==='home'&&(s>=135||d>=85))||(ctx==='office'&&(s>=140||d>=90)))above=true;} if(above)adv.push(currentLang==='ru'?'💊 Среднее АД выше порога гипертензии ESC: обсудите результаты с врачом':'💊 Average BP is above the ESC hypertension threshold: discuss the log with a clinician'); if(pp>60)adv.push(currentLang==='ru'?'📈 Пульсовое давление >60 мм рт.ст.; интерпретируйте в контексте возраста и общего риска':'📈 Pulse pressure >60 mmHg; interpret with age and overall risk'); if(!adv.length)adv.push(currentLang==='ru'?'✅ Явных предупреждений по этим простым показателям нет':'✅ No obvious warnings from these simple indicators'); return adv.join('; '); }
+    function getComparison(f) {
+        const validSession = r => {
+            const a = computeGlobalAverage(r.measures);
+            return a.sys > 0 && a.dia > 0;
+        };
+
+        const selected = (f || [])
+            .filter(validSession)
+            .slice()
+            .sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+
+        if(selected.length < 2) return t('insufficientData');
+
+        const search=(document.getElementById("searchInput")?.value||'').trim().toLowerCase();
+        const all = records
+            .filter(validSession)
+            .filter(r=>!search || JSON.stringify(r).toLowerCase().includes(search))
+            .slice()
+            .sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+
+        let current = [];
+        let previous = [];
+        let basis = '';
+
+        // Если пользователь задал фильтр дат:
+        // сравниваем с непосредственно предыдущим календарным периодом той же длительности.
+        if(currentFilter.start || currentFilter.end) {
+            current = selected.slice();
+
+            const startIso = currentFilter.start || current[0].date;
+            const endIso = currentFilter.end || current[current.length - 1].date;
+
+            if(isValidISODate(startIso) && isValidISODate(endIso) && startIso <= endIso) {
+                const start = new Date(startIso + 'T12:00:00');
+                const end = new Date(endIso + 'T12:00:00');
+                const days = Math.max(1, Math.round((end - start) / 86400000) + 1);
+
+                const prevEnd = new Date(start);
+                prevEnd.setDate(prevEnd.getDate() - 1);
+
+                const prevStart = new Date(prevEnd);
+                prevStart.setDate(prevStart.getDate() - (days - 1));
+
+                const prevStartIso = localDateISO(prevStart);
+                const prevEndIso = localDateISO(prevEnd);
+
+                previous = all.filter(r => r.date >= prevStartIso && r.date <= prevEndIso);
+
+                if(previous.length) {
+                    basis = currentLang === 'ru'
+                        ? `${days} дн. vs предыдущие ${days} дн.`
+                        : `${days} d vs previous ${days} d`;
+                }
+            }
+
+            // Если в предыдущем календарном окне записей нет,
+            // сравниваем с непосредственно предыдущими сеансами.
+            if(!previous.length) {
+                const firstKey = current[0].date + current[0].time;
+                const before = all.filter(r => (r.date + r.time) < firstKey);
+                const n = Math.min(current.length, before.length);
+
+                if(n > 0) {
+                    current = current.slice(-n);
+                    previous = before.slice(-n);
+                    basis = currentLang === 'ru'
+                        ? `${n} текущ. vs ${n} предыдущ. сеанс.`
+                        : `${n} current vs ${n} previous sessions`;
+                }
+            }
+        }
+
+        // Без фильтра сравниваем две соседние равные группы последних сеансов.
+        if(!previous.length) {
+            const n = Math.floor(selected.length / 2);
+            if(n < 1) return t('insufficientData');
+
+            previous = selected.slice(selected.length - 2*n, selected.length - n);
+            current = selected.slice(selected.length - n);
+
+            basis = currentLang === 'ru'
+                ? `${n} последних vs ${n} предыдущих сеанс.`
+                : `last ${n} vs previous ${n} sessions`;
+        }
+
+        const mean = arr => {
+            const vals = arr
+                .map(r => computeGlobalAverage(r.measures))
+                .filter(a => a.sys > 0 && a.dia > 0);
+
+            if(!vals.length) return null;
+
+            const avg = key => {
+                const v = vals.map(a => a[key]).filter(x => x > 0);
+                return v.length ? v.reduce((s,x) => s+x, 0) / v.length : null;
+            };
+
+            return { sys: avg('sys'), dia: avg('dia'), pulse: avg('pulse') };
+        };
+
+        const cur = mean(current);
+        const prev = mean(previous);
+        if(!cur || !prev) return t('insufficientData');
+
+        const fmt = (label, now, old, unit) => {
+            if(now === null || old === null) return null;
+            const diff = now - old;
+            const arrow = diff > 0.05 ? '↑' : diff < -0.05 ? '↓' : '→';
+            return `${label} ${arrow}${Math.abs(diff).toFixed(1)} ${unit}`;
+        };
+
+        const parts = [
+            fmt(currentLang === 'ru' ? 'САД' : 'SBP', cur.sys, prev.sys, t('unitMmHg')),
+            fmt(currentLang === 'ru' ? 'ДАД' : 'DBP', cur.dia, prev.dia, t('unitMmHg')),
+            fmt(currentLang === 'ru' ? 'Пульс' : 'Pulse', cur.pulse, prev.pulse, t('pulseUnit'))
+        ].filter(Boolean);
+
+        return parts.length
+            ? `${parts.join(' · ')} (${basis})`
+            : t('insufficientData');
+    }
+    function renderCalendarChart(f) {
+        if(typeof Chart==='undefined')return;
+        const valid=(f||[]).filter(r=>isValidISODate(r.date)).slice().sort((a,b)=>a.date.localeCompare(b.date));
+        const endIso=(currentFilter.end&&isValidISODate(currentFilter.end))?currentFilter.end:(valid.length?valid.at(-1).date:localDateISO());
+        const end=new Date(endIso+'T12:00:00'),dates=[],cnt=new Array(30).fill(0);
+        for(let i=29;i>=0;i--){const d=new Date(end);d.setDate(end.getDate()-i);dates.push(localDateISO(d));}
+        valid.forEach(r=>{const idx=dates.indexOf(r.date);if(idx!==-1)cnt[idx]++;});
+        if(calendarChart)calendarChart.destroy();
+        const c=document.getElementById('calendarChart');
+        if(c)calendarChart=new Chart(c,{type:'bar',data:{labels:dates.map(d=>d.slice(5)),datasets:[{label:t('measurementsCount'),data:cnt}]},options:{responsive:true,scales:{y:{beginAtZero:true,title:{display:true,text:t('measurementsCount')}}}}});
+    }
+    function pearsonCorrelation(f) { const pairs=f.map(r=>computeGlobalAverage(r.measures)).filter(a=>a.sys>0&&a.dia>0); if(pairs.length<3)return null; const n=pairs.length,sx=pairs.reduce((s,a)=>s+a.sys,0),sy=pairs.reduce((s,a)=>s+a.dia,0),sxy=pairs.reduce((s,a)=>s+a.sys*a.dia,0),sx2=pairs.reduce((s,a)=>s+a.sys*a.sys,0),sy2=pairs.reduce((s,a)=>s+a.dia*a.dia,0),den=Math.sqrt((n*sx2-sx*sx)*(n*sy2-sy*sy)); return den?((n*sxy-sx*sy)/den).toFixed(2):null; }
+    // Name preserved for compatibility; returns mean pulse pressure (SBP-DBP), not a surrogate diagnosis of arterial stiffness.
+    function vascularStiffnessIndex(f) { const vals=f.map(r=>{const a=computeGlobalAverage(r.measures);return a.sys>0&&a.dia>0?a.sys-a.dia:null;}).filter(v=>v!==null); return vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1):null; }
+    function getValidReadings(rec) { const out=[];(rec?.measures||[]).forEach((m,mi)=>['left','right'].forEach(side=>{const v=m?.[side];if(v?.sys>0&&v?.dia>0)out.push({...v,measurement:mi+1,side});}));return out; }
+    function safetyThreshold(rec) { const ctx=rec?.bpContext==='office'?'office':'home'; return ctx==='office'?{sys:180,dia:110,ctx,inclusive:true}:{sys:180,dia:120,ctx,inclusive:false}; }
+    function isSafetyTrigger(v,th) { return th.inclusive?(v.sys>=th.sys||v.dia>=th.dia):(v.sys>th.sys||v.dia>th.dia); }
+    function getTriggeredSafetyReadings(rec) { const th=safetyThreshold(rec);return getValidReadings(rec).filter(v=>isSafetyTrigger(v,th)).map(v=>({...v,threshold:th})); }
+    function getWorstSafetyReading(rec) { const hits=getTriggeredSafetyReadings(rec);if(!hits.length)return null;return hits.sort((a,b)=>Math.max(b.sys/b.threshold.sys,b.dia/b.threshold.dia)-Math.max(a.sys/a.threshold.sys,a.dia/a.threshold.dia))[0]; }
+    function crisisRiskAssessment(f) { if(!f.length)return {text:'—',class:''}; const last=f.slice().sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time))[0],high=getWorstSafetyReading(last); if(!high)return {text:t('noSevereBP'),class:'risk-low'}; if(last.emergencySymptoms)return {text:`${t('emergencyBP')}: ${high.sys}/${high.dia}. ${t('emergencyAdvice')}`,class:'risk-high'}; const label=high.threshold.ctx==='office'&&high.dia>=110&&high.dia<120?t('veryHighOfficeBP'):t('severeBP'),advice=high.threshold.ctx==='office'?t('officeHighAdvice'):t('repeatBPAdvice'); return {text:`${label}: ${high.sys}/${high.dia}. ${advice}`,class:'risk-high'}; }
+    function getReferenceBP(f=records) { const c=getContextSummary(f); if(c==='mixed')return `Home ≥135/85; Office ≥140/90 ${t('unitMmHg')}`; return c==='home'?'≥135/85 '+t('unitMmHg'):'≥140/90 '+t('unitMmHg'); }
+    function computeAchievements(f) { const tr=getTargetRange(),targetRate=parseInt(document.getElementById('targetTTRInput')?.value)||70; const dates=[...new Set(f.map(r=>r.date))].sort(); let streak=0,cur=0;dates.forEach((d,i)=>{if(i===0||(new Date(d+'T00:00:00')-new Date(dates[i-1]+'T00:00:00'))/86400000===1)cur++;else cur=1;streak=Math.max(streak,cur);});const valid=f.map(r=>computeGlobalAverage(r.measures)).filter(a=>a.sys>0&&a.dia>0),hit=tr?valid.filter(a=>a.sys>=tr.minS&&a.sys<=tr.maxS&&a.dia>=tr.minD&&a.dia<=tr.maxD).length:0,hitRate=valid.length&&tr?Math.round(hit/valid.length*100):0,badges=[];if(f.length>=10)badges.push({icon:'🏅',name:currentLang==='ru'?'10+ сеансов':'10+ sessions'});if(f.length>=50)badges.push({icon:'🏆',name:currentLang==='ru'?'50+ сеансов':'50+ sessions'});if(f.length>=100)badges.push({icon:'👑',name:currentLang==='ru'?'100+ сеансов':'100+ sessions'});if(streak>=7)badges.push({icon:'📅',name:currentLang==='ru'?'7 дней подряд':'7 days streak'});if(streak>=30)badges.push({icon:'🔥',name:currentLang==='ru'?'30 дней подряд':'30 days streak'});if(hitRate>=targetRate)badges.push({icon:'🎯',name:(currentLang==='ru'?'Цель диапазона ≥':'Target range ≥')+targetRate+'%'});return {total:f.length,streak,hitRate,badges}; }
+    function updateAllAnalytics() {
+        const filtered=getFilteredRecords(),container=document.getElementById('proAnalysis'); if(!container)return; if(!filtered.length){container.innerHTML='<div class="analysis-card">'+t('noPrevRecords')+'</div>';destroyAllCharts();return;}
+        const sorted=filtered.slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)),latestDate=parseRecordDateTime(sorted.at(-1)),weekStart=latestDate?new Date(latestDate):null;if(weekStart)weekStart.setDate(weekStart.getDate()-6);const weekRec=weekStart?sorted.filter(r=>r.date>=localDateISO(weekStart)&&r.date<=localDateISO(latestDate)):[],weekVals=weekRec.map(r=>computeGlobalAverage(r.measures).sys).filter(v=>v>0),weekAvg=weekVals.length?weekVals.reduce((a,b)=>a+b,0)/weekVals.length:0;
+        const allAvg=filtered.map(r=>computeGlobalAverage(r.measures)).filter(a=>a.sys>0&&a.dia>0);if(!allAvg.length)return;const avgSys=allAvg.reduce((s,a)=>s+a.sys,0)/allAvg.length,avgDia=allAvg.reduce((s,a)=>s+a.dia,0)/allAvg.length,pp=avgSys-avgDia,ctx=getContextSummary(filtered),bpClass=ctx==='mixed'?{key:'bpMixedContext',css:''}:getBPClassification(avgSys,avgDia,ctx),ttr=calculateTTR(filtered),varScore=calculateVariability(filtered),f3=forecastTrend(filtered,3),f7=forecastTrend(filtered,7),ppTrend=getPulsePressureTrend(filtered),interArm=calculateInterArmDifference(filtered);
+        const weight=safeParseFloat(document.getElementById('weight').value),height=safeParseFloat(document.getElementById('height').value),bmi=calculateBMI(weight,height),bmiStr=bmi?bmi+' ('+getBMICategory(parseFloat(bmi))+')':'—',age=safeParseFloat(document.getElementById('age').value),gender=document.getElementById('gender').value,smoking=document.getElementById('smoking').value,cholT=safeParseFloat(document.getElementById('cholTotal').value),cholHDL=safeParseFloat(document.getElementById('cholHDL').value),diab=document.getElementById('diabetes').value;
+        const risk=calculateScoreRisk(age,gender,smoking,avgSys,cholT,cholHDL,diab);let riskHtml='—';if(risk.status==='ok'){const cls=risk.category==='low'||risk.category==='lowModerate'?'risk-low':risk.category==='moderate'||risk.category==='high'?'risk-moderate':'risk-high',cat=t('scoreCategory'+risk.category.charAt(0).toUpperCase()+risk.category.slice(1));riskHtml=`<span class="${cls}">${risk.model}: ${risk.value}%</span><small class="status-note">${cat}</small>`;}else if(risk.status==='needsEligibility')riskHtml=t('scoreNeedsEligibility');else if(risk.status==='needsRegion')riskHtml=t('scoreNeedsRegion');else if(risk.status==='needsScoreSys')riskHtml=t('scoreNeedsSys');else if(risk.status==='needsDiabetesData')riskHtml=t('scoreNeedsDiabetesData');else if(risk.status==='diabetesAgeUnsupported')riskHtml=t('scoreDiabetesAgeUnsupported');else if(risk.status==='highRiskCondition')riskHtml=t('scoreHighRiskCondition');else if(risk.status==='notApplicable')riskHtml=t('scoreNotApplicable');else riskHtml=t('insufficientData');
+        const advice=escapeHtml(getLifestyleAdvice(bmi,smoking,avgSys,avgDia,pp,filtered)),comp=getComparison(filtered),arrh=detectArrhythmia(filtered),corr=pearsonCorrelation(filtered),stiff=vascularStiffnessIndex(filtered),crisis=crisisRiskAssessment(filtered),ref=getReferenceBP(filtered),ach=computeAchievements(filtered),targetPulse=parseInt(document.getElementById('targetPulseInput').value)||null,arm=getPrimaryArmSetting()==='auto'?getAutoPrimaryArm(records):getPrimaryArmSetting(),armText=arm==='right'?t('primaryArmRight'):arm==='left'?t('primaryArmLeft'):t('primaryArmAutoUnavailable');
+        container.innerHTML=`<div class="analysis-grid"><div class="analysis-card"><i class="fas fa-tachometer-alt"></i> ${t('pulsePressure')}<div class="analysis-value">${Math.round(pp)} ${t('unitMmHg')}</div></div><div class="analysis-card"><i class="fas fa-chart-line"></i> ${t('whoClass')}<div class="analysis-value">${ctx==='mixed'?t('mixedBP'):t(bpClass.key)}</div><small class="status-note">${contextText(ctx)}</small></div><div class="analysis-card"><i class="fas fa-calendar-week"></i> ${t('avg7days')}<div class="analysis-value">${weekAvg?Math.round(weekAvg)+' '+t('unitMmHg'):'—'}</div></div><div class="analysis-card"><i class="fas fa-bullseye"></i> ${t('targetSys')}<div class="analysis-value">${getTargetBP()}</div><small class="status-note">${targetPulse?t('targetPulseDisplay')+': '+targetPulse+' '+t('pulseUnit'):''}</small></div></div>
+        <div class="analysis-grid"><div class="analysis-card"><i class="fas fa-percent"></i> ${t('ttr')}<div class="analysis-value">${ttr}%</div><small class="status-note">${t('targetRangeNote')}</small></div><div class="analysis-card"><i class="fas fa-wave-square"></i> ${t('variability')}<div class="analysis-value">${varScore} ${t('unitMmHg')}</div><small class="status-note">SD (sample)</small></div><div class="analysis-card"><i class="fas fa-chart-line"></i> ${t('forecast3d')}<div class="analysis-value" style="font-size:1rem;">${f3}</div><small class="status-note">${t('forecastNote')}</small></div><div class="analysis-card"><i class="fas fa-chart-line"></i> ${t('forecast7d')}<div class="analysis-value" style="font-size:1rem;">${f7}</div><small class="status-note">${t('forecastNote')}</small></div></div>
+        <div class="analysis-grid"><div class="analysis-card"><i class="fas fa-heartbeat"></i> ${t('ppTrend')}<div class="analysis-value" style="font-size:1rem;">${ppTrend}</div></div><div class="analysis-card"><i class="fas fa-weight-scale"></i> ${t('bmi')}<div class="analysis-value">${bmiStr}</div></div><div class="analysis-card"><i class="fas fa-chart-simple"></i> ${t('score2')}<div class="analysis-value" style="font-size:1rem;">${riskHtml}</div></div><div class="analysis-card"><i class="fas fa-heartbeat"></i> ${t('arrhythmia')}<div class="analysis-value" style="font-size:0.95rem;">${arrh}</div></div></div>
+        <div style="margin:10px 0"><canvas id="calendarChart" style="max-height:180px;width:100%;"></canvas></div><div class="analysis-grid"><div class="analysis-card"><i class="fas fa-chart-line"></i> ${t('comparison')}<div class="analysis-value" style="font-size:1rem;">${comp}</div></div><div class="analysis-card"><i class="fas fa-chart-line"></i> ${t('correlation')}<div class="analysis-value">${corr||'—'}</div><small>${t('systoleDiastole')}</small></div><div class="analysis-card"><i class="fas fa-tachometer-alt"></i> ${t('vascularStiffness')}<div class="analysis-value">${stiff?stiff+' '+t('unitMmHg'):'—'}</div><small class="status-note">SBP − DBP; ${currentLang==='ru'?'не прямое измерение жёсткости артерий':'not a direct arterial-stiffness measurement'}</small></div><div class="analysis-card"><i class="fas fa-exclamation-triangle"></i> ${t('crisisRisk')}<div class="analysis-value ${crisis.class}" style="font-size:0.95rem;">${crisis.text}</div></div></div>
+        <div class="analysis-grid"><div class="analysis-card"><i class="fas fa-chart-simple"></i> ${t('refCompare')}<div class="analysis-value">${ref}</div><small>${contextText(ctx)}</small></div><div class="analysis-card"><i class="fas fa-hand"></i> ${t('primaryArmUsed')}<div class="analysis-value">${armText}</div><small>${interArm!==null?t('interArmDifference')+': '+interArm+' '+t('unitMmHg'):''}</small></div><div class="analysis-card" style="flex:2"><i class="fas fa-lightbulb"></i> ${t('lifestyle')}<div class="analysis-value" style="font-size:0.9rem;">${advice}</div></div></div>
+        <div class="analysis-card" style="margin-top:16px;"><h3 style="font-size:1rem;"><i class="fas fa-trophy"></i> ${t('achievements')}</h3><div><i class="fas fa-calendar-alt"></i> ${t('regularity')}: <strong>${ach.streak}</strong> ${currentLang==='ru'?'дней подряд':'days'}</div><div class="progress-bar-container"><div class="progress-fill" style="width:${Math.min(100,ach.streak*3.33)}%;"></div></div><div><i class="fas fa-bullseye"></i> ${t('targetHit')}: <strong>${ach.hitRate}%</strong></div><div class="progress-bar-container"><div class="progress-fill" style="width:${ach.hitRate}%;"></div></div><div><i class="fas fa-database"></i> ${t('totalMeasures')}: ${ach.total}</div><div><i class="fas fa-medal"></i> ${t('badges')}: ${ach.badges.map(b=>`<span class="achievement-badge">${b.icon} ${escapeHtml(b.name)}</span>`).join(' ')||'—'}</div></div>`;
+        renderCalendarChart(filtered);
+    }
+
+    function startVoiceInput() {
+        let SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if(!SpeechRecognition) { alert(t("voiceNotSupported")); return; }
+        let recognition = new SpeechRecognition();
+        recognition.lang = currentLang==='ru'?'ru-RU':'en-US';
+        recognition.onerror = function(e) { alert(t("voiceNotSupported")); };
+        recognition.onresult = (event) => {
+            let text = event.results[0][0].transcript;
+            let nums = text.match(/\d+/g);
+            if(nums && nums.length>=3) {
+                document.getElementById('m1_left_sys').value = nums[0];
+                document.getElementById('m1_left_dia').value = nums[1];
+                document.getElementById('m1_left_pulse').value = nums[2];
+            } else { alert(t("voiceNotRecognized")); }
+        };
+        recognition.start();
+    }
+    function speakSelectedRecord() {
+        let recId = editId;
+        if(!recId) { alert(t("noSelectedRecord")); return; }
+        let rec = records.find(r => r.id === recId);
+        if(!rec) return;
+        let avg = computeGlobalAverage(rec.measures);
+        let msg = `${t("recordFrom")} ${formatDate(rec.date)} ${rec.time}, ${t("avgPressure")}: ${avg.str} ${t("unitMmHg")}`;
+        let synth = window.speechSynthesis;
+        let utterance = new SpeechSynthesisUtterance(msg);
+        utterance.lang = currentLang==='ru'?'ru-RU':'en-US';
+        synth.speak(utterance);
+    }
+    function fillLastMeasurements() { if(records.length===0){alert(t('noPrevRecords'));return;}const last=records.slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).at(-1);for(let i=1;i<=3;i++){const m=last.measures[i-1];for(const side of ['left','right'])for(const p of ['sys','dia','pulse'])document.getElementById(`m${i}_${side}_${p}`).value=m?.[side]?.[p]||'';}const irr=document.getElementById('irregularPulseFlag');if(irr)irr.checked=!!last.irregularPulseFlag;const em=document.getElementById('emergencySymptoms');if(em)em.checked=!!last.emergencySymptoms;const ctx=document.getElementById('bpContext');if(ctx)ctx.value=last.bpContext||'home';editId=null;document.getElementById('editIdField').value='';setDefaultDate();timeManuallySet=false;document.getElementById('recordTime').value=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});window.scrollTo({top:0,behavior:'smooth'}); }
+    function setupReminderFromStorage() { const tm=localStorage.getItem('bp_reminder_time'); if(/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(tm||''))scheduleReminder(tm); }
+    function scheduleReminder(time) {
+        if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time||''))return false; if(reminderTimeout)clearTimeout(reminderTimeout);
+        const [hours,minutes]=time.split(':').map(Number),now=new Date(),target=new Date();target.setHours(hours,minutes,0,0);if(target<=now)target.setDate(target.getDate()+1);
+        const diff=target-now; reminderTimeout=setTimeout(()=>{alert(t('reminderMsg')); if('Notification'in window&&Notification.permission==='granted')new Notification(t('reminderMsg')); scheduleReminder(time);},diff); localStorage.setItem('bp_reminder_time',time); return true;
+    }
+    async function setReminder() { const time=prompt(t('reminderPrompt'),'09:00'); if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time||'')){alert(t('reminderPrompt'));return;} if('Notification'in window&&Notification.permission==='default'){try{await Notification.requestPermission();}catch(_){}} if(scheduleReminder(time))alert(`${t('reminderSet')} ${time}`); }
+    function checkAlerts(showDialog=false,recordOverride=null) { const source=recordOverride?[recordOverride]:records;if(!source.length)return;const last=source.slice().sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time))[0],high=getWorstSafetyReading(last);if(!high)return;const label=last.emergencySymptoms?t('emergencyBP'):(high.threshold.ctx==='office'&&high.dia>=110&&high.dia<120?t('veryHighOfficeBP'):t('severeBP')),advice=last.emergencySymptoms?t('emergencyAdvice'):(high.threshold.ctx==='office'?t('officeHighAdvice'):t('repeatBPAdvice')),msg=`${label}: ${high.sys}/${high.dia}. ${advice}`,alertKey=`${last.id||last.date+'_'+last.time}:${high.sys}/${high.dia}:${last.emergencySymptoms?'1':'0'}`;if(!showDialog&&alertKey===lastAlertKey)return;lastAlertKey=alertKey;if(showDialog)alert(`${t('criticalWarning')}\n\n${msg}`);if('Notification'in window&&Notification.permission==='granted')new Notification(t('criticalWarning'),{body:msg}); }
+
+
+    function exportExcel() {
+        if(typeof XLSX==='undefined'){ alert(t('dependencyMissing')+': SheetJS'); return; }
+        let f = getFilteredRecords();
+        if(!f.length) { alert(t("noData")); return; }
+        showLoading(true);
+        setTimeout(() => {
+            let sheet = [[t("date")+"/"+t("time"), t("measurement")+"-1 "+t("measurementL"), t("measurement")+"-1 "+t("measurementR"), t("measurement")+"-2 "+t("measurementL"), t("measurement")+"-2 "+t("measurementR"), t("measurement")+"-3 "+t("measurementL"), t("measurement")+"-3 "+t("measurementR"), t("avgLabel")]];
+            f.forEach(r => {
+                let row = [formatDate(r.date)+" "+r.time];
+                r.measures.forEach(m => row.push(formatPressure(m.left.sys,m.left.dia,m.left.pulse), formatPressure(m.right.sys,m.right.dia,m.right.pulse)));
+                row.push(computeGlobalAverage(r.measures).str);
+                sheet.push(row);
+            });
+            let ws = XLSX.utils.aoa_to_sheet(sheet);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "BP_Data");
+            XLSX.writeFile(wb, "BP_"+localDateISO()+".xlsx");
+            showLoading(false);
+        }, 50);
+    }
+    function exportCsv() {
+        let f = getFilteredRecords();
+        if(!f.length) { alert(t("noData")); return; }
+        showLoading(true);
+        setTimeout(() => {
+            let rows = [[t("date"),t("time"),t("measurement")+"-1 "+t("measurementL"),t("measurement")+"-1 "+t("measurementR"),t("measurement")+"-2 "+t("measurementL"),t("measurement")+"-2 "+t("measurementR"),t("measurement")+"-3 "+t("measurementL"),t("measurement")+"-3 "+t("measurementR"),t("avgLabel")]];
+            f.forEach(r => {
+                let row = [r.date, r.time];
+                r.measures.forEach(m => row.push(formatPressure(m.left.sys,m.left.dia,m.left.pulse), formatPressure(m.right.sys,m.right.dia,m.right.pulse)));
+                row.push(computeGlobalAverage(r.measures).str);
+                rows.push(row);
+            });
+            let csv = "\uFEFF" + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(";")).join("\n");
+            let a = document.createElement("a");
+            a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+            a.download = "BP_"+localDateISO()+".csv";
+            a.click();
+            showLoading(false);
+        }, 50);
+    }
+    function fhirDateTime(rec) { const tm=normalizeTime(rec?.time); if(!rec?.date||!tm)return null; if(Number.isFinite(rec.timezoneOffsetMinutes))return `${rec.date}T${tm}${offsetString(rec.timezoneOffsetMinutes)}`; const d=parseRecordDateTime(rec); return d?d.toISOString():null; }
+    function quantity(value,unit,code){return {value:Number(value),unit,system:'http://unitsofmeasure.org',code};}
+    function coding(system,code,display){return {coding:[{system,code,display}]};}
+    function buildFhirBundle(f=records) {
+        const patientUuid=uuidv4(),patientUrl='urn:uuid:'+patientUuid,entry=[{fullUrl:patientUrl,resource:{resourceType:'Patient',id:patientUuid,name:[{text:String(patients[currentPatient]||currentPatient)}]}}];
+        const vitalCategory=[{coding:[{system:'http://terminology.hl7.org/CodeSystem/observation-category',code:'vital-signs',display:'Vital Signs'}]}];
+        const addObs=(obs)=>{const id=uuidv4();obs.resourceType='Observation';obs.id=id;obs.status='final';obs.category=vitalCategory;obs.subject={reference:patientUrl};entry.push({fullUrl:'urn:uuid:'+id,resource:obs});};
+        for(const r of (f||[])){const effectiveDateTime=fhirDateTime(r);if(!effectiveDateTime)continue;
+            r.measures.forEach((m,idx)=>['left','right'].forEach(side=>{const v=m[side];if(v.sys>0&&v.dia>0)addObs({code:coding('http://loinc.org','85354-9','Blood pressure panel with all children optional'),effectiveDateTime,bodySite:{text:(side==='left'?'Left':'Right')+' arm'},note:[{text:`Measurement ${idx+1}`}],component:[{code:coding('http://loinc.org','8480-6','Systolic blood pressure'),valueQuantity:quantity(v.sys,'mmHg','mm[Hg]')},{code:coding('http://loinc.org','8462-4','Diastolic blood pressure'),valueQuantity:quantity(v.dia,'mmHg','mm[Hg]')} ]}); if(v.pulse>0)addObs({code:coding('http://loinc.org','8867-4','Heart rate'),effectiveDateTime,bodySite:{text:(side==='left'?'Left':'Right')+' arm measurement'},note:[{text:`Measurement ${idx+1}`}],valueQuantity:quantity(v.pulse,'beats/min','/min')});}));
+            if(r.temperature>0)addObs({code:coding('http://loinc.org','8310-5','Body temperature'),effectiveDateTime,valueQuantity:quantity(r.temperature,'°C','Cel')});
+            if(r.weight>0)addObs({code:coding('http://loinc.org','29463-7','Body weight'),effectiveDateTime,valueQuantity:quantity(r.weight,'kg','kg')});
+            if(r.height>0)addObs({code:coding('http://loinc.org','8302-2','Body height'),effectiveDateTime,valueQuantity:quantity(r.height,'cm','cm')});
+        }
+        return {resourceType:'Bundle',type:'collection',timestamp:new Date().toISOString(),entry};
+    }
+    function exportFhir() {
+        const f=getFilteredRecords(); if(!f.length){alert(t('noData'));return;} const bundle=buildFhirBundle(f); downloadBlob(new Blob([JSON.stringify(bundle,null,2)],{type:'application/fhir+json'}),`fhir_${safeRecordId(currentPatient)}_${localDateISO()}.json`);
+    }
+    function clearAll() { if(confirm(t('deleteAllConfirm'))){records=[];saveData();applyFilterAndRender();clearFormMeasurements();} }
+    function buildFullBackup() {
+        const dataByPatient={},quarantineByPatient={};
+        for(const id of Object.keys(patients)) {
+            const raw=safeJsonParse(localStorage.getItem('bp_data_'+id),[]),valid=[],quarantine=[],seen=new Set();
+            if(Array.isArray(raw)) for(const rec of raw) {
+                const rid=rec?.id!==undefined&&rec?.id!==null&&rec?.id!==''?incomingSafeId(rec.id):null;
+                if(!isValidRecord(rec) || (rid&&seen.has(rid))) { quarantine.push(rec); continue; }
+                const x=sanitizeRecord(rec); x.patientId=id; if(seen.has(x.id)) x.id=uuidv4(); seen.add(x.id); valid.push(x);
+            }
+            dataByPatient[id]=valid; if(quarantine.length) quarantineByPatient[id]=quarantine;
+        }
+        return {format:'BPDiaryBackup',schemaVersion:2,appVersion:'5.5.0-final-validated',exportedAt:new Date().toISOString(),currentPatient,currentLang,theme:localStorage.getItem('bp_theme')||'light',reminderTime:localStorage.getItem('bp_reminder_time')||'',patients,patientSettings,dataByPatient,...(Object.keys(quarantineByPatient).length?{quarantineByPatient}: {})};
+    }
+    function fullBackup() { const b=buildFullBackup(); downloadBlob(new Blob([JSON.stringify(b,null,2)],{type:'application/json'}),`full_backup_ALL_${localDateISO()}.json`); }
+    function validateBackupV2(b) { if(!isPlainObject(b)||b.format!=='BPDiaryBackup'||b.schemaVersion!==2||!isPlainObject(b.patients)||!isPlainObject(b.patientSettings)||!isPlainObject(b.dataByPatient))return false; for(const id of Object.keys(b.patients))if(!incomingSafeId(id))return false; for(const id of Object.keys(b.patientSettings))if(!incomingSafeId(id)||!Object.prototype.hasOwnProperty.call(b.patients,id))return false; for(const [id,arr] of Object.entries(b.dataByPatient)){if(!incomingSafeId(id)||!Object.prototype.hasOwnProperty.call(b.patients,id)||!validateImportedData(arr))return false;} return true; }
+    function snapshotBpStorage(){const out={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('bp_'))out[k]=localStorage.getItem(k);}return out;}
+    function snapshotRuntimeState(){return {currentPatient,currentLang,patients:JSON.parse(JSON.stringify(patients)),patientSettings:JSON.parse(JSON.stringify(patientSettings)),records:JSON.parse(JSON.stringify(records))};}
+    function restoreBpStorageSnapshot(s){for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith('bp_'))localStorage.removeItem(k);}for(const [k,v] of Object.entries(s||{}))localStorage.setItem(k,v);}
+    function restoreRuntimeState(s){if(!s)return;currentPatient=s.currentPatient;currentLang=s.currentLang;patients=s.patients;patientSettings=s.patientSettings;records=s.records;}
+    function restoreBackup() {
+        const inp=document.createElement('input');inp.type='file';inp.accept='application/json';inp.onchange=e=>{const file=e.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{showLoading(true);let before=null,runtimeBefore=snapshotRuntimeState();try{const b=JSON.parse(ev.target.result);if(!confirm(t('restoreConfirm')))return;
+            if(validateBackupV2(b)){before=snapshotBpStorage();try{for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith('bp_'))localStorage.removeItem(k);}const p=sanitizePatients(b.patients);localStorage.setItem('bp_patients',JSON.stringify(p));localStorage.setItem('bp_patient_settings',JSON.stringify(sanitizeSettings(b.patientSettings)));for(const [id,arr] of Object.entries(b.dataByPatient)){if(!Object.prototype.hasOwnProperty.call(p,id))continue;localStorage.setItem('bp_data_'+id,JSON.stringify(arr.map(r=>{const x=sanitizeRecord(r);x.patientId=id;return x;})));}if(['light','dark'].includes(b.theme))localStorage.setItem('bp_theme',b.theme);if(/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(b.reminderTime||''))localStorage.setItem('bp_reminder_time',b.reminderTime);currentLang=b.currentLang==='en'?'en':'ru';localStorage.setItem('bp_lang',currentLang);currentPatient=Object.prototype.hasOwnProperty.call(p,b.currentPatient)?b.currentPatient:'default';renderFullApp();alert(t('backupRestored'));return;}catch(writeErr){restoreBpStorageSnapshot(before);restoreRuntimeState(runtimeBefore);throw new Error(t('restoreFailedReverted')+' '+writeErr.message);}}
+            if(Array.isArray(b.records)&&validateImportedData(b.records)){before=snapshotBpStorage();try{const pid=safeRecordId(b.patient||'default');if(!patients[pid])patients[pid]=String(b.patientName||pid);currentPatient=pid;records=b.records.map(r=>{const x=sanitizeRecord(r);x.patientId=pid;return x;});patientSettings[pid]=sanitizePatientSetting(isPlainObject(b.settings)?b.settings:{});savePatients();savePatientSettings();saveData();loadData();alert(t('backupRestored'));return;}catch(writeErr){restoreBpStorageSnapshot(before);restoreRuntimeState(runtimeBefore);throw new Error(t('restoreFailedReverted')+' '+writeErr.message);}}
+            throw new Error(t('invalidBackup'));
+        }catch(err){alert(t('importError')+': '+err.message);}finally{showLoading(false);}};reader.readAsText(file);};inp.click();
+    }
+
+
+    function exportDoctorReport() {
+        const filtered = getFilteredRecords();
+        if (!filtered.length) { alert(t("noData")); return; }
+
+        const sorted = filtered.slice().sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+        const sessionAvgs = sorted.map(r => ({r, a: computeGlobalAverage(r.measures)})).filter(x => x.a.sys>0 && x.a.dia>0);
+        if (!sessionAvgs.length) { alert(t("noData")); return; }
+
+        const avgSys = Math.round(sessionAvgs.reduce((s,x)=>s+x.a.sys,0) / sessionAvgs.length);
+        const avgDia = Math.round(sessionAvgs.reduce((s,x)=>s+x.a.dia,0) / sessionAvgs.length);
+        const sessionPulseVals = sessionAvgs.map(x=>x.a.pulse).filter(v=>v>0);
+        const avgPulse = sessionPulseVals.length ? Math.round(sessionPulseVals.reduce((a,b)=>a+b,0)/sessionPulseVals.length) : 0;
+        const pp = avgSys - avgDia;
+
+        const readings = [];
+        sorted.forEach((r,ri) => {
+            (r.measures||[]).forEach((m,mi) => ['left','right'].forEach(side => {
+                const v = m?.[side];
+                if (v?.sys>0 && v?.dia>0) readings.push({
+                    sys:Number(v.sys), dia:Number(v.dia), pulse:Number(v.pulse)||0,
+                    recordIndex:ri, recordId:safeRecordId(r.id), date:r.date, time:r.time,
+                    measurement:mi+1, side
+                });
+            }));
+        });
+
+        const sysVals = readings.map(x=>x.sys);
+        const diaVals = readings.map(x=>x.dia);
+        const pulseVals = readings.map(x=>x.pulse).filter(v=>v>0);
+        const minSys = sysVals.length ? Math.min(...sysVals) : 0;
+        const maxSys = sysVals.length ? Math.max(...sysVals) : 0;
+        const minDia = diaVals.length ? Math.min(...diaVals) : 0;
+        const maxDia = diaVals.length ? Math.max(...diaVals) : 0;
+        const minPulse = pulseVals.length ? Math.min(...pulseVals) : 0;
+        const maxPulse = pulseVals.length ? Math.max(...pulseVals) : 0;
+
+        const tr=getTargetRange(); if(!tr){alert(t('targetRangeInvalid'));return;} const {minS:targetMinS,minD:targetMinD,maxS:targetMaxS,maxD:targetMaxD}=tr;
+        const inRangeCount = sessionAvgs.filter(x =>
+            x.a.sys>=targetMinS && x.a.sys<=targetMaxS &&
+            x.a.dia>=targetMinD && x.a.dia<=targetMaxD
+        ).length;
+        const inRangePct = sessionAvgs.length ? Math.round(inRangeCount/sessionAvgs.length*100) : 0;
+
+        const severeReadings=[]; sorted.forEach(r=>{const th=safetyThreshold(r);getValidReadings(r).forEach(v=>{if(isSafetyTrigger(v,th))severeReadings.push({...v,recordId:safeRecordId(r.id),threshold:th});});});
+        const severeSessions = new Set(severeReadings.map(x=>x.recordId)).size;
+        const irregularSessions = sorted.filter(r=>r.irregularPulseFlag===true).length;
+        const symptomSessions = sorted.filter(r=>r.emergencySymptoms===true).length;
+
+        const weight = safeParseFloat(document.getElementById("weight")?.value);
+        const height = safeParseFloat(document.getElementById("height")?.value);
+        const bmi = calculateBMI(weight, height);
+        const age = safeParseFloat(document.getElementById("age")?.value);
+        const genderCode = document.getElementById("gender")?.value || 'male';
+        const gender = genderCode === 'male' ? t("male") : t("female");
+        const smokingCode = document.getElementById("smoking")?.value || '0';
+        const smoking = smokingCode === '1' ? t("yes") : t("no");
+        const cholTotal = safeParseFloat(document.getElementById("cholTotal")?.value);
+        const cholHDL = safeParseFloat(document.getElementById("cholHDL")?.value);
+        const diabetesCode = document.getElementById("diabetes")?.value || '0';
+        const diabetes = diabetesCode === '1' ? t("yes") : t("no");
+        const contextCode=getContextSummary(sorted),context=contextText(contextCode),armCode=getPrimaryArmSetting()==='auto'?getAutoPrimaryArm(records):getPrimaryArmSetting(),armText=armCode==='right'?t('primaryArmRight'):armCode==='left'?t('primaryArmLeft'):t('primaryArmAutoUnavailable'),interArm=calculateInterArmDifference(sorted);
+        const risk = calculateScoreRisk(age, genderCode, smokingCode, avgSys, cholTotal, cholHDL, diabetesCode);
+        const riskRegion = document.getElementById('riskRegion')?.value || '';
+        const countryEl = document.getElementById('scoreCountry');
+        const countryText = countryEl?.selectedOptions?.[0]?.textContent?.trim() || '';
+
+        const ru = currentLang === 'ru';
+        const R = ru ? {
+            period:'Период', generated:'Сформирован', sessions:'Сеансов измерения',
+            readings:'Отдельных измерений АД', avgBP:'Среднее АД по сеансам',
+            avgPulse:'Средний пульс', bpRange:'Диапазон АД',
+            pulseRange:'Диапазон пульса', pulsePressure:'Пульсовое давление',
+            context:'Контекст измерения', targetRange:'Персональный диапазон',
+            inTarget:'Сеансов в персональном диапазоне',
+            severe:'Очень высокое АД',
+            severeNone:'Не зарегистрировано', severeUnits:'измерений',
+            inSessions:'сеансов', irregular:'Индикатор нерегулярного пульса',
+            symptoms:'Тревожные симптомы при высоком АД',
+            ageGender:'Возраст / пол',
+            smoking:'Курение', diabetes:'Диабет', bmi:'ИМТ',
+            weightHeight:'Вес / рост', cholesterol:'Общий холестерин / ЛПВП',
+            score:'Сердечно-сосудистый риск', scoreRegion:'Регион SCORE2',
+            measurements:'Таблица измерений', cellFormat:'Формат: САД/ДАД · пульс',
+            flags:'Метки', irregularShort:'Нерег. пульс', symptomsShort:'Симптомы',
+            none:'нет', years:'лет', kg:'кг', cm:'см', bpm:'уд/мин',
+            unitBP:'мм рт. ст.', records:'записей',
+            note:'Отчёт сформирован из данных дневника. Флаги тонометра и расчётные показатели не являются самостоятельным диагнозом.'
+        } : {
+            period:'Period', generated:'Generated', sessions:'Measurement sessions',
+            readings:'Individual BP readings', avgBP:'Mean BP by session',
+            avgPulse:'Mean pulse', bpRange:'BP range',
+            pulseRange:'Pulse range', pulsePressure:'Pulse pressure',
+            context:'Measurement context', targetRange:'Personal target range',
+            inTarget:'Sessions inside personal range',
+            severe:'Very high BP',
+            severeNone:'Not recorded', severeUnits:'readings',
+            inSessions:'sessions', irregular:'Monitor irregular-pulse flag',
+            symptoms:'Concerning symptoms with high BP',
+            ageGender:'Age / sex',
+            smoking:'Smoking', diabetes:'Diabetes', bmi:'BMI',
+            weightHeight:'Weight / height', cholesterol:'Total cholesterol / HDL',
+            score:'Cardiovascular risk', scoreRegion:'SCORE2 region',
+            measurements:'Measurement table', cellFormat:'Format: SBP/DBP · pulse',
+            flags:'Flags', irregularShort:'Irregular pulse', symptomsShort:'Symptoms',
+            none:'none', years:'years', kg:'kg', cm:'cm', bpm:'bpm',
+            unitBP:'mmHg', records:'records',
+            note:'This report is generated from diary data. Monitor flags and calculated indicators are not standalone diagnoses.'
+        };
+
+        const periodStart = formatDate(sorted[0].date);
+        const periodEnd = formatDate(sorted[sorted.length-1].date);
+        const periodText = periodStart===periodEnd ? periodStart : `${periodStart} — ${periodEnd}`;
+        const generatedDate = formatDate(localDateISO());
+
+        let scoreText = '';
+        if (risk.status === 'ok') {
+            const catKey='scoreCategory'+risk.category.charAt(0).toUpperCase()+risk.category.slice(1);
+            scoreText = `${risk.model}: ${risk.value}% (${t(catKey)})`;
+            if (countryText && countryEl?.value) scoreText += ` · ${escapeHtml(countryText)}`;
+            if (riskRegion) scoreText += ` · ${scoreRegionText(riskRegion)}`;
+        }
+
+        const bmiText = bmi ? `${bmi} (${getBMICategory(parseFloat(bmi))})` : '';
+        const severeText = severeReadings.length
+            ? `${severeReadings.length} ${R.severeUnits} / ${severeSessions} ${R.inSessions}`
+            : R.severeNone;
+
+        const fmtReportPressure = (v) => {
+            if (!(v?.sys>0) || !(v?.dia>0)) return '—';
+            return `${Math.round(v.sys)}/${Math.round(v.dia)}${v.pulse>0 ? ' · '+Math.round(v.pulse) : ''}`;
+        };
+
+        const extraOverviewRows = [];
+        if (age>0 || gender) extraOverviewRows.push(`<div><b>${R.ageGender}:</b> ${age>0?escapeHtml(String(age))+' '+R.years:'—'} / ${escapeHtml(gender)}</div>`);
+        extraOverviewRows.push(`<div><b>${R.smoking}:</b> ${escapeHtml(smoking)}</div>`);
+        extraOverviewRows.push(`<div><b>${R.diabetes}:</b> ${escapeHtml(diabetes)}</div>`);
+        if (weight>0 || height>0) extraOverviewRows.push(`<div><b>${R.weightHeight}:</b> ${weight>0?escapeHtml(String(weight))+' '+R.kg:'—'} / ${height>0?escapeHtml(String(height))+' '+R.cm:'—'}</div>`);
+        if (bmiText) extraOverviewRows.push(`<div><b>${R.bmi}:</b> ${escapeHtml(bmiText)}</div>`);
+        if (cholTotal>0 || cholHDL>0) extraOverviewRows.push(`<div><b>${R.cholesterol}:</b> ${cholTotal>0?escapeHtml(String(cholTotal)):'—'} / ${cholHDL>0?escapeHtml(String(cholHDL)):'—'} mmol/L</div>`);
+        if (scoreText) extraOverviewRows.push(`<div class="wide"><b>${R.score}:</b> ${scoreText}</div>`);
+
+        let html = `<!DOCTYPE html>
+<html lang="${currentLang}">
+<head>
+<meta charset="UTF-8">
+<title>${escapeHtml(t("reportTitle"))}</title>
+<style>
+    @page { size: A4 landscape; margin: 10mm; }
+    * { box-sizing: border-box; }
+    body { font-family: "Segoe UI", Roboto, Arial, sans-serif; margin: 0; color:#111; font-size:9.6pt; line-height:1.22; }
+    h1 { font-size:19pt; text-align:center; margin:0 0 3px; letter-spacing:.2px; }
+    h2 { font-size:12.5pt; margin:11px 0 6px; }
+    .meta { text-align:center; margin-bottom:8px; font-size:9.2pt; }
+    .meta span { display:inline-block; margin:0 8px; }
+    .kpis { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin:0 0 9px; }
+    .kpi { border:1px solid #aaa; border-radius:5px; padding:6px 8px; }
+    .kpi .label { font-size:8pt; color:#444; margin-bottom:2px; }
+    .kpi .value { font-size:12pt; font-weight:700; }
+    .overview { display:grid; grid-template-columns:repeat(3,1fr); gap:0; border:1px solid #aaa; border-radius:6px; overflow:hidden; margin:0 0 11px; }
+    .overview > div { padding:5px 8px; border-right:1px solid #ddd; border-bottom:1px solid #ddd; break-inside:avoid; }
+    .overview > div:nth-child(3n) { border-right:none; }
+    .overview .wide { grid-column:1 / -1; border-right:none; }
+    .overview .severe-row { display:flex; flex-wrap:wrap; column-gap:4px; align-content:flex-start; }
+    .overview .severe-row .severe-value { white-space:nowrap; }
+    .overview .primary-arm-row { white-space:nowrap; font-size:8.6pt; }
+    .overview .primary-arm-row.wide { white-space:normal; font-size:8.6pt; }
+    .overview > div:nth-last-child(-n+3) { border-bottom:none; }
+    .section-note { font-size:8pt; color:#444; margin:-4px 0 6px; }
+    table.data { width:100%; border-collapse:collapse; font-size:7.4pt; table-layout:fixed; }
+    table.data th, table.data td { border:1px solid #555; padding:3px 4px; text-align:center; vertical-align:middle; overflow-wrap:anywhere; }
+    table.data th { background:#efefef; font-weight:700; }
+    table.data th:first-child { width:12%; }
+    table.data th:last-child { width:10%; }
+    table.data tbody tr { break-inside:avoid; page-break-inside:avoid; }
+    thead { display:table-header-group; }
+    .flag { font-size:6.9pt; line-height:1.15; }
+    .report-note { margin-top:8px; font-size:7.5pt; color:#444; }
+    @media (max-width:1100px) { .kpis { grid-template-columns:repeat(5,minmax(0,1fr)); } .kpi .label { font-size:7.4pt; } .kpi .value { font-size:10.8pt; } }
+    @media print {
+        body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+        h1, h2, .kpis, .overview { break-after:avoid; }
+    }
+</style>
+</head>
+<body>
+    <h1>${escapeHtml(t("reportTitle"))}</h1>
+    <div class="meta">
+        <span><b>${escapeHtml(t("patientNameLabel"))}:</b> ${escapeHtml(patients[currentPatient]||currentPatient)}</span>
+        <span><b>${R.period}:</b> ${escapeHtml(periodText)}</span>
+        <span><b>${R.generated}:</b> ${escapeHtml(generatedDate)}</span>
+    </div>
+
+    <div class="kpis">
+        <div class="kpi"><div class="label">${R.sessions}</div><div class="value">${sorted.length}</div></div>
+        <div class="kpi"><div class="label">${R.readings}</div><div class="value">${readings.length}</div></div>
+        <div class="kpi"><div class="label">${R.avgBP}</div><div class="value">${avgSys}/${avgDia} ${R.unitBP}</div></div>
+        <div class="kpi"><div class="label">${R.avgPulse}</div><div class="value">${avgPulse>0?avgPulse+' '+R.bpm:'—'}</div></div>
+        <div class="kpi"><div class="label">${R.pulsePressure}</div><div class="value">${pp} ${R.unitBP}</div></div>
+    </div>
+
+    <div class="overview">
+        <div><b>${R.context}:</b> ${escapeHtml(context)}</div>
+        <div class="primary-arm-row${armCode===null?' wide':''}"><b>${escapeHtml(t('primaryArmUsed'))}:</b> ${escapeHtml(armText)}${interArm!==null?` · ${escapeHtml(t('interArmDifference'))}: ${interArm} ${R.unitBP}`:''}</div>
+        <div><b>${R.bpRange}:</b> ${minSys}–${maxSys} / ${minDia}–${maxDia} ${R.unitBP}</div>
+        <div><b>${R.pulseRange}:</b> ${pulseVals.length?minPulse+'–'+maxPulse+' '+R.bpm:'—'}</div>
+        <div><b>${R.targetRange}:</b> ${targetMinS}–${targetMaxS} / ${targetMinD}–${targetMaxD} ${R.unitBP}</div>
+        <div><b>${R.inTarget}:</b> ${inRangeCount}/${sessionAvgs.length} (${inRangePct}%)</div>
+        <div class="severe-row"><b>${R.severe}:</b><span class="severe-value">${escapeHtml(severeText)}</span></div>
+        <div><b>${R.irregular}:</b> ${irregularSessions} ${R.records}</div>
+        <div><b>${R.symptoms}:</b> ${symptomSessions} ${R.records}</div>
+        ${extraOverviewRows.join('')}
+    </div>
+
+    <h2>${R.measurements}</h2>
+    <div class="section-note">${R.cellFormat}</div>
+    <table class="data">
+        <thead>
+            <tr>
+                <th>${escapeHtml(t("dateTime"))}</th>
+                <th>${escapeHtml(t("measurement"))}-1 ${escapeHtml(t("measurementL"))}</th>
+                <th>${escapeHtml(t("measurement"))}-1 ${escapeHtml(t("measurementR"))}</th>
+                <th>${escapeHtml(t("measurement"))}-2 ${escapeHtml(t("measurementL"))}</th>
+                <th>${escapeHtml(t("measurement"))}-2 ${escapeHtml(t("measurementR"))}</th>
+                <th>${escapeHtml(t("measurement"))}-3 ${escapeHtml(t("measurementL"))}</th>
+                <th>${escapeHtml(t("measurement"))}-3 ${escapeHtml(t("measurementR"))}</th>
+                <th>${escapeHtml(t("avgLabel"))}</th>
+                <th>${R.flags}</th>
+            </tr>
+        </thead>
+        <tbody>`;
+
+        sorted.forEach(r => {
+            const avg = computeGlobalAverage(r.measures);
+            const flags = [];
+            if (r.irregularPulseFlag) flags.push(R.irregularShort);
+            if (r.emergencySymptoms) flags.push(R.symptomsShort);
+            html += `<tr>
+                <td>${escapeHtml(formatDate(r.date))} ${escapeHtml((r.time||'').slice(0,5))}</td>
+                <td>${escapeHtml(fmtReportPressure(r.measures?.[0]?.left))}</td>
+                <td>${escapeHtml(fmtReportPressure(r.measures?.[0]?.right))}</td>
+                <td>${escapeHtml(fmtReportPressure(r.measures?.[1]?.left))}</td>
+                <td>${escapeHtml(fmtReportPressure(r.measures?.[1]?.right))}</td>
+                <td>${escapeHtml(fmtReportPressure(r.measures?.[2]?.left))}</td>
+                <td>${escapeHtml(fmtReportPressure(r.measures?.[2]?.right))}</td>
+                <td>${avg.sys>0&&avg.dia>0 ? `${avg.sys}/${avg.dia}${avg.pulse>0?' · '+avg.pulse:''}` : '—'}</td>
+                <td class="flag">${flags.length?escapeHtml(flags.join('; ')):'—'}</td>
+            </tr>`;
+        });
+
+        html += `</tbody></table>
+        <div class="report-note">${R.note}</div>
+        <script>
+            setTimeout(function() {
+                window.print();
+                window.onafterprint = function() { window.close(); };
+            }, 350);
+        </` + `script>
+</body></html>`;
+
+        const win = window.open('', '_blank', 'width=1200,height=800');
+        if (win) {
+            win.document.write(html);
+            win.document.close();
+        } else {
+            alert(currentLang==='ru'
+                ? "Пожалуйста, разрешите всплывающие окна для просмотра отчёта."
+                : "Please allow pop-up windows to view the report.");
+        }
+    }
+
+    function setTheme(theme) { document.body.classList.remove('light','dark'); document.body.classList.add(theme); localStorage.setItem('bp_theme',theme); }
+    function updateUITexts() {
+        document.querySelectorAll("[data-i18n]").forEach(el => {
+            let key = el.getAttribute("data-i18n");
+            if(translations[currentLang] && translations[currentLang][key]) {
+                if(el.tagName === "OPTION") el.innerText = translations[currentLang][key];
+                else el.innerHTML = translations[currentLang][key];
+            }
+        });
+        document.querySelectorAll("[data-i18n-title]").forEach(el=>{const key=el.getAttribute("data-i18n-title"); if(translations[currentLang]?.[key]) el.setAttribute("title",translations[currentLang][key]);});
+        updateConditionalProfileUI(); const groups=document.querySelectorAll('#scoreCountry optgroup'); if(groups[0])groups[0].label=t('riskLowRegion');if(groups[1])groups[1].label=t('riskModerateRegion');if(groups[2])groups[2].label=t('riskHighRegion');if(groups[3])groups[3].label=t('riskVeryHighRegion'); updateScoreSysSourceNote();
+        document.getElementById("saveBtn").innerHTML = '<i class="fas fa-save"></i> ' + t("save");
+        document.getElementById("clearFormBtn").innerHTML = '<i class="fas fa-eraser"></i> ' + t("clear");
+        document.getElementById("voiceBtn").innerHTML = '<i class="fas fa-microphone-alt"></i> ' + t("voice");
+        document.getElementById("speakRecordBtn").innerHTML = '<i class="fas fa-volume-up"></i> ' + t("speak");
+        document.getElementById("fillLastBtn").innerHTML = '<i class="fas fa-copy"></i> ' + t("fillLast");
+        document.getElementById("applyFilterBtn").innerHTML = '<i class="fas fa-filter"></i> ' + t("filter");
+        document.getElementById("resetFilterBtn").innerHTML = '<i class="fas fa-undo-alt"></i> ' + t("reset");
+        document.getElementById("searchInput").placeholder = t("search");
+        document.getElementById("exportExcelBtn").innerHTML = '<i class="fas fa-file-excel"></i> ' + t("excel");
+        document.getElementById("exportCsvBtn").innerHTML = '<i class="fas fa-file-csv"></i> ' + t("csv");
+        document.getElementById("exportFhirBtn").innerHTML = '<i class="fas fa-file-code"></i> ' + t("fhir");
+        document.getElementById("reminderBtn").innerHTML = '<i class="fas fa-bell"></i> ' + t("reminder");
+        document.getElementById("clearAllBtn").innerHTML = '<i class="fas fa-trash-alt"></i> ' + t("deleteAll");
+        document.getElementById("reportDoctorBtn").innerHTML = '<i class="fas fa-user-md"></i> ' + t("reportDoctor");
+        document.getElementById("fullBackupBtn").innerHTML = '<i class="fas fa-save"></i> ' + t("fullBackup");
+        document.getElementById("restoreBackupBtn").innerHTML = '<i class="fas fa-upload"></i> ' + t("restoreBackup");
+        document.getElementById("addPatientBtn").innerHTML = '<i class="fas fa-plus"></i> ' + t("addPatient");
+        document.getElementById("editPatientBtn").innerHTML = '<i class="fas fa-edit"></i> ' + t("editPatient");
+        document.getElementById("delPatientBtn").innerHTML = '<i class="fas fa-trash-alt"></i> ' + t("delPatient");
+        document.getElementById("titleMain").innerHTML = '<i class="fas fa-heartbeat"></i> ' + t("appTitle");
+        document.getElementById("h2-pressure").innerText = t("pressureDynamics");
+        document.getElementById("h2-pulse").innerText = t("pulseDynamics");
+        document.getElementById("h2-tempWeight").innerText = t("tempWeightDynamics");
+        document.getElementById("h2-timeOfDay").innerText = t("timeOfDayAnalysis");
+        document.getElementById("h2-weekday").innerText = t("weekdayAvg");
+        let headers = document.querySelectorAll(".card-header h2");
+        if(headers[0]) headers[0].innerHTML = '<i class="fas fa-chart-pie"></i> ' + t("analysis");
+        if(headers[1]) headers[1].innerHTML = '<i class="fas fa-archive"></i> ' + t("archive");
+        let th = document.querySelector("#recordsTable thead tr");
+        if(th) {
+            let cells = th.querySelectorAll("th");
+            cells[0].innerText = t("date") + "/" + t("time");
+            for(let j=1;j<=3;j++) {
+                cells[(j-1)*2+1].innerText = t("measurement")+"-"+j+" "+t("measurementL");
+                cells[(j-1)*2+2].innerText = t("measurement")+"-"+j+" "+t("measurementR");
+            }
+            cells[7].innerText = t("avgLabel");
+            cells[8].innerText = t("actions");
+        }
+        document.getElementById("filterStart").placeholder = t("fromDate");
+        document.getElementById("filterEnd").placeholder = t("toDate");
+        updatePlaceholders();
+    }
+    function switchLanguage() {
+        let savedEditId = editId;
+        let filterStartIso = currentFilter.start, filterEndIso = currentFilter.end;
+        currentLang = currentLang === "ru" ? "en" : "ru";
+        try{localStorage.setItem('bp_lang',currentLang);}catch(_){}
+        document.documentElement.lang = currentLang;
+        updateDataRecoveryWarning();
+        let dateField = document.getElementById("recordDate");
+        let dateIso = dateField.value.trim();
+        // Сохраняем все значения полей
+        let savedValues = {};
+        for(let i=1;i<=3;i++) {
+            for(let side of ['left','right']) {
+                for(let param of ['sys','dia','pulse']) {
+                    let id = `m${i}_${side}_${param}`;
+                    savedValues[id] = document.getElementById(id).value;
+                }
+            }
+        }
+        let ids = ["temperature","weight","height","age","gender","smoking","cholTotal","cholHDL","diabetes","diabetesType","diabetesAge","hba1c","hba1cUnit","egfr","uacr","scoreEligibility","scoreCountry","riskRegion","scoreSysInput","bpContext","primaryArm","targetSysMinInput","targetDiaMinInput","targetSysInput","targetDiaInput","targetPulseInput","targetTTRInput"];
+        ids.forEach(id => savedValues[id] = document.getElementById(id).value);
+        loadPatients();
+        updateUITexts();
+        const note=document.getElementById('clinicalDisclaimer'); if(note) note.textContent=t('clinicalDisclaimer');
+        buildForm();
+        for(let key in savedValues) { let el = document.getElementById(key); if(el) el.value = savedValues[key]; }
+        if(savedEditId) {
+            editId = savedEditId;
+            document.getElementById("editIdField").value = savedEditId;
+        } else {
+            editId = null;
+            document.getElementById("editIdField").value = "";
+        }
+        currentFilter.start = filterStartIso;
+        currentFilter.end = filterEndIso;
+        if(filterStartIso) document.getElementById("filterStart").value = filterStartIso;
+        if(filterEndIso) document.getElementById("filterEnd").value = filterEndIso;
+        // Установка даты после смены языка
+        dateField = document.getElementById("recordDate");
+        if(dateIso.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            dateField.value = dateIso;
+        } else {
+            setDefaultDate();
+        }
+        bindAutoSave();
+        applyFilterAndRender();
+    }
+    function attachEvents() {
+        document.getElementById("saveBtn").onclick = saveRecord;
+        document.getElementById("clearFormBtn").onclick = clearForm;
+        document.getElementById("voiceBtn").onclick = startVoiceInput;
+        document.getElementById("speakRecordBtn").onclick = speakSelectedRecord;
+        document.getElementById("fillLastBtn").onclick = fillLastMeasurements;
+        const scoreDiaryBtn=document.getElementById("scoreSysFromDiaryBtn"); if(scoreDiaryBtn) scoreDiaryBtn.onclick=fillScoreSysFromDiary;
+        document.getElementById("exportExcelBtn").onclick = exportExcel;
+        document.getElementById("exportCsvBtn").onclick = exportCsv;
+        document.getElementById("clearAllBtn").onclick = clearAll;
+        document.getElementById("applyFilterBtn").onclick = setFilter;
+        document.getElementById("resetFilterBtn").onclick = resetFilter;
+        document.getElementById("exportFhirBtn").onclick = exportFhir;
+        document.getElementById("reminderBtn").onclick = setReminder;
+        document.getElementById("lightThemeBtn").onclick = () => setTheme('light');
+        document.getElementById("darkThemeBtn").onclick = () => setTheme('dark');
+        document.getElementById("addPatientBtn").onclick = addPatient;
+        document.getElementById("editPatientBtn").onclick = editPatient;
+        document.getElementById("delPatientBtn").onclick = deletePatient;
+        document.getElementById("restoreBackupBtn").onclick = restoreBackup;
+        document.getElementById("patientSelect").onchange = function() {
+            currentPatient = this.value;
+            editId = null;
+            editBpContextBefore = null;
+            clearFormMeasurements();
+            loadData();
+        };
+        document.getElementById("searchInput").oninput = applyFilterAndRender;
+        document.getElementById("langSwitchBtn").onclick = switchLanguage;
+        document.getElementById("reportDoctorBtn").onclick = exportDoctorReport;
+        document.getElementById("fullBackupBtn").onclick = fullBackup;
+        document.onkeydown=function(e){if(e.key==='Enter'&&(e.target.tagName!=='TEXTAREA'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='SELECT'&&e.target.tagName!=='BUTTON'))saveRecord();};
+        document.getElementById("recordTime").addEventListener('input', () => { timeManuallySet = true; }); const scoreInput=document.getElementById('scoreSysInput');if(scoreInput)scoreInput.addEventListener('input',()=>{if(!patientSettings[currentPatient])patientSettings[currentPatient]={};patientSettings[currentPatient].scoreSysSource='manual';updateScoreSysSourceNote('manual');});
+        bindAutoSave();
+    }
+    function wireAccessibility() {
+        document.querySelectorAll('.field label').forEach(label=>{const target=label.parentElement?.querySelector('input,select,textarea');if(target?.id)label.setAttribute('for',target.id);});
+        document.querySelectorAll('.help-tip').forEach(el=>{if(el.title)el.setAttribute('aria-label',el.title);el.setAttribute('role','note');}); const cd=document.getElementById('clinicalDisclaimer');if(cd)cd.setAttribute('role','note');
+        const app=document.getElementById('app');if(app)app.setAttribute('aria-live','off');
+        updateConditionalProfileUI();
+    }
+    function renderFullApp() {
+        document.documentElement.lang=currentLang;
+        document.getElementById('app').innerHTML = `<div class="card"><div class="card-header"><h1 id="titleMain"><i class="fas fa-heartbeat"></i> ${t("appTitle")}</h1><div style="display:flex; gap:10px;"><button id="langSwitchBtn" class="outline"><i class="fas fa-globe"></i> EN/RU</button><button id="lightThemeBtn" class="outline" aria-label="Light theme" title="Light theme"><i class="fas fa-sun"></i></button><button id="darkThemeBtn" class="outline" aria-label="Dark theme" title="Dark theme"><i class="fas fa-moon"></i></button></div></div><div class="form-panel"><div class="date-time-row"><div class="field"><label data-i18n="date">${t("date")}</label><input type="date" id="recordDate" style="width:140px;"></div><div class="field"><label data-i18n="timeSec">${t("timeSec")}</label><input type="time" step="1" id="recordTime" style="width:130px;"></div><div class="field"><label data-i18n="id">ID</label><input type="text" id="editIdField" readonly placeholder="${t("auto")}" style="width:100px;"></div><div class="patient-block"><select id="patientSelect"></select><button id="addPatientBtn" class="small"><i class="fas fa-plus"></i> ${t("addPatient")}</button><button id="editPatientBtn" class="small outline"><i class="fas fa-edit"></i> ${t("editPatient")}</button><button id="delPatientBtn" class="small danger"><i class="fas fa-trash-alt"></i> ${t("delPatient")}</button></div><div class="field"><label><span data-i18n="bpContext">${t("bpContext")}</span><span class="help-tip" tabindex="0" data-i18n-title="bpContextHelp" title="${t('bpContextHelp')}">?</span></label><select id="bpContext" style="width:180px;"><option value="home" data-i18n="homeBP">${t("homeBP")}</option><option value="office" data-i18n="officeBP">${t("officeBP")}</option></select></div><div class="field"><label><span data-i18n="primaryArm">${t("primaryArm")}</span><span class="help-tip" tabindex="0" data-i18n-title="primaryArmHelp" title="${t('primaryArmHelp')}">?</span></label><select id="primaryArm" style="width:150px;"><option value="auto" data-i18n="primaryArmAuto">${t("primaryArmAuto")}</option><option value="left" data-i18n="primaryArmLeft">${t("primaryArmLeft")}</option><option value="right" data-i18n="primaryArmRight">${t("primaryArmRight")}</option></select></div></div><div class="date-time-row" style="margin-top:-8px; align-items:stretch;"><div class="profile-section"><div class="profile-section-title"><i class="fas fa-heart-pulse"></i><span data-i18n="cardiovascularProfile">${t("cardiovascularProfile")}</span></div><div class="profile-fields"><div class="field"><label data-i18n="temperature">${t("temperature")}</label><input type="number" step="0.1" id="temperature" placeholder="36.6" style="width:100px;"></div><div class="field"><label data-i18n="weight">${t("weight")}</label><input type="number" step="0.1" id="weight" placeholder="70" style="width:100px;"></div><div class="field"><label data-i18n="height">${t("height")}</label><input type="number" step="1" id="height" placeholder="170" style="width:100px;"></div><div class="field"><label data-i18n="age">${t("age")}</label><input type="number" id="age" placeholder="50" style="width:90px;"></div><div class="field"><label data-i18n="gender">${t("gender")}</label><select id="gender"><option value="male" data-i18n="male">${t("male")}</option><option value="female" data-i18n="female">${t("female")}</option></select></div><div class="field"><label data-i18n="smoking">${t("smoking")}</label><select id="smoking"><option value="0" data-i18n="no">${t("no")}</option><option value="1" data-i18n="yes">${t("yes")}</option></select></div><div class="field"><label data-i18n="cholesterolTotal">${t("cholesterolTotal")}</label><input type="number" step="0.1" id="cholTotal" placeholder="5.0" style="width:110px;"></div><div class="field"><label data-i18n="cholesterolHDL">${t("cholesterolHDL")}</label><input type="number" step="0.1" id="cholHDL" placeholder="1.3" style="width:110px;"></div><div class="field"><label><span data-i18n="diabetes">${t("diabetes")}</span><span class="help-tip" tabindex="0" data-i18n-title="diabetesHelp" title="${t('diabetesHelp')}">?</span></label><select id="diabetes"><option value="0" data-i18n="no">${t("no")}</option><option value="1" data-i18n="yes">${t("yes")}</option></select></div></div></div><div class="profile-section conditional-panel" id="diabetesDetailsPanel" hidden><div class="profile-section-title"><i class="fas fa-droplet"></i><span data-i18n="diabetesDetails">${t("diabetesDetails")}</span><span class="help-tip" tabindex="0" data-i18n-title="diabetesDetailsNote" title="${t('diabetesDetailsNote')}">?</span></div><div class="profile-fields"><div class="field"><label data-i18n="diabetesType">${t("diabetesType")}</label><select id="diabetesType"><option value="t2" data-i18n="diabetesT2">${t("diabetesT2")}</option><option value="other" data-i18n="diabetesOther">${t("diabetesOther")}</option></select></div><div class="field"><label data-i18n="diabetesAge">${t("diabetesAge")}</label><input type="number" id="diabetesAge" min="1" max="100" style="width:105px;"></div><div class="field"><label data-i18n="hba1c">${t("hba1c")}</label><input type="number" step="0.1" id="hba1c" style="width:90px;"></div><div class="field"><label data-i18n="hba1cUnit">${t("hba1cUnit")}</label><select id="hba1cUnit"><option value="mmolmol">mmol/mol</option><option value="percent">%</option></select></div><div class="field"><label data-i18n="egfr">${t("egfr")}</label><input type="number" step="1" id="egfr" min="1" max="200" placeholder="90" style="width:90px;"></div><div class="field"><label><span data-i18n="uacr">${t("uacr")}</span><span class="help-tip" tabindex="0" data-i18n-title="uacrHelp" title="${t('uacrHelp')}">?</span></label><input type="number" step="1" id="uacr" min="0" max="10000" placeholder="30" style="width:100px;"></div></div></div></div><div class="date-time-row score-row"><div class="profile-section"><div class="profile-section-title"><i class="fas fa-chart-line"></i><span data-i18n="scoreSettings">${t("scoreSettings")}</span></div><div class="profile-fields score-compact-fields"><div class="field"><label><span data-i18n="scoreEligibility">${t("scoreEligibility")}</span><span class="help-tip" tabindex="0" data-i18n-title="scoreEligibilityHelp" title="${t('scoreEligibilityHelp')}">?</span></label><select id="scoreEligibility"><option value="" data-i18n="scoreEligibilityChoose">${t("scoreEligibilityChoose")}</option><option value="eligible" data-i18n="scoreEligible">${t("scoreEligible")}</option><option value="ineligible" data-i18n="scoreIneligible">${t("scoreIneligible")}</option></select></div><div class="field"><label><span data-i18n="scoreCountry">${t("scoreCountry")}</span><span class="help-tip" tabindex="0" data-i18n-title="scoreCountryNote" title="${t('scoreCountryNote')}">?</span></label><select id="scoreCountry"><option value="" data-i18n="scoreCountryChoose">${t("scoreCountryChoose")}</option><option value="RU">Россия / Russia</option><option value="UZ">Узбекистан / Uzbekistan</option><optgroup label="Low"><option value="BE">Belgium</option><option value="DK">Denmark</option><option value="FR">France</option><option value="IL">Israel</option><option value="LU">Luxembourg</option><option value="NO">Norway</option><option value="ES">Spain</option><option value="CH">Switzerland</option><option value="NL">Netherlands</option><option value="GB">United Kingdom</option></optgroup><optgroup label="Moderate"><option value="DE">Germany</option><option value="AT">Austria</option><option value="CY">Cyprus</option><option value="FI">Finland</option><option value="GR">Greece</option><option value="IS">Iceland</option><option value="IE">Ireland</option><option value="IT">Italy</option><option value="MT">Malta</option><option value="PT">Portugal</option><option value="SM">San Marino</option><option value="SI">Slovenia</option><option value="SE">Sweden</option></optgroup><optgroup label="High"><option value="AL">Albania</option><option value="BA">Bosnia and Herzegovina</option><option value="HR">Croatia</option><option value="CZ">Czech Republic</option><option value="EE">Estonia</option><option value="HU">Hungary</option><option value="KZ">Kazakhstan</option><option value="PL">Poland</option><option value="SK">Slovakia</option><option value="TR">Turkey</option></optgroup><optgroup label="Very high"><option value="DZ">Algeria</option><option value="AM">Armenia</option><option value="AZ">Azerbaijan</option><option value="BY">Belarus</option><option value="BG">Bulgaria</option><option value="EG">Egypt</option><option value="GE">Georgia</option><option value="KG">Kyrgyzstan</option><option value="LV">Latvia</option><option value="LB">Lebanon</option><option value="LY">Libya</option><option value="LT">Lithuania</option><option value="ME">Montenegro</option><option value="MA">Morocco</option><option value="MD">Moldova</option><option value="RO">Romania</option><option value="RS">Serbia</option><option value="SY">Syria</option><option value="MK">North Macedonia</option><option value="TN">Tunisia</option><option value="UA">Ukraine</option></optgroup><option value="manual" data-i18n="scoreCountryManual">${t("scoreCountryManual")}</option></select></div><div class="field"><label data-i18n="scoreResolvedRegion">${t("scoreResolvedRegion")}</label><div class="score-region-badge" id="scoreRegionResolved">—</div></div><div class="field score-sys-field"><label><span data-i18n="scoreSys">${t("scoreSys")}</span><span class="help-tip" tabindex="0" data-i18n-title="scoreSysNote" title="${t('scoreSysNote')}">?</span></label><div class="score-sys-control"><input type="number" id="scoreSysInput" min="70" max="260" placeholder="120" style="width:110px;"><button id="scoreSysFromDiaryBtn" type="button" class="outline small"><i class="fas fa-calculator"></i> <span data-i18n="scoreUseDiaryAvg">${t("scoreUseDiaryAvg")}</span></button></div></div></div><div class="score-source-line"><small class="field-note" id="scoreSysSourceNote">${t("scoreSysSourceManual")}</small></div><details class="advanced-score" id="manualRegionWrap"><summary data-i18n="scoreManualRegion">${t("scoreManualRegion")}</summary><div class="profile-fields" style="margin-top:8px;"><div class="field"><label data-i18n="riskRegion">${t("riskRegion")}</label><select id="riskRegion"><option value="" data-i18n="riskRegionChoose">${t("riskRegionChoose")}</option><option value="low" data-i18n="riskLowRegion">${t("riskLowRegion")}</option><option value="moderate" data-i18n="riskModerateRegion">${t("riskModerateRegion")}</option><option value="high" data-i18n="riskHighRegion">${t("riskHighRegion")}</option><option value="veryHigh" data-i18n="riskVeryHighRegion">${t("riskVeryHighRegion")}</option></select></div></div></details></div></div><div class="date-time-row target-row"><div class="profile-section"><div class="profile-section-title"><i class="fas fa-bullseye"></i><span data-i18n="personalTargetsTitle">${t("personalTargetsTitle")}</span><span class="help-tip" tabindex="0" data-i18n-title="targetRangeHelp" title="${t('targetRangeHelp')}">?</span></div><div class="profile-fields"><div class="field"><label data-i18n="targetSysMin">${t("targetSysMin")}</label><input type="number" id="targetSysMinInput" value="90" style="width:80px;"></div><div class="field"><label data-i18n="targetDiaMin">${t("targetDiaMin")}</label><input type="number" id="targetDiaMinInput" value="60" style="width:80px;"></div><div class="field"><label data-i18n="targetSysMax">${t("targetSysMax")}</label><input type="number" id="targetSysInput" value="130" style="width:80px;"></div><div class="field"><label data-i18n="targetDiaMax">${t("targetDiaMax")}</label><input type="number" id="targetDiaInput" value="85" style="width:80px;"></div><div class="field"><label data-i18n="targetPulse">${t("targetPulse")}</label><input type="number" id="targetPulseInput" placeholder="70" style="width:80px;"></div><div class="field"><label data-i18n="targetTTRlabel">${t("targetTTRlabel")}</label><input type="number" id="targetTTRInput" value="70" min="0" max="100" style="width:120px;"></div></div></div></div><div class="measures-grid" id="measuresContainer"></div><div class="measurement-bottom-row"><div class="measurement-flags"><label class="check-field"><input type="checkbox" id="irregularPulseFlag"> <span data-i18n="irregularPulseFlag">${t("irregularPulseFlag")}</span></label><label class="check-field"><input type="checkbox" id="emergencySymptoms"> <span data-i18n="emergencySymptoms">${t("emergencySymptoms")}</span></label></div><div class="action-buttons"><button id="saveBtn"><i class="fas fa-save"></i> ${t("save")}</button><button id="clearFormBtn" class="outline"><i class="fas fa-eraser"></i> ${t("clear")}</button><button id="voiceBtn" class="outline"><i class="fas fa-microphone-alt"></i> ${t("voice")}</button><button id="speakRecordBtn" class="outline"><i class="fas fa-volume-up"></i> ${t("speak")}</button><button id="fillLastBtn" class="outline"><i class="fas fa-copy"></i> ${t("fillLast")}</button></div></div></div></div><div class="clinical-note" id="clinicalDisclaimer">${t("clinicalDisclaimer")}</div><div class="clinical-note data-recovery-warning" id="dataRecoveryWarning" hidden></div><div class="card"><div class="card-header"><h2><i class="fas fa-chart-pie"></i> ${t("analysis")}</h2></div><div class="pro-analysis" id="proAnalysis"></div><div class="stats-bar"><div class="filter-group"><input type="date" id="filterStart" placeholder="${t("fromDate")}"><input type="date" id="filterEnd" placeholder="${t("toDate")}"><button id="applyFilterBtn" class="outline"><i class="fas fa-filter"></i> ${t("filter")}</button><button id="resetFilterBtn" class="outline"><i class="fas fa-undo-alt"></i> ${t("reset")}</button></div><div class="stat-numbers" id="statPanel"></div></div><div class="chart-panel"><h2 id="h2-pressure">${t("pressureDynamics")}</h2><canvas id="pressureChart"></canvas></div><div class="chart-panel"><h2 id="h2-pulse">${t("pulseDynamics")}</h2><canvas id="pulseChart"></canvas></div><div class="chart-panel"><h2 id="h2-tempWeight">${t("tempWeightDynamics")}</h2><canvas id="tempWeightChart"></canvas></div><div class="chart-panel"><h2 id="h2-timeOfDay">${t("timeOfDayAnalysis")}</h2><canvas id="timeOfDayChart"></canvas></div><div class="chart-panel"><h2 id="h2-weekday">${t("weekdayAvg")}</h2><canvas id="weekdayChart"></canvas></div></div><div class="card"><div class="card-header"><h2><i class="fas fa-archive"></i> ${t("archive")}</h2><div class="toolbar" style="padding: 0; margin: 0;"><button id="exportExcelBtn"><i class="fas fa-file-excel"></i> ${t("excel")}</button><button id="exportCsvBtn"><i class="fas fa-file-csv"></i> ${t("csv")}</button><button id="exportFhirBtn"><i class="fas fa-file-code"></i> ${t("fhir")}</button><button id="reminderBtn"><i class="fas fa-bell"></i> ${t("reminder")}</button><button id="reportDoctorBtn"><i class="fas fa-user-md"></i> ${t("reportDoctor")}</button><button id="fullBackupBtn"><i class="fas fa-save"></i> ${t("fullBackup")}</button><button id="restoreBackupBtn"><i class="fas fa-upload"></i> ${t("restoreBackup")}</button><button id="clearAllBtn" class="danger"><i class="fas fa-trash-alt"></i> ${t("deleteAll")}</button></div></div><div style="margin:8px 24px; display:flex; justify-content:flex-end;"><input type="text" id="searchInput" placeholder="${t("search")}" style="width:220px; padding:6px 12px; border-radius:12px;"></div><div class="table-container"><table id="recordsTable"><thead><tr><th>${t("date")}/${t("time")}</th><th>${t("measurement")}-1 ${t("measurementL")}</th><th>${t("measurement")}-1 ${t("measurementR")}</th><th>${t("measurement")}-2 ${t("measurementL")}</th><th>${t("measurement")}-2 ${t("measurementR")}</th><th>${t("measurement")}-3 ${t("measurementL")}</th><th>${t("measurement")}-3 ${t("measurementR")}</th><th>${t("avgLabel")}</th><th>${t("actions")}</th></tr></thead><tbody id="tableBody"></tbody></table></div></div><footer>© DEVELOPED BY YULDOSHEV TOKHIRJON | MEDICAL PRO FINAL VALIDATED LOGIC v5.5</footer>`;
+        buildForm();
+        attachEvents();
+        loadPatients();
+        loadData();
+        if(timeAutoUpdateInterval) clearInterval(timeAutoUpdateInterval);
+        lastAutoDate = document.getElementById("recordDate")?.value || localDateISO();
+        updateAutoDateTime();
+        timeAutoUpdateInterval = setInterval(updateAutoDateTime, 1000);
+        if(alertCheckInterval) clearInterval(alertCheckInterval); alertCheckInterval=setInterval(()=>checkAlerts(false),60000);
+        updateUITexts();
+        document.documentElement.lang=currentLang; wireAccessibility();
+        clearFormMeasurements();
+        setTheme(localStorage.getItem('bp_theme') || 'light');
+        setupReminderFromStorage();
+    }
+    window.addEventListener('DOMContentLoaded', renderFullApp);
+</script>
+</body>
+</html>
