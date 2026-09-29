@@ -224,3 +224,48 @@ source/index.html
 Prefer mobile UX changes in `assets/mobile-modern.*` and `scripts/patch-android.mjs`.
 
 Only modify core/medical logic in `source/index.html` when necessary and with dedicated validation.
+
+
+---
+
+## V17 Privacy & Resilience
+
+### Русский
+
+V17 добавляет слой приватности поверх существующей архитектуры без переноса медицинских расчётов из core.
+
+- **Biometric bridge** находится в `NativeBridgePlugin` и использует AndroidX Biometric.
+- **Screen privacy** управляет Android `FLAG_SECURE`; состояние также сохраняется в native SharedPreferences.
+- **Pre-paint guard** добавляется в `scripts/prepare-web.mjs`, чтобы при включённой биометрии содержимое дневника не отображалось до инициализации lock-overlay.
+- **Protected Backup** шифруется в WebView через Web Crypto API до передачи в Android file picker.
+- Android получает уже зашифрованный JSON-envelope и отвечает только за сохранение/чтение файла.
+- Пароль не передаётся в native storage и не сохраняется в localStorage.
+- Restore сначала расшифровывает и проверяет файл, затем просит подтверждение и создаёт safety auto-backup перед заменой данных.
+
+```text
+backupSnapshot()
+      │
+      ▼
+PBKDF2-SHA-256(password, random salt)
+      │
+      ▼
+AES-GCM-256(random IV)
+      │
+      ▼
+encrypted envelope
+      │
+      ▼
+NativeBridge.saveTextFile()
+```
+
+### English
+
+V17 adds a privacy layer around the existing architecture without moving medical calculations out of the core.
+
+- The **biometric bridge** lives in `NativeBridgePlugin` and uses AndroidX Biometric.
+- **Screen privacy** controls Android `FLAG_SECURE`, with state also persisted in native SharedPreferences.
+- A **pre-paint guard** is injected by `scripts/prepare-web.mjs` so protected diary content is not displayed before the biometric lock overlay initializes.
+- **Protected Backup** encryption happens in the WebView through the Web Crypto API before data are handed to the Android file picker.
+- Android receives only the encrypted JSON envelope for saving/reading.
+- The password is not stored in native preferences or localStorage.
+- Restore decrypts and validates first, then asks for confirmation and creates a safety auto-backup before replacing data.
