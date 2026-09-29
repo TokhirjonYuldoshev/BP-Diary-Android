@@ -4,12 +4,13 @@
   <p><strong>Android-приложение для ведения дневника давления, анализа измерений, резервного копирования и подготовки PDF-отчётов.</strong></p>
   <p><strong>Android app for blood-pressure journaling, trend review, backups and doctor-ready PDF reports.</strong></p>
   <p>
-    <a href="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/actions/workflows/build-android.yml"><img src="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/actions/workflows/build-android.yml/badge.svg?branch=main" alt="Build Android APK"></a>
+    <a href="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/actions/workflows/build-android.yml"><img src="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/actions/workflows/build-android.yml/badge.svg?branch=main" alt="Android build"></a>
+    <a href="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/actions/workflows/ui-regression.yml"><img src="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/actions/workflows/ui-regression.yml/badge.svg?branch=main" alt="UI regression"></a>
   </p>
   <p>
     <a href="#-русский">Русский</a> ·
     <a href="#-english">English</a> ·
-    <a href="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.6.0">Latest Release</a>
+    <a href="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.6.0">V16 Release</a>
   </p>
 </div>
 
@@ -17,59 +18,50 @@
 
 # 🇷🇺 Русский
 
-## О проекте
+## Статус проекта
 
-**BP Diary 5.5** — Android-версия дневника артериального давления с мобильным интерфейсом, локальным хранением данных, аналитикой, резервными копиями и отчётами для врача.
+**Текущий стабильный релиз: V16 / 5.6.0 — Reliability & Android Integration.**
 
-Текущий стабильный релиз: **V16 / 5.6.0 — Reliability & Android Integration**.
-
+- Release tag: `v5.6.0`
+- versionCode: `160`
 - Package ID: `com.tokhirjonyuldoshev.bpdiary`
 - Android shell: Capacitor 8
-- Основной исходник приложения: `source/index.html`
-- Мобильный UI/UX слой: `assets/mobile-modern.js` + `assets/mobile-modern.css`
-- Android/native bridge: `scripts/patch-android.mjs`
-- Стабильный APK: [GitHub Release v5.5.150](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.6.0)
+- Основной исходник: `source/index.html`
+- Мобильный UI/UX: `assets/mobile-modern.js` + `assets/mobile-modern.css`
+- Native Android bridge: `scripts/patch-android.mjs`
+- Официальный APK: [BP Diary 5.6.0 V16](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.6.0)
 
-> Основной исходный код теперь хранится в обычном читаемом `source/index.html`. Старые Base64-части удалены.
+Финальный APK:
 
+```text
+BP-Diary-5.6-V16.apk
+SHA-256: 74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
+```
 
-### V16 candidate
-
-V16 переносит критичные Android-функции из WebView в нативный слой:
-
-- ежедневные системные напоминания, работающие после закрытия приложения;
-- восстановление напоминания после перезагрузки и изменения времени/часового пояса;
-- отдельный экран **Настройки**;
-- ручная проверка обновлений только через официальный GitHub Release;
-- единый `version.json` для версии APK, имени артефакта и release tag;
-- автоматизированные UI/screenshot regression-тесты.
-
-V16 принят как **stable release** после полного CI/UI regression и device-acceptance шага. См. [QA_V16.md](QA_V16.md).
-
-## Возможности
+## Что умеет BP Diary
 
 ### Замеры и профиль
 
-- ввод измерений артериального давления и пульса;
-- поддержка нескольких замеров и обеих рук;
+- ввод артериального давления и пульса;
+- несколько замеров и поддержка обеих рук;
 - Кардио-профиль и параметры SCORE2;
 - персональный диапазон и цели;
 - голосовой ввод;
 - TTS-озвучивание;
-- RU / EN;
+- русский и английский языки;
 - светлая и тёмная темы.
 
 ### Архив и аналитика
 
-- карточки сохранённых измерений;
-- быстрый поиск по Архиву;
+- современные карточки измерений;
+- быстрый поиск;
 - фильтры **Все / 7 / 30 / 90 дней**;
-- сортировка **сначала новые / сначала старые**;
-- редактирование и удаление записей;
+- сортировка новые/старые;
+- редактирование и удаление;
 - графики и сводная аналитика;
 - подтверждение опасных действий.
 
-### Отчёт для врача
+### Отчёт врачу
 
 - периоды **7 / 14 / 30 дней / все данные / свой диапазон**;
 - предварительный просмотр;
@@ -77,26 +69,46 @@ V16 принят как **stable release** после полного CI/UI regre
 - **Сохранить PDF**;
 - **Поделиться PDF** через системное меню Android.
 
-### Защита данных
+### Резервное копирование
 
-- до **5 автоматических локальных резервных копий**;
-- ручной полный JSON backup/restore;
-- safety-backup перед частью опасных операций;
-- данные дневника и автоматические копии хранятся внутри локальной области приложения.
+- до **5 автоматических локальных копий**;
+- ручной Full Backup в JSON;
+- восстановление из Full Backup;
+- safety-backup перед отдельными опасными операциями.
 
-> Перед удалением приложения или переносом на другое устройство рекомендуется создать **Полный бэкап**. Удаление Android-приложения удаляет его локальные данные.
+### V16: Android-интеграция
 
-## Установка
+- **нативные ежедневные Android-напоминания**;
+- уведомления работают после закрытия BP Diary;
+- восстановление расписания после перезагрузки телефона;
+- пересчёт расписания после изменения времени или часового пояса;
+- Android 13+ notification permission;
+- миграция старого V15 JavaScript-напоминания без создания дублей;
+- отдельный экран **Настройки**;
+- ручная **Проверка обновлений** только через официальный GitHub Release;
+- никаких скрытых загрузок или автоустановки APK.
 
-1. Откройте [релиз BP Diary 5.5 V15](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.6.0).
+## Установка и обновление
+
+1. Откройте [официальный V16 Release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.6.0).
 2. Скачайте `BP-Diary-5.6-V16.apk`.
 3. Установите APK на Android.
-4. V15 подписан тем же стабильным update-ключом, что и последние тестовые V8–V14, поэтому его можно устанавливать **поверх V14 без удаления приложения**.
+4. V16 использует ту же signing lineage, что и V8–V15 direct-distribution builds, поэтому его можно устанавливать **поверх V15 без удаления приложения**.
 
-SHA-256 финального V15 APK:
+Перед удалением приложения или переносом на другое устройство рекомендуется создать **Полный бэкап**. Android удаляет локальные app/WebView-данные при uninstall.
+
+## Проверка SHA-256
+
+Ожидаемый SHA-256:
 
 ```text
-2dc658f51214718706963ed71186a31fd883d8ea1fa4ce5841d55e0f3f598082
+74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
+```
+
+Пример проверки:
+
+```bash
+sha256sum BP-Diary-5.6-V16.apk
 ```
 
 ## Структура репозитория
@@ -104,27 +116,33 @@ SHA-256 финального V15 APK:
 ```text
 BP-Diary-Android/
 ├── source/
-│   └── index.html              # основной читаемый код BP Diary
+│   └── index.html               # основной читаемый код BP Diary
 ├── assets/
-│   ├── mobile-modern.js        # Android/mobile UX слой
-│   ├── mobile-modern.css       # мобильные стили
+│   ├── mobile-modern.js         # mobile UX и Android UI integration
+│   ├── mobile-modern.css        # mobile visual system
 │   └── logo.svg
 ├── scripts/
-│   ├── prepare-web.mjs         # подготовка offline web bundle
-│   ├── patch-android.mjs       # native Android bridge + signing config
-│   └── regression-v15.mjs      # автоматический regression smoke
+│   ├── prepare-web.mjs          # сборка offline web bundle
+│   ├── patch-android.mjs        # native Android bridge
+│   └── regression.mjs           # regression smoke
+├── tests/
+│   └── ui-v16.spec.mjs          # Playwright mobile UI regression
 ├── .github/workflows/
-│   ├── build-android.yml       # CI debug + release verification
-│   └── release-v15.yml         # финальный V15 GitHub Release
-├── CHANGELOG.md
-├── QA_V15.md
+│   ├── build-android.yml        # debug + release CI
+│   ├── ui-regression.yml        # visual/mobile regression
+│   └── release.yml              # generic signed release workflow
+├── version.json                 # единый источник версии
+├── release-request.json         # publication gate
 ├── ARCHITECTURE.md
+├── CHANGELOG.md
 ├── CONTRIBUTING.md
 ├── SECURITY.md
+├── QA_V15.md
+├── QA_V16.md
 └── package.json
 ```
 
-Сгенерированные каталоги `www/`, `android/` и `node_modules/` не хранятся в Git: они создаются во время сборки.
+Сгенерированные `www/`, `android/` и `node_modules/` не хранятся в Git.
 
 ## Сборка локально
 
@@ -135,104 +153,131 @@ BP-Diary-Android/
 - Android SDK;
 - npm.
 
-Подготовка web-части:
-
 ```bash
-npm install
+npm ci
 npm run prepare:web
 npm run qa
-```
-
-Создание Android-проекта:
-
-```bash
 npx cap add android
 node scripts/patch-android.mjs
 npm run cap:sync
 ```
 
-После этого Android-проект находится в `android/`.
+Android-проект после этого находится в `android/`.
 
-## Архитектура и принцип изменений
+## Версионирование и Release
 
-Мобильный Android-слой намеренно отделён от основной логики дневника:
+V16 использует один источник истины:
 
-- `source/index.html` — исходное приложение;
-- `assets/mobile-modern.*` — mobile presentation/UX;
-- `scripts/patch-android.mjs` — Android-native функции;
-- `scripts/prepare-web.mjs` — композиция runtime bundle.
+```text
+version.json
+```
 
-Это позволяет улучшать Android UX без ненужного вмешательства в медицинскую/core-логику. Подробнее: [ARCHITECTURE.md](ARCHITECTURE.md).
+Он задаёт:
 
-## QA и стабильность
+- release label;
+- versionName;
+- versionCode;
+- Git tag;
+- имя APK/artifact.
 
-Финальный V15 прошёл:
+Публикация дополнительно защищена `release-request.json`. Release workflow выполняет свежую release-сборку, проверяет signer, считает SHA-256 и только затем публикует GitHub Release.
 
-- GitHub Actions build;
-- JavaScript syntax check;
-- automated regression smoke;
-- debug + release APK build;
-- проверку одинаковой подписи;
-- ручную проверку на Android-устройстве: upgrade поверх V14, сохранение данных, Archive search/filter/sort, PDF Save/Share, backups, Android Back, Voice/TTS, RU/EN, light/dark и accessibility.
+## QA
 
-Полная матрица: [QA_V15.md](QA_V15.md).
+V16 прошёл:
 
-История изменений: [CHANGELOG.md](CHANGELOG.md).
+- final regression smoke;
+- JavaScript syntax validation;
+- Android debug build;
+- Android release build;
+- signer verification;
+- Playwright mobile UI regression;
+- light/dark screenshots;
+- проверку ключевой геометрии мобильных карточек;
+- device-acceptance этап перед публикацией.
 
-## Подпись APK
+Основные финальные прогоны:
 
-Текущий direct-distribution APK использует стабильный update-ключ проекта, чтобы сохранялась совместимость обновлений V8–V15.
+- Android Build **#115 — SUCCESS**;
+- UI Regression **#13 — SUCCESS**;
+- final release build **SUCCESS**;
+- GitHub Release publish **SUCCESS**.
 
-**Важно:** этот ключ присутствовал в истории публичного репозитория и **не должен считаться безопасным production-ключом для Google Play**. Для будущей публикации в Google Play нужен отдельный приватный signing key / Play App Signing и предпочтительно AAB.
+Полная матрица: [QA_V16.md](QA_V16.md).
+
+История: [CHANGELOG.md](CHANGELOG.md).
+
+## Архитектура
+
+Основная логика, мобильный слой и native Android integration разделены:
+
+- `source/index.html` — базовое приложение;
+- `assets/mobile-modern.*` — mobile UX;
+- `scripts/prepare-web.mjs` — offline runtime bundle;
+- `scripts/patch-android.mjs` — Android-native функции.
+
+Подробнее: [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Приватность и безопасность
+
+Измерения, профиль и локальные backups не отправляются в GitHub при проверке обновлений.
+
+V16 обращается к GitHub Releases API **только после явного нажатия пользователем «Проверить обновления»**.
+
+Нативное напоминание хранит только настройки напоминания: включено/выключено, время и текст уведомления.
+
+Подробнее: [SECURITY.md](SECURITY.md).
+
+### Signing
+
+Direct-distribution APK V8–V16 сохраняет существующий update signer:
+
+```text
+SHA-256 certificate:
+63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102
+```
+
+Этот ключ присутствовал в истории публичного репозитория и **не является безопасным production signing key для Google Play**. Для будущей публикации в Google Play нужен отдельный приватный ключ / Play App Signing и предпочтительно AAB.
 
 ## Медицинское назначение
 
-BP Diary помогает вести записи и готовить данные для обсуждения с врачом. Приложение не заменяет медицинскую диагностику, лечение или профессиональную консультацию.
+BP Diary предназначен для ведения записей и подготовки данных для обсуждения со специалистом. Приложение не заменяет диагностику, лечение или профессиональную медицинскую консультацию.
 
 ## Лицензия
 
-В репозитории **не опубликован отдельный LICENSE-файл**. Публичная доступность исходного кода сама по себе не означает автоматического разрешения на копирование, изменение или распространение. Перед переиспользованием кода необходимо получить соответствующее разрешение правообладателя или руководствоваться применимым законодательством.
+В репозитории пока нет отдельного `LICENSE`-файла. Публичная доступность исходного кода сама по себе не предоставляет автоматического разрешения на копирование, изменение или распространение.
 
 ## Автор и обратная связь
 
 Разработчик: **Tokhirjon Yuldoshev**
 
-- [GitHub repository](https://github.com/TokhirjonYuldoshev/BP-Diary-Android)
-- [Issues / ошибки и предложения](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues)
+- [Repository](https://github.com/TokhirjonYuldoshev/BP-Diary-Android)
+- [Issues](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues)
 - [Releases](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases)
 
 ---
 
 # 🇬🇧 English
 
-## About
+## Project status
 
-**BP Diary 5.5** is an Android blood-pressure diary with a mobile-first interface, local data storage, analytics, backup/restore and doctor-ready reports.
+**Current stable release: V16 / 5.6.0 — Reliability & Android Integration.**
 
-Current stable release: **V16 / 5.6.0 — Reliability & Android Integration**.
-
+- Release tag: `v5.6.0`
+- versionCode: `160`
 - Package ID: `com.tokhirjonyuldoshev.bpdiary`
 - Android shell: Capacitor 8
-- Main application source: `source/index.html`
-- Mobile UI/UX layer: `assets/mobile-modern.js` + `assets/mobile-modern.css`
-- Android/native bridge: `scripts/patch-android.mjs`
-- Stable APK: [GitHub Release v5.5.150](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.6.0)
+- Primary source: `source/index.html`
+- Mobile UI/UX: `assets/mobile-modern.js` + `assets/mobile-modern.css`
+- Native Android bridge: `scripts/patch-android.mjs`
+- Official APK: [BP Diary 5.6.0 V16](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.6.0)
 
-> The main application source is now stored as a normal, human-readable `source/index.html`. The legacy Base64 source chunks have been removed.
+Final APK:
 
-
-### V16 candidate
-
-V16 moves critical Android behavior out of the WebView and into the native layer:
-
-- persistent daily system reminders that work after the app is closed;
-- reminder restoration after reboot and time/timezone changes;
-- dedicated **Settings** screen;
-- manual update checks against the official GitHub Release only;
-- single-source `version.json` for APK version, artifact name and release tag;
-- automated UI/screenshot regression tests.
-
-V16 is accepted as the **stable release** after final CI/UI regression and the device-acceptance step. See [QA_V16.md](QA_V16.md).
+```text
+BP-Diary-5.6-V16.apk
+SHA-256: 74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
+```
 
 ## Features
 
@@ -243,8 +288,8 @@ V16 is accepted as the **stable release** after final CI/UI regression and the d
 - cardiovascular profile and SCORE2 parameters;
 - personal target range;
 - voice input;
-- TTS read-out;
-- RU / EN;
+- TTS;
+- Russian and English;
 - light and dark themes.
 
 ### Archive and analytics
@@ -255,36 +300,56 @@ V16 is accepted as the **stable release** after final CI/UI regression and the d
 - newest/oldest sorting;
 - edit and delete flows;
 - charts and summary analytics;
-- confirmations for destructive actions.
+- destructive-action confirmations.
 
 ### Doctor report
 
 - **7 / 14 / 30 days / all data / custom range**;
-- report preview;
+- preview;
 - **Print**;
 - **Save PDF**;
 - **Share PDF** through Android's system share sheet.
 
-### Data protection
+### Backup and restore
 
 - up to **5 automatic local restore points**;
-- manual full JSON backup/restore;
-- safety backup before selected destructive operations;
-- diary data and automatic backups remain inside the app's local storage area.
+- manual Full Backup JSON export;
+- restore from Full Backup;
+- safety backups before selected destructive operations.
 
-> Create a **Full Backup** before uninstalling the app or moving to another device. Android removes the app's local data when the app is uninstalled.
+### V16 Android integration
 
-## Installation
+- **native daily Android reminders**;
+- notifications work after BP Diary is closed;
+- reminder restoration after device reboot;
+- rescheduling after time/timezone changes;
+- Android 13+ notification permission;
+- one-time migration from the legacy V15 JavaScript reminder;
+- dedicated **Settings** screen;
+- user-initiated **Check for updates** against the official GitHub Release;
+- no silent APK download or installation.
 
-1. Open [BP Diary 5.5 V15 release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.6.0).
+## Installation and upgrade
+
+1. Open the [official V16 Release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.6.0).
 2. Download `BP-Diary-5.6-V16.apk`.
-3. Install the APK on Android.
-4. V15 uses the same stable update signer as the recent V8–V14 test builds, so it can be installed **over V14 without uninstalling**.
+3. Install it on Android.
+4. V16 uses the same direct-distribution signing lineage as V8–V15, so it can be installed **over V15 without uninstalling**.
 
-Final V15 APK SHA-256:
+Create a **Full Backup** before uninstalling or moving devices. Android removes the application's local app/WebView data on uninstall.
+
+## SHA-256 verification
+
+Expected SHA-256:
 
 ```text
-2dc658f51214718706963ed71186a31fd883d8ea1fa4ce5841d55e0f3f598082
+74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
+```
+
+Example:
+
+```bash
+sha256sum BP-Diary-5.6-V16.apk
 ```
 
 ## Repository layout
@@ -292,27 +357,33 @@ Final V15 APK SHA-256:
 ```text
 BP-Diary-Android/
 ├── source/
-│   └── index.html              # readable BP Diary application source
+│   └── index.html               # readable primary BP Diary source
 ├── assets/
-│   ├── mobile-modern.js        # Android/mobile UX layer
-│   ├── mobile-modern.css       # mobile styling
+│   ├── mobile-modern.js         # mobile UX and Android UI integration
+│   ├── mobile-modern.css        # mobile visual system
 │   └── logo.svg
 ├── scripts/
-│   ├── prepare-web.mjs         # prepares the offline web bundle
-│   ├── patch-android.mjs       # native Android bridge + signing config
-│   └── regression-v15.mjs      # automated regression smoke
+│   ├── prepare-web.mjs          # offline web bundle
+│   ├── patch-android.mjs        # native Android bridge
+│   └── regression.mjs           # regression smoke
+├── tests/
+│   └── ui-v16.spec.mjs          # Playwright mobile UI regression
 ├── .github/workflows/
-│   ├── build-android.yml       # CI debug + release verification
-│   └── release-v15.yml         # final V15 GitHub Release
-├── CHANGELOG.md
-├── QA_V15.md
+│   ├── build-android.yml        # debug + release CI
+│   ├── ui-regression.yml        # visual/mobile regression
+│   └── release.yml              # generic signed release workflow
+├── version.json                 # single source of version truth
+├── release-request.json         # publication gate
 ├── ARCHITECTURE.md
+├── CHANGELOG.md
 ├── CONTRIBUTING.md
 ├── SECURITY.md
+├── QA_V15.md
+├── QA_V16.md
 └── package.json
 ```
 
-Generated `www/`, `android/` and `node_modules/` directories are intentionally not tracked.
+Generated `www/`, `android/` and `node_modules/` directories are not tracked.
 
 ## Local build
 
@@ -323,68 +394,98 @@ Requirements:
 - Android SDK;
 - npm.
 
-Prepare and validate the web layer:
-
 ```bash
-npm install
+npm ci
 npm run prepare:web
 npm run qa
-```
-
-Create the Android project:
-
-```bash
 npx cap add android
 node scripts/patch-android.mjs
 npm run cap:sync
 ```
 
-The generated Android project will be available in `android/`.
+The generated Android project is written to `android/`.
+
+## Versioning and release
+
+V16 uses a single source of truth:
+
+```text
+version.json
+```
+
+It defines the release label, versionName, versionCode, Git tag and artifact basename.
+
+Publication is additionally gated by `release-request.json`. The release workflow performs a fresh signed release build, verifies the signer, computes SHA-256 and only then publishes the GitHub Release.
+
+## QA
+
+V16 passed:
+
+- final regression smoke;
+- JavaScript syntax validation;
+- Android debug build;
+- Android release build;
+- signer verification;
+- Playwright mobile UI regression;
+- light/dark screenshots;
+- key mobile-layout geometry checks;
+- the device-acceptance stage before publication.
+
+Key final runs:
+
+- Android Build **#115 — SUCCESS**;
+- UI Regression **#13 — SUCCESS**;
+- final signed release build **SUCCESS**;
+- GitHub Release publication **SUCCESS**.
+
+Full matrix: [QA_V16.md](QA_V16.md).
+
+History: [CHANGELOG.md](CHANGELOG.md).
 
 ## Architecture
 
-The Android mobile layer is intentionally separated from the diary's primary application logic:
+The application core, mobile presentation layer and native Android integration are intentionally separated:
 
-- `source/index.html` — application source;
-- `assets/mobile-modern.*` — mobile presentation and UX;
-- `scripts/patch-android.mjs` — native Android capabilities;
-- `scripts/prepare-web.mjs` — runtime bundle composition.
+- `source/index.html` — base application;
+- `assets/mobile-modern.*` — mobile UX;
+- `scripts/prepare-web.mjs` — offline runtime bundle;
+- `scripts/patch-android.mjs` — Android-native capabilities.
 
-This keeps mobile UX work isolated from unnecessary changes to medical/core logic. See [ARCHITECTURE.md](ARCHITECTURE.md).
+See [ARCHITECTURE.md](ARCHITECTURE.md).
 
-## QA and release quality
+## Privacy and security
 
-V15 has passed:
+Measurements, profile data and local backups are not sent to GitHub when checking for updates.
 
-- GitHub Actions build;
-- JavaScript syntax validation;
-- automated regression smoke;
-- debug + release APK builds;
-- signer verification;
-- manual Android-device regression covering upgrade over V14, preserved data, Archive search/filter/sort, PDF Save/Share, backups, Android Back, Voice/TTS, RU/EN, light/dark and accessibility.
+V16 contacts the GitHub Releases API **only after the user explicitly taps “Check for updates.”**
 
-Full matrix: [QA_V15.md](QA_V15.md).
+The native reminder stores reminder configuration only: enabled state, time and notification text.
 
-Change history: [CHANGELOG.md](CHANGELOG.md).
+See [SECURITY.md](SECURITY.md).
 
-## APK signing
+### APK signing
 
-The current direct-distribution APK uses the project's stable update key to preserve the V8–V15 update path.
+Direct-distribution builds V8–V16 retain the existing update signer:
 
-**Important:** this key has existed in the history of the public repository and must **not** be treated as a secure Google Play production key. A future Google Play release should use a separate private signing key / Play App Signing and preferably an AAB.
+```text
+SHA-256 certificate:
+63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102
+```
+
+Because this key has existed in public repository history, it **must not be treated as a secure Google Play production key**. A future Play release should use a separate private key / Play App Signing and preferably an AAB.
 
 ## Medical scope
 
-BP Diary is a record-keeping and reporting tool intended to help users organize information for discussion with healthcare professionals. It does not replace medical diagnosis, treatment or professional medical advice.
+BP Diary is a record-keeping and reporting tool intended to help organize information for discussion with a healthcare professional. It does not replace diagnosis, treatment or professional medical advice.
 
 ## License
 
-This repository currently has **no separate LICENSE file**. Public source visibility does not by itself grant permission to copy, modify or redistribute the code. Obtain appropriate permission from the rights holder or follow applicable law before reusing the code.
+The repository currently has no separate `LICENSE` file. Public source visibility does not by itself grant permission to copy, modify or redistribute the code.
 
 ## Author and feedback
 
 Developer: **Tokhirjon Yuldoshev**
 
-- [GitHub repository](https://github.com/TokhirjonYuldoshev/BP-Diary-Android)
-- [Issues / bug reports and suggestions](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues)
+- [Repository](https://github.com/TokhirjonYuldoshev/BP-Diary-Android)
+- [Issues](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues)
 - [Releases](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases)
