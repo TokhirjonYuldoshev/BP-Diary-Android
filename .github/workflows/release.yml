@@ -109,25 +109,18 @@ jobs:
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk "${ARTIFACT_BASE}.apk"
           sha256sum "${ARTIFACT_BASE}.apk" | tee "${ARTIFACT_BASE}.apk.sha256"
-          cat > /tmp/release-notes.md <<EOF
-          # BP Diary ${VERSION_NAME} — ${APP_RELEASE}
-
-          Reliability & Android Integration release.
-
-          Highlights:
-          - persistent native Android daily reminders;
-          - reminder restoration after reboot/time changes;
-          - dedicated Settings screen;
-          - in-app official GitHub Release update checker;
-          - single-source versioning via version.json;
-          - UI regression tests and visual snapshots;
-          - existing V15 archive, PDF, backup, accessibility, Voice/TTS and Android Back behavior preserved.
-
-          Package: com.tokhirjonyuldoshev.bpdiary
-          Version: ${VERSION_NAME} (versionCode ${VERSION_CODE})
-
-          The direct-distribution APK keeps the existing stable update signer for V8–V16 compatibility. That public-history key is not a secure Google Play production key.
-          EOF
+          test -s RELEASE_NOTES.md
+          cp RELEASE_NOTES.md /tmp/release-notes.md
+          {
+            echo
+            echo "---"
+            echo
+            echo "Package: `com.tokhirjonyuldoshev.bpdiary`"
+            echo "Version: `${VERSION_NAME}` (versionCode `${VERSION_CODE}`)"
+            echo "SHA-256: `$(awk '{print $1}' "${ARTIFACT_BASE}.apk.sha256")`"
+            echo
+            echo "The direct-distribution APK keeps the existing stable update signer for upgrade compatibility. The public-history key is not a secure Google Play production key."
+          } >> /tmp/release-notes.md
 
       - name: Create or update GitHub Release
         env:
