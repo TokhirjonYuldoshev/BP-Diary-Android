@@ -25,7 +25,16 @@
 - Package ID and existing data/signing lineage.
 
 ### Release status
-Accepted for stable publication after final Android Build #115, UI Regression #13, signer verification and the device-acceptance step.
+**FINAL / STABLE / RELEASED**
+
+- GitHub Release: `v5.6.0`
+- Release APK: `BP-Diary-5.6-V16.apk`
+- APK SHA-256: `74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc`
+- Signing certificate SHA-256: `63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102`
+- Android Build #115: **SUCCESS**
+- UI Regression #13: **SUCCESS**
+- Release workflow #2: **SUCCESS**
+- Publication gate reset to `publish=false` after release.
 
 
 All notable Android wrapper and repository changes are tracked here. Medical/core calculations are intentionally kept outside mobile presentation and repository-maintenance changes.
