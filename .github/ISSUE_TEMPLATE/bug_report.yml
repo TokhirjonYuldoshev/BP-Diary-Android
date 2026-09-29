@@ -1,0 +1,80 @@
+name: Bug report / Сообщить об ошибке
+description: Report a reproducible problem in BP Diary / Сообщить о воспроизводимой проблеме
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not include real medical data, backup files containing personal data, passwords or signing secrets.
+        Не прикладывайте реальные медицинские данные, backup-файлы с персональными данными, пароли или signing secrets.
+  - type: input
+    id: version
+    attributes:
+      label: App version / Версия приложения
+      placeholder: "5.5.150"
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Install type / Тип установки
+      options:
+        - Upgrade over previous version / Обновление поверх предыдущей версии
+        - Clean install / Чистая установка
+        - Not sure / Не уверен
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / Проблема
+      description: What happened? / Что произошло?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Шаги воспроизведения
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior / Ожидаемое поведение
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: Android device and version / Устройство и версия Android
+      placeholder: "Pixel 8 — Android 16"
+  - type: dropdown
+    id: theme
+    attributes:
+      label: Theme / Тема
+      options:
+        - Light / Светлая
+        - Dark / Тёмная
+        - Both / Обе
+        - Not relevant / Не относится
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language / Язык
+      options:
+        - Russian
+        - English
+        - Both
+        - Not relevant
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check / Проверка приватности
+      options:
+        - label: I removed personal medical data and secrets from attachments / Я удалил персональные медицинские данные и секреты из вложений
+          required: true
