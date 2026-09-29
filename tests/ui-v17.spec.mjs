@@ -51,6 +51,59 @@ test('V17 preserves core mobile layout and exposes privacy settings',async({page
   await page.screenshot({path:shots+'/settings-privacy-light.png',fullPage:true});
 });
 
+test('V17 final control polish keeps reading selectors framed and centered',async({page})=>{
+  const state=await page.evaluate(()=>{
+    const stepper=document.querySelector('#mobileMeasureStepper');
+    const buttons=[...document.querySelectorAll('#mobileMeasureStepper [data-round]')];
+    return {
+      role:stepper?.getAttribute('role')||'',
+      label:stepper?.getAttribute('aria-label')||'',
+      buttons:buttons.map(button=>{
+        const s=getComputedStyle(button),r=button.getBoundingClientRect();
+        return {
+          border:parseFloat(s.borderTopWidth)||0,
+          display:s.display,
+          align:s.alignItems,
+          justify:s.justifyContent,
+          textAlign:s.textAlign,
+          height:r.height,
+          selected:button.getAttribute('aria-selected'),
+          controls:button.getAttribute('aria-controls')||''
+        };
+      })
+    };
+  });
+  expect(state.role).toBe('tablist');
+  expect(state.label.length).toBeGreaterThan(0);
+  expect(state.buttons).toHaveLength(3);
+  expect(state.buttons.filter(x=>x.selected==='true')).toHaveLength(1);
+  for(const button of state.buttons){
+    expect(button.border).toBeGreaterThan(0);
+    expect(button.display).toBe('flex');
+    expect(button.align).toBe('center');
+    expect(button.justify).toBe('center');
+    expect(button.textAlign).toBe('center');
+    expect(button.height).toBeGreaterThanOrEqual(44);
+    expect(button.controls).toMatch(/^mobileMeasureRound[123]$/);
+  }
+  expect(Math.max(...state.buttons.map(x=>x.height))-Math.min(...state.buttons.map(x=>x.height))).toBeLessThanOrEqual(1);
+
+  await page.locator('#mobileMeasureStepper [data-round="1"]').click();
+  await expect(page.locator('#mobileMeasureStepper [data-round="1"]')).toHaveAttribute('aria-selected','true');
+  await expect(page.locator('#mobileMeasureRound2')).toHaveClass(/mobile-round-active/);
+
+  await page.locator('#mobileMeasureQuickActions [data-action="more"]').click();
+  await expect(page.locator('#mobileMeasureActionSheet')).toHaveClass(/open/);
+  const actionAlignment=await page.locator('#mobileMeasureActionSheet .mobile-sheet-grid button').first().evaluate(el=>{
+    const s=getComputedStyle(el);return {justify:s.justifyContent,align:s.alignItems,text:s.textAlign};
+  });
+  expect(actionAlignment.justify).toBe('center');
+  expect(actionAlignment.align).toBe('center');
+  expect(actionAlignment.text).toBe('center');
+
+  await page.screenshot({path:shots+'/measure-controls-polish-light.png',fullPage:true});
+});
+
 test('V17 biometric and screenshot privacy toggles use the native bridge',async({page})=>{
   await page.evaluate(()=>{
     window.__bpPrivacyCalls=[];

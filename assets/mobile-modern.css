@@ -1426,3 +1426,113 @@ html.bp-prelocked body{visibility:hidden!important}
     #mobilePrivacyLock,.mobile-privacy-lock-card{animation:none!important;transition:none!important}
   }
 }
+
+
+/* V17 final UI polish — framed measurement rounds and centered controls */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  #mobileMeasureStepper{
+    gap:8px!important;
+    padding:6px!important;
+    border-radius:20px!important;
+    border:1px solid var(--m-line)!important;
+    background:var(--m-surface-2)!important
+  }
+  #mobileMeasureStepper button{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    min-height:48px!important;
+    padding:8px 10px!important;
+    border:1px solid var(--m-line)!important;
+    border-radius:14px!important;
+    background:var(--m-surface)!important;
+    color:var(--m-muted)!important;
+    text-align:center!important;
+    line-height:1.15!important;
+    box-shadow:0 3px 10px rgba(31,72,112,.06)!important
+  }
+  #mobileMeasureStepper button.active{
+    border-color:#4fb4cd!important;
+    background:var(--m-accent-soft)!important;
+    color:var(--m-accent)!important;
+    box-shadow:0 7px 18px rgba(29,103,136,.14)!important
+  }
+  #mobileMeasureStepper button.done::after{right:8px!important;top:8px!important}
+  body.dark #mobileMeasureStepper button{
+    border-color:#304157!important;
+    background:#101b29!important;
+    color:#9cb0c0!important
+  }
+  body.dark #mobileMeasureStepper button.active{
+    border-color:#55b8d0!important;
+    background:#163246!important;
+    color:#a8e6f5!important
+  }
+
+  .mobile-page button:not(.mobile-settings-row):not(.mobile-about-list button){
+    text-align:center
+  }
+  .mobile-secondary-btn,
+  .mobile-analytics-toggle,
+  .mobile-archive-more,
+  .filter-group button,
+  #mobileAnalyticsTabs button,
+  #mobileChartSelector button,
+  .mobile-sheet-grid>button:not(.mobile-settings-row),
+  .mobile-reminder-actions>button,
+  .mobile-confirm-actions>button,
+  .mobile-custom-period-actions>button,
+  .mobile-pdf-option,
+  .mobile-about-ok,
+  .mobile-settings-primary{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    text-align:center!important
+  }
+  .mobile-sheet-grid>button:not(.mobile-settings-row)>span,
+  .mobile-reminder-actions>button>span,
+  .mobile-confirm-actions>button>span,
+  .mobile-custom-period-actions>button>span,
+  .mobile-pdf-option>span,
+  .mobile-settings-primary>span{
+    text-align:center
+  }
+
+  .mobile-choice-trigger{
+    position:relative!important;
+    justify-content:center!important;
+    padding-left:38px!important;
+    padding-right:38px!important;
+    text-align:center!important
+  }
+  .mobile-choice-trigger>span{
+    width:100%;
+    text-align:center!important
+  }
+  .mobile-choice-trigger>svg:last-child{
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%)
+  }
+  .mobile-choice-option{
+    position:relative!important;
+    align-items:center!important;
+    justify-content:center!important;
+    padding-left:38px!important;
+    padding-right:38px!important;
+    text-align:center!important
+  }
+  .mobile-choice-option>span{
+    flex:1 1 auto;
+    text-align:center!important
+  }
+  .mobile-choice-option>i:last-child,
+  .mobile-choice-option>svg:last-child{
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%)
+  }
+}

@@ -1380,14 +1380,32 @@
   function roundDone(card){return !!qa('.bp-inputs',card).find(row=>{const v=qa('input',row).map(x=>Number(x.value)||0);return v[0]>0&&v[1]>0})}
   function measureStepper(measure){
     const grid=q('.measures-grid',measure);if(!grid)return;let st=q('#mobileMeasureStepper',measure);if(!st){st=document.createElement('div');st.id='mobileMeasureStepper';grid.before(st)}
-    st.innerHTML=[0,1,2].map(i=>`<button type="button" data-round="${i}">${ru()?'Замер':'Round'} ${i+1}</button>`).join('');
-    st.onclick=e=>{const b=e.target.closest('[data-round]');if(!b)return;activeRound=Number(b.dataset.round);try{localStorage.setItem('bp_mobile_round',String(activeRound))}catch(_){}updateRound(measure)};
+    st.setAttribute('role','tablist');
+    st.setAttribute('aria-label',ru()?'Выбор замера':'Reading selector');
+    st.innerHTML=[0,1,2].map(i=>`<button type="button" role="tab" data-round="${i}">${ru()?'Замер':'Round'} ${i+1}</button>`).join('');
+    const selectRound=i=>{activeRound=Math.max(0,Math.min(2,Number(i)||0));try{localStorage.setItem('bp_mobile_round',String(activeRound))}catch(_){}updateRound(measure)};
+    st.onclick=e=>{const b=e.target.closest('[data-round]');if(!b)return;selectRound(b.dataset.round)};
+    st.onkeydown=e=>{
+      const b=e.target.closest('[data-round]');if(!b)return;
+      const current=Number(b.dataset.round);let next=current;
+      if(e.key==='ArrowRight'||e.key==='ArrowDown')next=(current+1)%3;
+      else if(e.key==='ArrowLeft'||e.key==='ArrowUp')next=(current+2)%3;
+      else if(e.key==='Home')next=0;
+      else if(e.key==='End')next=2;
+      else return;
+      e.preventDefault();selectRound(next);q(`#mobileMeasureStepper [data-round="${next}"]`,measure)?.focus();
+    };
     if(!grid.dataset.mobileRoundBound){grid.dataset.mobileRoundBound='1';grid.addEventListener('input',()=>updateRound(measure))}
     updateRound(measure);
   }
   function updateRound(measure){
     const cards=qa('.measure-card',measure);if(!cards.length)return;if(activeRound<0||activeRound>=cards.length)activeRound=0;
-    cards.forEach((c,i)=>c.classList.toggle('mobile-round-active',i===activeRound));qa('#mobileMeasureStepper [data-round]',measure).forEach((b,i)=>{b.classList.toggle('active',i===activeRound);b.classList.toggle('done',roundDone(cards[i]))})
+    cards.forEach((c,i)=>{if(!c.id)c.id=`mobileMeasureRound${i+1}`;c.classList.toggle('mobile-round-active',i===activeRound)});
+    qa('#mobileMeasureStepper [data-round]',measure).forEach((b,i)=>{
+      const active=i===activeRound;
+      b.classList.toggle('active',active);b.classList.toggle('done',roundDone(cards[i]));
+      b.setAttribute('aria-selected',String(active));b.setAttribute('aria-controls',cards[i]?.id||'');b.tabIndex=active?0:-1;
+    })
   }
 
   function measureActions(measure){
