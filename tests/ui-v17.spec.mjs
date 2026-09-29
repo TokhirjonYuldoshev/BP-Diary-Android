@@ -117,3 +117,22 @@ test('V17 remains usable in dark theme and English',async({page})=>{
   await expect(page.locator('#mobileSettingsSheet')).toContainText('Protected backup');
   await page.screenshot({path:shots+'/settings-privacy-dark-en.png',fullPage:true});
 });
+
+
+test('V17 cold-start biometric guard covers the diary until authentication succeeds',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('bp_biometric_lock_v17','1');
+    window.__bpBioResolve=null;
+    window.Capacitor={Plugins:{NativeBridge:{
+      authenticateBiometric:async()=>new Promise(resolve=>{window.__bpBioResolve=resolve}),
+      setPrivacyShield:async()=>({})
+    }}};
+  });
+  await page.reload({waitUntil:'domcontentloaded'});
+  await expect(page.locator('#mobilePrivacyLock')).toHaveClass(/open/);
+  await expect(page.locator('#mobilePrivacyLock')).toContainText(/Приложение защищено|App locked/);
+  const prelocked=await page.evaluate(()=>document.documentElement.classList.contains('bp-prelocked'));
+  expect(prelocked).toBe(false);
+  await page.evaluate(()=>window.__bpBioResolve?.({authenticated:true}));
+  await expect(page.locator('#mobilePrivacyLock')).not.toHaveClass(/open/);
+});
