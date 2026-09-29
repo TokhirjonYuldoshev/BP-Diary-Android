@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main, v11-ui-ux, v12-functional-upgrades, v13-ui-polish]
+    branches: [main, v11-ui-ux, v12-functional-upgrades, v13-ui-polish, v15-finalization]
   workflow_dispatch:
 
 permissions:
@@ -44,12 +44,15 @@ jobs:
           grep -q 'mobile-modern.js' www/index.html
           grep -q 'mobileBottomNav' www/mobile-modern.js
           grep -q 'mobileArchiveCards' www/mobile-modern.js
+          grep -q 'mobileArchiveSearch' www/mobile-modern.js
+          grep -q 'bp_archive_search_v15' www/mobile-modern.js
+          grep -q 'applyAccessibility' www/mobile-modern.js
           grep -q 'mobileMeasureHero' www/mobile-modern.js
           grep -q 'sharePdfBase64' www/mobile-modern.js
           grep -q 'mobileToast' www/mobile-modern.js
           grep -q 'mobileConfirmSheet' www/mobile-modern.js
           grep -q 'mobile-report-actions' www/mobile-modern.js
-          grep -q 'Android V14' www/mobile-modern.js
+          grep -q 'Android V15' www/mobile-modern.js
           grep -q 'mobile-cardio-row' www/mobile-modern.js
           grep -q 'mobile-target-shell' www/mobile-modern.js
           grep -q 'date-time-row.mobile-cardio-row' www/mobile-modern.css
@@ -64,6 +67,9 @@ jobs:
             exit 1
           fi
           node --check www/mobile-modern.js
+
+      - name: Run V15 regression smoke
+        run: npm run qa:v15
 
       - name: Create Android project
         run: npx cap add android
@@ -112,12 +118,12 @@ jobs:
           echo "Verified permanent signer: $KEY_FP"
 
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-V14.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-V15.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BP-Diary-5.5-V14-Android-APK
-          path: BP-Diary-5.5-V14.apk
+          name: BP-Diary-5.5-V15-Android-APK
+          path: BP-Diary-5.5-V15.apk
           if-no-files-found: error
           retention-days: 30
