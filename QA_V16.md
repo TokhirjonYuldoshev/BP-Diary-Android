@@ -1,4 +1,4 @@
-# V16 Candidate Regression QA
+# V16 Final Regression QA
 
 Status: **PASSED / ACCEPTED FOR RELEASE**
 
@@ -87,3 +87,18 @@ Publication remains mechanically gated until `release-request.json` is intention
 ```
 
 The final release commit sets `publish` to `true`. The generic release workflow then performs a fresh signed release build, signer verification, checksum generation and GitHub Release publication from `version.json`.
+
+
+## Final release verification
+
+- GitHub Release: `v5.6.0`
+- Release name: `BP Diary 5.6.0 V16`
+- Release APK: `BP-Diary-5.6-V16.apk`
+- Release APK size: `4,907,672 bytes`
+- Release APK SHA-256: `74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc`
+- Signing certificate SHA-256: `63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102`
+- Main Android Build #115: **SUCCESS**
+- Main UI Regression #13: **SUCCESS**
+- Final release workflow #2: **SUCCESS**
+
+Final status: **FINAL / STABLE / RELEASED**.
