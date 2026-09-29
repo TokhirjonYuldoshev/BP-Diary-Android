@@ -38,6 +38,7 @@ Package ID: `com.tokhirjonyuldoshev.bpdiary`
 - [ ] Tapping notification opens BP Diary.
 - [ ] Reminder remains configured after reopening the app.
 - [ ] Reminder is restored after device reboot.
+- [ ] Reminder is restored after installing a newer APK over the app.
 - [ ] Device time/timezone change reschedules the reminder.
 - [ ] Turning reminder off cancels future notifications.
 - [ ] A legacy V15 JavaScript reminder is migrated once without duplicate reminders.
