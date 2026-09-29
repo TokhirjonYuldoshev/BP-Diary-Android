@@ -1,5 +1,13 @@
 node_modules/
 android/
 www/
+
+*.apk
+*.aab
 *.log
 .DS_Store
+
+.idea/
+.vscode/
+local.properties
+.gradle/
