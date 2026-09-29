@@ -11,7 +11,26 @@ permissions:
   contents: write
 
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.release_gate.outputs.publish }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read publication gate
+        id: release_gate
+        shell: bash
+        run: |
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const r=require('./release-request.json');
+          console.log('publish='+(r.publish === true ? 'true' : 'false'));
+          NODE
+
   release:
+    needs: gate
+    if: needs.gate.outputs.publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 35
 
@@ -34,13 +53,6 @@ jobs:
             RELEASE_REQUESTED:r.publish === true ? 'true' : 'false'
           })) console.log(k+'='+val);
           NODE
-
-      - name: Require explicit release request
-        run: |
-          if [ "$RELEASE_REQUESTED" != "true" ]; then
-            echo "release-request.json has publish=false; refusing to publish."
-            exit 1
-          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
