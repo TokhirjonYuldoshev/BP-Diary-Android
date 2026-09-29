@@ -133,6 +133,7 @@ test('V17 cold-start biometric guard covers the diary until authentication succe
   await expect(page.locator('#mobilePrivacyLock')).toContainText(/Приложение защищено|App locked/);
   const prelocked=await page.evaluate(()=>document.documentElement.classList.contains('bp-prelocked'));
   expect(prelocked).toBe(false);
-  await page.evaluate(()=>window.__bpBioResolve?.({authenticated:true}));
+  await expect.poll(()=>page.evaluate(()=>typeof window.__bpBioResolve)).toBe('function');
+  await page.evaluate(()=>window.__bpBioResolve({authenticated:true}));
   await expect(page.locator('#mobilePrivacyLock')).not.toHaveClass(/open/);
 });
