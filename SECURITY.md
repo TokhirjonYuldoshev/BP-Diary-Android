@@ -84,3 +84,40 @@ Changing the signing lineage breaks direct upgrades from APKs signed by a differ
 - The request targets the official GitHub Releases API for this repository.
 - BP Diary does not silently download or install APK updates.
 - Diary measurements, backups and profile/medical data remain local unless the user explicitly exports or shares them.
+
+
+## V17 protected backups
+
+### Русский
+
+V17 добавляет опциональный защищённый Full Backup. Пароль не сохраняется в BP Diary.
+
+Формат использует:
+
+- PBKDF2-SHA-256;
+- 310 000 итераций;
+- случайную 16-байтовую соль;
+- AES-GCM-256;
+- случайный 12-байтовый IV;
+- проверку аутентичности при расшифровке.
+
+Неверный пароль или повреждение ciphertext приводит к отказу расшифровки до изменения текущих данных приложения.
+
+Биометрическая блокировка является защитой интерфейса приложения, а не заменой полного шифрования Android-устройства. Опция Screen privacy использует Android `FLAG_SECURE` и сохраняется в native SharedPreferences, чтобы восстанавливаться при следующем запуске.
+
+### English
+
+V17 adds an optional password-protected Full Backup. BP Diary does not persist the password.
+
+The format uses:
+
+- PBKDF2-SHA-256;
+- 310,000 iterations;
+- a random 16-byte salt;
+- AES-GCM-256;
+- a random 12-byte IV;
+- authenticated decryption.
+
+A wrong password or modified ciphertext fails before current application data are changed.
+
+The biometric app lock protects the application UI and is not a replacement for full-device encryption. Screen privacy uses Android `FLAG_SECURE` and persists its state in native SharedPreferences so it is restored on the next launch.
