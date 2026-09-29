@@ -21,7 +21,7 @@
 
 **BP Diary 5.5** — Android-версия дневника артериального давления с мобильным интерфейсом, локальным хранением данных, аналитикой, резервными копиями и отчётами для врача.
 
-Текущий стабильный релиз: **V15 / 5.5.150**.
+Текущий стабильный релиз: **V15 / 5.5.150**. Следующий кандидат: **V16 / 5.6.0 — Reliability & Android Integration**.
 
 - Package ID: `com.tokhirjonyuldoshev.bpdiary`
 - Android shell: Capacitor 8
@@ -31,6 +31,20 @@
 - Стабильный APK: [GitHub Release v5.5.150](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.5.150)
 
 > Основной исходный код теперь хранится в обычном читаемом `source/index.html`. Старые Base64-части удалены.
+
+
+### V16 candidate
+
+V16 переносит критичные Android-функции из WebView в нативный слой:
+
+- ежедневные системные напоминания, работающие после закрытия приложения;
+- восстановление напоминания после перезагрузки и изменения времени/часового пояса;
+- отдельный экран **Настройки**;
+- ручная проверка обновлений только через официальный GitHub Release;
+- единый `version.json` для версии APK, имени артефакта и release tag;
+- автоматизированные UI/screenshot regression-тесты.
+
+V16 пока является **candidate**, а V15 остаётся опубликованным stable release до завершения проверки на реальном Android-устройстве. См. [QA_V16.md](QA_V16.md).
 
 ## Возможности
 
@@ -195,7 +209,7 @@ BP Diary помогает вести записи и готовить данны
 
 **BP Diary 5.5** is an Android blood-pressure diary with a mobile-first interface, local data storage, analytics, backup/restore and doctor-ready reports.
 
-Current stable release: **V15 / 5.5.150**.
+Current stable release: **V15 / 5.5.150**. Next candidate: **V16 / 5.6.0 — Reliability & Android Integration**.
 
 - Package ID: `com.tokhirjonyuldoshev.bpdiary`
 - Android shell: Capacitor 8
@@ -205,6 +219,20 @@ Current stable release: **V15 / 5.5.150**.
 - Stable APK: [GitHub Release v5.5.150](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.5.150)
 
 > The main application source is now stored as a normal, human-readable `source/index.html`. The legacy Base64 source chunks have been removed.
+
+
+### V16 candidate
+
+V16 moves critical Android behavior out of the WebView and into the native layer:
+
+- persistent daily system reminders that work after the app is closed;
+- reminder restoration after reboot and time/timezone changes;
+- dedicated **Settings** screen;
+- manual update checks against the official GitHub Release only;
+- single-source `version.json` for APK version, artifact name and release tag;
+- automated UI/screenshot regression tests.
+
+V16 remains a **candidate** while V15 stays the published stable release until real-device acceptance is complete. See [QA_V16.md](QA_V16.md).
 
 ## Features
 
