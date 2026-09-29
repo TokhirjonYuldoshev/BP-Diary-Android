@@ -1196,3 +1196,50 @@
     .mobile-brand-copy span{font-size:.49rem!important}
   }
 }
+
+
+/* V15 — archive search and final accessibility polish */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  .sr-only{
+    position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;
+    overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important
+  }
+
+  #mobileArchiveTools{
+    grid-template-columns:1fr auto!important
+  }
+  .mobile-archive-search-wrap{
+    grid-column:1/-1;position:relative;display:grid;grid-template-columns:22px 1fr 38px;align-items:center;gap:5px;
+    min-height:48px;padding:0 5px 0 11px;border:1px solid var(--m-line);border-radius:15px;background:var(--m-surface)
+  }
+  .mobile-archive-search-wrap>svg{width:18px!important;height:18px!important;color:var(--m-muted)}
+  #mobileArchiveSearch{
+    min-height:44px!important;height:44px!important;padding:7px 4px!important;border:0!important;border-radius:0!important;
+    background:transparent!important;box-shadow:none!important;font-size:16px!important;color:var(--m-ink)!important
+  }
+  #mobileArchiveSearch::-webkit-search-cancel-button{display:none}
+  #mobileArchiveSearchClear{
+    width:34px!important;height:34px!important;min-height:34px!important;padding:0!important;
+    border:0!important;border-radius:10px!important;background:transparent!important;color:var(--m-muted)!important
+  }
+  #mobileArchiveSearchClear svg{width:17px!important;height:17px!important}
+  .mobile-archive-no-results{
+    margin:0 9px 10px;padding:18px 14px;text-align:center;border:1px dashed var(--m-line);border-radius:16px;
+    color:var(--m-muted);background:var(--m-surface-2);font-size:.68rem;line-height:1.4
+  }
+  .mobile-archive-no-results[hidden]{display:none!important}
+
+  :focus-visible{
+    outline:3px solid rgba(17,140,196,.58)!important;
+    outline-offset:2px!important
+  }
+  body.dark :focus-visible{outline-color:rgba(78,208,243,.72)!important}
+  button,input,select,textarea,[role="button"]{touch-action:manipulation}
+  [role="button"]{min-height:44px}
+  .profile-section-title{min-height:48px!important}
+  .mobile-record-actions button,.mobile-top-actions button,#mobileBottomNav button{min-width:44px;min-height:44px}
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto!important}
+  }
+}
