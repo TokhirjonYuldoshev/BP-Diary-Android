@@ -117,3 +117,65 @@ test('V16 direct settings access, touch targets and bilingual UI remain usable',
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 });
+
+
+test('V16 native reminder bridge contract is wired correctly',async({page})=>{
+  await page.evaluate(()=>{
+    window.__bpNativeCalls=[];
+    window.Capacitor={Plugins:{NativeBridge:{
+      getReminderStatus:async()=>({enabled:true,time:'08:30',notificationsAllowed:true}),
+      scheduleDailyReminder:async(args)=>{window.__bpNativeCalls.push({method:'scheduleDailyReminder',args});return {enabled:true,time:args.time,notificationsAllowed:true,nextTrigger:Date.now()+3600000}},
+      cancelDailyReminder:async()=>{window.__bpNativeCalls.push({method:'cancelDailyReminder'});return {enabled:false,notificationsAllowed:true}},
+      requestNotificationPermission:async()=>({allowed:true,requested:false})
+    }}};
+  });
+
+  await page.locator('#mobileAppBar [data-top="reminder"]').click();
+  await expect(page.locator('#mobileReminderSheet')).toHaveClass(/open/);
+  await expect(page.locator('#mobileReminderTime')).toHaveValue('08:30');
+  await expect(page.locator('#mobileReminderSheet')).toContainText(/Уведомления разрешены|Notifications allowed/);
+
+  await page.locator('#mobileReminderTime').fill('08:45');
+  await page.locator('#mobileReminderSheet button').filter({hasText:/Сохранить|Save/}).click();
+  await expect(page.locator('#mobileReminderSheet')).not.toHaveClass(/open/);
+
+  const calls=await page.evaluate(()=>window.__bpNativeCalls);
+  expect(calls).toHaveLength(1);
+  expect(calls[0].method).toBe('scheduleDailyReminder');
+  expect(calls[0].args.time).toBe('08:45');
+  expect(calls[0].args.title).toBe('BP Diary');
+});
+
+test('V16 update checker prevents downgrade and offers only a newer release',async({page})=>{
+  await page.evaluate(()=>{
+    window.__bpOpenedUrls=[];
+    window.__bpLatest={tag:'v5.5.150',htmlUrl:'https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.5.150',apkUrl:''};
+    window.Capacitor={Plugins:{NativeBridge:{
+      checkForUpdate:async()=>window.__bpLatest,
+      openUrl:async({url})=>{window.__bpOpenedUrls.push(url);return {}}
+    }}};
+  });
+
+  const openUpdate=async()=>{
+    await page.locator('#mobileAppBar [data-top="settings"]').click();
+    await expect(page.locator('#mobileSettingsSheet')).toHaveClass(/open/);
+    await page.locator('#mobileSettingsSheet .mobile-settings-row').filter({hasText:/Проверить обновления|Check for updates/}).click();
+    await expect(page.locator('#mobileUpdateSheet')).toHaveClass(/open/);
+  };
+
+  await openUpdate();
+  await expect(page.locator('#mobileUpdateSheet')).toContainText('5.5.150');
+  await expect(page.locator('#mobileUpdateSheet')).toContainText(/актуальная версия|current version/i);
+  await expect(page.locator('#mobileUpdateSheet .mobile-settings-primary')).toHaveCount(0);
+  await page.locator('#mobileUpdateSheet .mobile-sheet-close').click();
+
+  await page.evaluate(()=>{window.__bpLatest={tag:'v5.7.0',htmlUrl:'https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0',apkUrl:''}});
+  await openUpdate();
+  await expect(page.locator('#mobileUpdateSheet')).toContainText('5.7.0');
+  await expect(page.locator('#mobileUpdateSheet')).toContainText(/более новая версия|newer version/i);
+  await expect(page.locator('#mobileUpdateSheet .mobile-settings-primary')).toHaveCount(1);
+  await page.locator('#mobileUpdateSheet .mobile-settings-primary').click();
+
+  const urls=await page.evaluate(()=>window.__bpOpenedUrls);
+  expect(urls).toEqual(['https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0']);
+});
