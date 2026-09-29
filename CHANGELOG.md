@@ -1,5 +1,33 @@
 # Changelog
 
+## V16 — Reliability & Android Integration — candidate
+
+### Added
+- Native Android daily reminders using AlarmManager and system notifications.
+- Reminder restoration after reboot, device-time changes and timezone changes.
+- Android 13+ notification permission flow and notification settings access.
+- One-time migration path from the legacy JavaScript reminder.
+- Dedicated mobile Settings screen.
+- Manual update checker against the official GitHub Releases API.
+- Single-source release metadata in `version.json`.
+- Generic release workflow gated by `release-request.json`.
+- Playwright mobile UI regression with light/dark screenshots.
+- V16-specific static regression coverage.
+
+### Preserved
+- V15 archive search/filter/sort.
+- Doctor PDF preview/save/print/share.
+- Manual and automatic backup/restore.
+- Android Back integration.
+- Voice/TTS.
+- RU/EN and light/dark themes.
+- Cardio-profile/SCORE2/Personal-range layout fixes.
+- Package ID and existing data/signing lineage.
+
+### Release policy
+V16 is not published until its candidate APK passes the real-device matrix in `QA_V16.md`.
+
+
 All notable Android wrapper and repository changes are tracked here. Medical/core calculations are intentionally kept outside mobile presentation and repository-maintenance changes.
 
 ## Repository finalization — post V15
