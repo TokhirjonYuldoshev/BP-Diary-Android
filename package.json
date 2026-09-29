@@ -5,7 +5,8 @@
   "description": "Android wrapper for the Blood Pressure Diary 5.5",
   "scripts": {
     "prepare:web": "node scripts/prepare-web.mjs",
-    "cap:sync": "npx cap sync android"
+    "cap:sync": "npx cap sync android",
+    "qa:v15": "node scripts/regression-v15.mjs"
   },
   "dependencies": {
     "@capacitor/android": "8.5.2",
