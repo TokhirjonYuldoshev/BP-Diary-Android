@@ -49,7 +49,11 @@ jobs:
           grep -q 'mobileToast' www/mobile-modern.js
           grep -q 'mobileConfirmSheet' www/mobile-modern.js
           grep -q 'mobile-report-actions' www/mobile-modern.js
-          grep -q 'Android V13' www/mobile-modern.js
+          grep -q 'Android V14' www/mobile-modern.js
+          grep -q 'mobile-cardio-row' www/mobile-modern.js
+          grep -q 'mobile-target-shell' www/mobile-modern.js
+          grep -q 'date-time-row.mobile-cardio-row' www/mobile-modern.css
+          grep -q 'date-time-row.target-row.mobile-target-shell' www/mobile-modern.css
           grep -q 'vendor/pdf/html2canvas.min.js' www/index.html
           grep -q 'vendor/pdf/jspdf.umd.min.js' www/index.html
           grep -q 'vendor/chart/chart.umd.js' www/index.html
@@ -108,12 +112,12 @@ jobs:
           echo "Verified permanent signer: $KEY_FP"
 
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-V13.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-V14.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BP-Diary-5.5-V13-Android-APK
-          path: BP-Diary-5.5-V13.apk
+          name: BP-Diary-5.5-V14-Android-APK
+          path: BP-Diary-5.5-V14.apk
           if-no-files-found: error
           retention-days: 30
