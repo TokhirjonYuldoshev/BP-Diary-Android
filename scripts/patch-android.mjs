@@ -31,6 +31,11 @@ if(!gradle.includes('bpDiaryStable')){
         }
 `);
 }
+if(!/release\s*\{[\s\S]*?signingConfig\s+signingConfigs\.bpDiaryStable/.test(gradle)){
+  gradle=gradle.replace(/release\s*\{/,m=>m+`
+            signingConfig signingConfigs.bpDiaryStable
+`);
+}
 await writeFile(join(app,'build.gradle'),gradle,'utf8');
 
 const mainActivity=`package com.tokhirjonyuldoshev.bpdiary;
