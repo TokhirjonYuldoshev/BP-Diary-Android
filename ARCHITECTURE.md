@@ -182,6 +182,19 @@ Creates the Android-specific layer after `npx cap add android`, including MainAc
 
 `android/` is generated and intentionally untracked.
 
+### V16 Android integration
+
+V16 keeps diary/medical calculations in the existing core and adds native reliability features around them.
+
+- `ReminderScheduler.java` stores the daily reminder and schedules the next Android alarm.
+- `ReminderReceiver.java` posts the system notification and schedules the following occurrence.
+- Boot, device-time and timezone broadcasts restore/reschedule reminders after system changes.
+- Android 13+ notification permission is requested only when the user chooses notification-based reminders.
+- `NativeBridge.checkForUpdate` performs an explicit user-requested HTTPS call to the official GitHub Releases API; there is no background update polling.
+- `version.json` is the single source for release label, semantic version, Android versionCode, release tag and artifact basename.
+- `release-request.json` prevents accidental publication while `publish=false`.
+- `tests/ui-v16.spec.mjs` performs mobile layout regression checks and light/dark screenshots in CI.
+
 ### Data flow
 
 ```text
