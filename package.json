@@ -1,12 +1,13 @@
 {
   "name": "bp-diary-android",
-  "version": "5.5.0",
+  "version": "5.5.150",
   "private": true,
-  "description": "Android wrapper for the Blood Pressure Diary 5.5",
+  "description": "Android application and mobile UX layer for BP Diary 5.5",
   "scripts": {
     "prepare:web": "node scripts/prepare-web.mjs",
-    "cap:sync": "npx cap sync android",
-    "qa:v15": "node scripts/regression-v15.mjs"
+    "qa": "node scripts/regression-v15.mjs",
+    "qa:v15": "node scripts/regression-v15.mjs",
+    "cap:sync": "npx cap sync android"
   },
   "dependencies": {
     "@capacitor/android": "8.5.2",
