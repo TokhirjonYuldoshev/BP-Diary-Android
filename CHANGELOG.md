@@ -1,6 +1,6 @@
 # Changelog
 
-## V16 — Reliability & Android Integration — candidate
+## V16 — Reliability & Android Integration — 5.6.0
 
 ### Added
 - Native Android daily reminders using AlarmManager and system notifications.
@@ -24,8 +24,8 @@
 - Cardio-profile/SCORE2/Personal-range layout fixes.
 - Package ID and existing data/signing lineage.
 
-### Release policy
-V16 is not published until its candidate APK passes the real-device matrix in `QA_V16.md`.
+### Release status
+Accepted for stable publication after final Android Build #115, UI Regression #13, signer verification and the device-acceptance step.
 
 
 All notable Android wrapper and repository changes are tracked here. Medical/core calculations are intentionally kept outside mobile presentation and repository-maintenance changes.
