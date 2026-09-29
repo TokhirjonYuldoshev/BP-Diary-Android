@@ -36,6 +36,11 @@ if(!/release\s*\{[\s\S]*?signingConfig\s+signingConfigs\.bpDiaryStable/.test(gra
             signingConfig signingConfigs.bpDiaryStable
 `);
 }
+if(!gradle.includes('androidx.biometric:biometric')){
+  gradle=gradle.replace(/dependencies\s*\{/,m=>m+`
+    implementation "androidx.biometric:biometric:1.1.0"
+`);
+}
 await writeFile(join(app,'build.gradle'),gradle,'utf8');
 
 const mainActivity=`package com.tokhirjonyuldoshev.bpdiary;
@@ -289,12 +294,16 @@ import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.view.WindowManager;
 
 import androidx.activity.result.ActivityResult;
+import androidx.biometric.BiometricManager;
+import androidx.biometric.BiometricPrompt;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.fragment.app.FragmentActivity;
 
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -318,6 +327,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.concurrent.Executor;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -774,6 +784,77 @@ public class NativeBridgePlugin extends Plugin {
         } catch (Exception e) {
             call.reject("Could not open notification settings", e);
         }
+    }
+
+    @PluginMethod
+    public void getBiometricStatus(PluginCall call) {
+        try {
+            int status = BiometricManager.from(getContext()).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK);
+            JSObject out = new JSObject();
+            out.put("available", status == BiometricManager.BIOMETRIC_SUCCESS);
+            out.put("status", status);
+            call.resolve(out);
+        } catch (Exception e) {
+            call.reject("Could not read biometric status", e);
+        }
+    }
+
+    @PluginMethod
+    public void authenticateBiometric(PluginCall call) {
+        if (!(getActivity() instanceof FragmentActivity)) {
+            call.reject("Biometric authentication is unavailable");
+            return;
+        }
+        try {
+            Executor executor = ContextCompat.getMainExecutor(getContext());
+            BiometricPrompt prompt = new BiometricPrompt(
+                (FragmentActivity) getActivity(),
+                executor,
+                new BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationError(int errorCode, CharSequence errString) {
+                        super.onAuthenticationError(errorCode, errString);
+                        call.reject(errString == null ? "Biometric authentication cancelled" : errString.toString());
+                    }
+
+                    @Override
+                    public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
+                        super.onAuthenticationSucceeded(result);
+                        JSObject out = new JSObject();
+                        out.put("authenticated", true);
+                        call.resolve(out);
+                    }
+                }
+            );
+
+            String title = call.getString("title");
+            String subtitle = call.getString("subtitle");
+            String cancel = call.getString("cancel");
+            BiometricPrompt.PromptInfo.Builder info = new BiometricPrompt.PromptInfo.Builder()
+                .setTitle(title == null || title.trim().isEmpty() ? "BP Diary" : title)
+                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK)
+                .setNegativeButtonText(cancel == null || cancel.trim().isEmpty() ? "Cancel" : cancel);
+            if (subtitle != null && !subtitle.trim().isEmpty()) info.setSubtitle(subtitle);
+            prompt.authenticate(info.build());
+        } catch (Exception e) {
+            call.reject("Could not start biometric authentication", e);
+        }
+    }
+
+    @PluginMethod
+    public void setPrivacyShield(PluginCall call) {
+        boolean enabled = Boolean.TRUE.equals(call.getBoolean("enabled"));
+        getActivity().runOnUiThread(() -> {
+            try {
+                if (enabled) getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+                else getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+                JSObject out = new JSObject();
+                out.put("enabled", enabled);
+                call.resolve(out);
+            } catch (Exception e) {
+                call.reject("Could not update privacy shield", e);
+            }
+        });
     }
 
     @PluginMethod
