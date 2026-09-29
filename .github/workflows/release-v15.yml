@@ -1,0 +1,121 @@
+name: Release V15
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/release-v15.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  release-v15:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Prepare web app and run regression smoke
+        run: |
+          npm run prepare:web
+          node --check www/mobile-modern.js
+          npm run qa:v15
+
+      - name: Create and patch Android project
+        run: |
+          npx cap add android
+          node scripts/patch-android.mjs
+          npx cap sync android
+          npx capacitor-assets generate --android --iconBackgroundColor '#126f96' --iconBackgroundColorDark '#08131f' --splashBackgroundColor '#eef6fa' --splashBackgroundColorDark '#08131f'
+
+      - name: Configure final V15 version
+        run: |
+          sed -i 's/versionCode 1/versionCode 150/' android/app/build.gradle
+          sed -i 's/versionName "1.0"/versionName "5.5.150"/' android/app/build.gradle
+          grep -E 'versionCode|versionName' android/app/build.gradle
+          grep -q 'release' android/app/build.gradle
+          grep -q 'signingConfig signingConfigs.bpDiaryStable' android/app/build.gradle
+
+      - name: Build signed release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Verify release APK and signer
+        run: |
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
+          test -x "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs "$APK" | tee /tmp/v15-release-signature.txt
+          KEY_FP="$(keytool -exportcert -keystore android/app/bp-diary-signing.p12 -storetype PKCS12 -storepass android -alias androiddebugkey | sha256sum | awk '{print $1}')"
+          APK_FP="$(grep -m1 'certificate SHA-256 digest' /tmp/v15-release-signature.txt | sed 's/.*digest: //' | tr '[:upper:]' '[:lower:]' | tr -d ':[:space:]')"
+          test -n "$APK_FP"
+          test "$KEY_FP" = "$APK_FP"
+          echo "Verified release signer: $KEY_FP"
+
+      - name: Prepare release assets
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk BP-Diary-5.5-V15.apk
+          sha256sum BP-Diary-5.5-V15.apk | tee BP-Diary-5.5-V15.apk.sha256
+          cat > /tmp/release-notes.md <<'EOF'
+          # BP Diary Android V15
+
+          Finalization release for the V11 → V12 → V13 roadmap.
+
+          Highlights:
+          - fast Archive search;
+          - final accessibility polish and semantic labels;
+          - automatic backups and manual backup/restore;
+          - 7/14/30/all/custom doctor-report periods;
+          - stable PDF Save/Print/Share flow;
+          - corrected Cardio-profile and Personal-range mobile layout;
+          - RU/EN, light/dark, Voice/TTS and Android Back retained;
+          - regression smoke and signed release-build verification added.
+
+          Package: com.tokhirjonyuldoshev.bpdiary
+          Version: 5.5.150 (versionCode 150)
+
+          The APK is signed with the same stable direct-distribution update key used by the recent test builds, so it can update V14 without uninstalling. This key is not a Play Store production signing key.
+
+          See CHANGELOG.md and QA_V15.md in the repository for the detailed change and test matrix.
+          EOF
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v5.5.150 \
+            BP-Diary-5.5-V15.apk \
+            BP-Diary-5.5-V15.apk.sha256 \
+            --target "$GITHUB_SHA" \
+            --title "BP Diary 5.5 V15" \
+            --notes-file /tmp/release-notes.md
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BP-Diary-5.5-V15-Release-APK
+          path: |
+            BP-Diary-5.5-V15.apk
+            BP-Diary-5.5-V15.apk.sha256
+          if-no-files-found: error
+          retention-days: 30
