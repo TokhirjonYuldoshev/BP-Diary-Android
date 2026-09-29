@@ -79,6 +79,177 @@ public class MainActivity extends BridgeActivity {
 `;
 await writeFile(join(pkgDir,'MainActivity.java'),mainActivity,'utf8');
 
+const reminderScheduler=`package com.tokhirjonyuldoshev.bpdiary;
+
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Build;
+
+import java.util.Calendar;
+
+public final class ReminderScheduler {
+    public static final String ACTION_REMINDER = "com.tokhirjonyuldoshev.bpdiary.ACTION_DAILY_REMINDER";
+    private static final String PREFS = "bp_diary_native_reminder";
+    private static final String KEY_ENABLED = "enabled";
+    private static final String KEY_TIME = "time";
+    private static final String KEY_TITLE = "title";
+    private static final String KEY_BODY = "body";
+    private static final int REQUEST_CODE = 16001;
+
+    private ReminderScheduler() {}
+
+    public static SharedPreferences prefs(Context context) {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+    }
+
+    public static boolean isEnabled(Context context) {
+        return prefs(context).getBoolean(KEY_ENABLED, false);
+    }
+
+    public static String getTime(Context context) {
+        return prefs(context).getString(KEY_TIME, "09:00");
+    }
+
+    public static String getTitle(Context context) {
+        return prefs(context).getString(KEY_TITLE, "BP Diary");
+    }
+
+    public static String getBody(Context context) {
+        return prefs(context).getString(KEY_BODY, "Time to measure your blood pressure");
+    }
+
+    public static long nextTriggerMillis(String time) {
+        if (time == null || !time.matches("^(?:[01]\\d|2[0-3]):[0-5]\\d$")) {
+            throw new IllegalArgumentException("Invalid reminder time");
+        }
+        String[] parts = time.split(":");
+        int hour = Integer.parseInt(parts[0]);
+        int minute = Integer.parseInt(parts[1]);
+        Calendar now = Calendar.getInstance();
+        Calendar next = Calendar.getInstance();
+        next.set(Calendar.HOUR_OF_DAY, hour);
+        next.set(Calendar.MINUTE, minute);
+        next.set(Calendar.SECOND, 0);
+        next.set(Calendar.MILLISECOND, 0);
+        if (!next.after(now)) next.add(Calendar.DAY_OF_YEAR, 1);
+        return next.getTimeInMillis();
+    }
+
+    private static PendingIntent alarmIntent(Context context) {
+        Intent intent = new Intent(context, ReminderReceiver.class).setAction(ACTION_REMINDER);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) flags |= PendingIntent.FLAG_IMMUTABLE;
+        return PendingIntent.getBroadcast(context, REQUEST_CODE, intent, flags);
+    }
+
+    public static void schedule(Context context, String time, String title, String body) {
+        prefs(context).edit()
+            .putBoolean(KEY_ENABLED, true)
+            .putString(KEY_TIME, time)
+            .putString(KEY_TITLE, title == null || title.trim().isEmpty() ? "BP Diary" : title.trim())
+            .putString(KEY_BODY, body == null || body.trim().isEmpty() ? "Time to measure your blood pressure" : body.trim())
+            .apply();
+        scheduleNext(context);
+    }
+
+    public static void scheduleNext(Context context) {
+        if (!isEnabled(context)) return;
+        AlarmManager alarms = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (alarms == null) return;
+        long when = nextTriggerMillis(getTime(context));
+        PendingIntent pi = alarmIntent(context);
+        alarms.cancel(pi);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, when, pi);
+        } else {
+            alarms.set(AlarmManager.RTC_WAKEUP, when, pi);
+        }
+    }
+
+    public static void cancel(Context context) {
+        prefs(context).edit().putBoolean(KEY_ENABLED, false).apply();
+        AlarmManager alarms = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (alarms != null) alarms.cancel(alarmIntent(context));
+    }
+}
+`;
+await writeFile(join(pkgDir,'ReminderScheduler.java'),reminderScheduler,'utf8');
+
+const reminderReceiver=`package com.tokhirjonyuldoshev.bpdiary;
+
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
+
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+
+public class ReminderReceiver extends BroadcastReceiver {
+    private static final String CHANNEL_ID = "bp_diary_reminders";
+    private static final int NOTIFICATION_ID = 16001;
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        String action = intent == null ? null : intent.getAction();
+        if (Intent.ACTION_BOOT_COMPLETED.equals(action)
+            || Intent.ACTION_TIME_CHANGED.equals(action)
+            || Intent.ACTION_TIMEZONE_CHANGED.equals(action)) {
+            ReminderScheduler.scheduleNext(context);
+            return;
+        }
+        if (!ReminderScheduler.ACTION_REMINDER.equals(action) || !ReminderScheduler.isEnabled(context)) return;
+        showNotification(context);
+        ReminderScheduler.scheduleNext(context);
+    }
+
+    private void showNotification(Context context) {
+        createChannel(context);
+        Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+        PendingIntent contentIntent = null;
+        if (launch != null) {
+            launch.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) flags |= PendingIntent.FLAG_IMMUTABLE;
+            contentIntent = PendingIntent.getActivity(context, 16002, launch, flags);
+        }
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.bp_diary_notification)
+            .setContentTitle(ReminderScheduler.getTitle(context))
+            .setContentText(ReminderScheduler.getBody(context))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setAutoCancel(true)
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE);
+        if (contentIntent != null) builder.setContentIntent(contentIntent);
+        try {
+            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, builder.build());
+        } catch (SecurityException ignored) {
+        }
+    }
+
+    private void createChannel(Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager == null) return;
+        NotificationChannel channel = new NotificationChannel(
+            CHANNEL_ID,
+            "BP Diary reminders",
+            NotificationManager.IMPORTANCE_DEFAULT
+        );
+        channel.setDescription("Daily blood pressure measurement reminders");
+        manager.createNotificationChannel(channel);
+    }
+}
+`;
+await writeFile(join(pkgDir,'ReminderReceiver.java'),reminderReceiver,'utf8');
+
 const plugin=`package com.tokhirjonyuldoshev.bpdiary;
 
 import android.Manifest;
