@@ -20,7 +20,9 @@
 
 ## Статус проекта
 
-**Текущий стабильный релиз: V16 / 5.6.0 — Reliability & Android Integration.**\n\nСледующий кандидат: **V17 / 5.7.0 — Privacy & Resilience**.
+**Текущий стабильный релиз: V16 / 5.6.0 — Reliability & Android Integration.**
+
+Следующий кандидат: **V17 / 5.7.0 — Privacy & Resilience**.
 
 - Release tag: `v5.6.0`
 - versionCode: `160`
@@ -261,7 +263,9 @@ BP Diary предназначен для ведения записей и под
 
 ## Project status
 
-**Current stable release: V16 / 5.6.0 — Reliability & Android Integration.**\n\nNext candidate: **V17 / 5.7.0 — Privacy & Resilience**.
+**Current stable release: V16 / 5.6.0 — Reliability & Android Integration.**
+
+Next candidate: **V17 / 5.7.0 — Privacy & Resilience**.
 
 - Release tag: `v5.6.0`
 - versionCode: `160`
