@@ -52,6 +52,9 @@ test('V16 mobile shell, profile cards, archive and settings remain structurally 
   await page.locator('#mobileBottomNav [data-tab="archive"]').click();
   await expect(page.locator('#mobileArchiveSearch')).toBeVisible();
   await expect(page.locator('#mobileArchiveSort')).toBeVisible();
+  const clearSize=await page.locator('#mobileArchiveSearchClear').evaluate(el=>{const r=el.getBoundingClientRect();return {w:r.width,h:r.height}});
+  expect(clearSize.w).toBeGreaterThanOrEqual(44);
+  expect(clearSize.h).toBeGreaterThanOrEqual(44);
   await page.screenshot({path:shots+'/archive-light.png',fullPage:true});
 
   await page.locator('#mobileAppBar [data-top="about"]').click();
@@ -62,6 +65,9 @@ test('V16 mobile shell, profile cards, archive and settings remain structurally 
   await expect(page.locator('#mobileSettingsSheet')).toContainText('5.6.0');
   await expect(page.locator('#mobileSettingsSheet')).toContainText('V16');
   await expect(page.locator('#mobileSettingsSheet')).toContainText(/Проверить обновления|Check for updates/);
+  const closeSize=await page.locator('#mobileSettingsSheet .mobile-sheet-close').evaluate(el=>{const r=el.getBoundingClientRect();return {w:r.width,h:r.height}});
+  expect(closeSize.w).toBeGreaterThanOrEqual(44);
+  expect(closeSize.h).toBeGreaterThanOrEqual(44);
   await page.screenshot({path:shots+'/settings-light.png',fullPage:true});
 
   await page.locator('#mobileSettingsSheet .mobile-sheet-close').click();
@@ -100,6 +106,12 @@ test('V16 direct settings access, touch targets and bilingual UI remain usable',
   await expect(page.locator('#mobileSettingsSheet')).toContainText('Reminder');
   await expect(page.locator('#mobileSettingsSheet')).toContainText('Check for updates');
   await page.screenshot({path:shots+'/settings-en.png',fullPage:true});
+
+  await page.evaluate(()=>{document.documentElement.style.fontSize='18px'});
+  await expect(page.locator('#mobileSettingsSheet')).toContainText('Check for updates');
+  const largeTextOverflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+  expect(largeTextOverflow).toBeLessThanOrEqual(1);
+  await page.screenshot({path:shots+'/settings-en-large-text.png',fullPage:true});
 
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
