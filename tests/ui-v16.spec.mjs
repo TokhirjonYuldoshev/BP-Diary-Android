@@ -70,3 +70,34 @@ test('V16 mobile shell, profile cards, archive and settings remain structurally 
   await expect(page.locator('body')).toHaveClass(/dark/);
   await page.screenshot({path:shots+'/measure-dark.png',fullPage:true});
 });
+
+
+test('V16 direct settings access, touch targets and bilingual UI remain usable',async({page})=>{
+  const topButtons=page.locator('#mobileAppBar .mobile-top-actions button');
+  await expect(topButtons).toHaveCount(4);
+  const sizes=await topButtons.evaluateAll(nodes=>nodes.map(el=>{const r=el.getBoundingClientRect();return {w:r.width,h:r.height,label:el.getAttribute('aria-label')}}));
+  for(const size of sizes){
+    expect(size.w).toBeGreaterThanOrEqual(40);
+    expect(size.h).toBeGreaterThanOrEqual(40);
+    expect(size.label).toBeTruthy();
+  }
+
+  await page.locator('#mobileAppBar [data-top="settings"]').click();
+  await expect(page.locator('#mobileSettingsSheet')).toHaveClass(/open/);
+  await expect(page.locator('#mobileSettingsSheet')).toContainText(/Настройки|Settings/);
+  await expect(page.locator('#mobileSettingsSheet')).toContainText(/Напоминание|Reminder/);
+  await expect(page.locator('#mobileSettingsSheet')).toContainText(/Авто-бэкапы|Auto-backups/);
+  await expect(page.locator('#mobileSettingsSheet')).toContainText(/Проверить обновления|Check for updates/);
+  await page.locator('#mobileSettingsSheet .mobile-sheet-close').click();
+
+  await page.locator('#mobileAppBar [data-top="lang"]').click();
+  await expect(page.locator('#mobileAppBar')).toContainText('Blood pressure diary');
+  await page.locator('#mobileAppBar [data-top="settings"]').click();
+  await expect(page.locator('#mobileSettingsSheet')).toContainText('Settings');
+  await expect(page.locator('#mobileSettingsSheet')).toContainText('Reminder');
+  await expect(page.locator('#mobileSettingsSheet')).toContainText('Check for updates');
+  await page.screenshot({path:shots+'/settings-en.png',fullPage:true});
+
+  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
+});
