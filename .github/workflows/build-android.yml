@@ -9,6 +9,7 @@ on:
       - '.github/pull_request_template.md'
       - 'tests/**'
       - '.github/workflows/ui-regression.yml'
+      - '.github/workflows/release.yml'
   workflow_dispatch:
 
 concurrency:
