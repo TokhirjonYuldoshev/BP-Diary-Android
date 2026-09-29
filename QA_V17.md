@@ -1,6 +1,6 @@
 # V17 Privacy & Resilience — Candidate QA
 
-Status: **CANDIDATE — automated acceptance in progress, real-device privacy tests required**
+Status: **CANDIDATE — CI/UI PASSED, REAL-DEVICE PRIVACY ACCEPTANCE PENDING**
 
 - Release: `V17`
 - Version: `5.7.0`
@@ -29,9 +29,9 @@ It adds:
 - [x] Native biometric bridge exists.
 - [x] Native screenshot/Recent Apps privacy shield exists.
 - [x] Pre-paint biometric lock guard exists.
-- [ ] Final Android debug + release build succeeds on the candidate SHA.
-- [ ] Debug and release APK signer matches the stable update signer.
-- [ ] V17 Playwright UI regression succeeds.
+- [x] Final Android debug + release build succeeds on the candidate SHA.
+- [x] Debug and release APK signer matches the stable update signer.
+- [x] V17 Playwright UI regression succeeds.
 
 ## Device acceptance
 
