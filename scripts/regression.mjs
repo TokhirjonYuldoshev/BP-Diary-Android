@@ -50,7 +50,7 @@ const checks=[
   ['notification permission handling',patch.includes('POST_NOTIFICATIONS')&&patch.includes('requestNotificationPermission')],
   ['receiver separation',patch.includes('android:name=".ReminderReceiver"')&&patch.includes('android:exported="false"')&&patch.includes('android:name=".ReminderRestoreReceiver"')&&patch.includes('android:exported="true"')],
   ['native update checker',patch.includes('void checkForUpdate')&&patch.includes('api.github.com/repos/TokhirjonYuldoshev/BP-Diary-Android/releases/latest')],
-  ['reboot reminder restoration',patch.includes('BOOT_COMPLETED')&&patch.includes('ReminderRestoreReceiver')&&patch.includes('ReminderScheduler.scheduleNext')],
+  ['system reminder restoration',patch.includes('BOOT_COMPLETED')&&patch.includes('MY_PACKAGE_REPLACED')&&patch.includes('ReminderRestoreReceiver')&&patch.includes('ReminderScheduler.scheduleNext')],
   ['reduced motion',css.includes('prefers-reduced-motion')],
   ['high contrast',css.includes('prefers-contrast:more')],
   ['keyboard focus',css.includes(':focus-visible')],
