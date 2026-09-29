@@ -1,5 +1,19 @@
 # Changelog
 
+All notable Android wrapper and repository changes are tracked here. Medical/core calculations are intentionally kept outside mobile presentation and repository-maintenance changes.
+
+## Repository finalization — post V15
+
+- Restored the primary application source as human-readable `source/index.html`.
+- Removed legacy gzip+Base64 source chunks after byte-exact reconstruction and build verification.
+- Updated the web build pipeline to read `source/index.html` directly.
+- Added deterministic npm lockfile generation for reproducible dependency installation.
+- Added `npm run qa` as the canonical regression command.
+- Rebuilt README in Russian and English.
+- Added architecture, contribution and security documentation.
+- Marked the complete V15 Android device regression matrix as passed.
+- Preserved V15 application behavior, package ID, data format and signing lineage.
+
 All notable Android wrapper changes are tracked here. Medical/core calculations are intentionally kept outside these mobile UI/release changes.
 
 ## V15 — Finalization
