@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main]
+    branches: [main, v16-android-integration]
   workflow_dispatch:
 
 permissions:
@@ -27,6 +27,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+
+      - name: Load version metadata
+        shell: bash
+        run: |
+          node -e "const v=require('./version.json'); for (const [k,val] of Object.entries({APP_RELEASE:v.release,VERSION_NAME:v.versionName,VERSION_CODE:v.versionCode,ARTIFACT_BASE:v.artifactBase})) console.log(k+'='+val)" >> "$GITHUB_ENV"
 
       - name: Install npm dependencies
         run: npm ci --no-audit --no-fund
@@ -60,7 +65,7 @@ jobs:
           grep -q 'mobileToast' www/mobile-modern.js
           grep -q 'mobileConfirmSheet' www/mobile-modern.js
           grep -q 'mobile-report-actions' www/mobile-modern.js
-          grep -q 'Android V15' www/mobile-modern.js
+          grep -q "const APP_RELEASE='V16'" www/mobile-modern.js
           grep -q 'mobile-cardio-row' www/mobile-modern.js
           grep -q 'mobile-target-shell' www/mobile-modern.js
           grep -q 'date-time-row.mobile-cardio-row' www/mobile-modern.css
@@ -88,6 +93,10 @@ jobs:
           grep -q 'OnBackPressedCallback' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/MainActivity.java
           grep -q 'sharePdfBase64' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
           grep -q 'void openUrl' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
+          grep -q 'void scheduleDailyReminder' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
+          grep -q 'void checkForUpdate' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
+          grep -q 'class ReminderReceiver' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/ReminderReceiver.java
+          grep -q 'class ReminderScheduler' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/ReminderScheduler.java
 
       - name: Sync Capacitor
         run: npx cap sync android
@@ -97,8 +106,8 @@ jobs:
 
       - name: Configure Android build version
         run: |
-          sed -i "s/versionCode 1/versionCode ${GITHUB_RUN_NUMBER}/" android/app/build.gradle
-          sed -i "s/versionName \"1.0\"/versionName \"5.5.${GITHUB_RUN_NUMBER}\"/" android/app/build.gradle
+          sed -i "s/versionCode 1/versionCode ${VERSION_CODE}/" android/app/build.gradle
+          sed -i "s/versionName \"1.0\"/versionName \"${VERSION_NAME}\"/" android/app/build.gradle
           grep -E 'versionCode|versionName' android/app/build.gradle
 
       - name: Verify permanent signing key
@@ -127,13 +136,17 @@ jobs:
           done
           echo "Verified permanent signer on debug and release APKs: $KEY_FP"
 
-      - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk BP-Diary-5.5-V15-CI-Debug.apk
+      - name: Prepare candidate APK
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk "${ARTIFACT_BASE}-Candidate.apk"
+          sha256sum "${ARTIFACT_BASE}-Candidate.apk" | tee "${ARTIFACT_BASE}-Candidate.apk.sha256"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BP-Diary-V15-CI-Validation
-          path: BP-Diary-5.5-V15-CI-Debug.apk
+          name: ${{ env.ARTIFACT_BASE }}-Candidate
+          path: |
+            ${{ env.ARTIFACT_BASE }}-Candidate.apk
+            ${{ env.ARTIFACT_BASE }}-Candidate.apk.sha256
           if-no-files-found: error
           retention-days: 30
