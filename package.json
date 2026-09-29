@@ -5,8 +5,7 @@
   "description": "Android application and mobile UX layer for BP Diary 5.5",
   "scripts": {
     "prepare:web": "node scripts/prepare-web.mjs",
-    "qa": "node scripts/regression-v15.mjs",
-    "qa:v15": "node scripts/regression-v15.mjs",
+    "qa": "node scripts/regression.mjs",
     "cap:sync": "npx cap sync android"
   },
   "dependencies": {
