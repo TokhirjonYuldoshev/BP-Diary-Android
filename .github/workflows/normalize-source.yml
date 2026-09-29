@@ -1,0 +1,74 @@
+name: Normalize Source Layout
+
+on:
+  push:
+    branches: [v16-repository-final]
+    paths:
+      - '.github/workflows/normalize-source.yml'
+      - 'source/**'
+      - 'scripts/prepare-web.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  normalize-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Reconstruct readable source exactly
+        shell: bash
+        run: |
+          if [ -f source/index.html ] && [ ! -f source/index.part01.b64 ]; then
+            echo "Readable source already normalized."
+            exit 0
+          fi
+          node <<'NODE'
+          const fs = require('fs');
+          const zlib = require('zlib');
+          const crypto = require('crypto');
+          const names = ['index.part01.b64','index.part02.b64','index.part03.b64','index.part04.b64'];
+          const encoded = names.map(name => fs.readFileSync('source/' + name, 'utf8')).join('').replace(/\s+/g,'');
+          const original = zlib.gunzipSync(Buffer.from(encoded, 'base64'));
+          fs.writeFileSync('source/index.html', original);
+          const reread = fs.readFileSync('source/index.html');
+          if (!original.equals(reread)) throw new Error('source/index.html is not byte-identical to legacy payload');
+          const sha = crypto.createHash('sha256').update(reread).digest('hex');
+          console.log('Readable source bytes:', reread.length);
+          console.log('Readable source SHA-256:', sha);
+          NODE
+
+      - name: Verify new source pipeline
+        run: |
+          npm install --no-audit --no-fund
+          npm run prepare:web
+          node --check www/mobile-modern.js
+          npm run qa:v15
+          test -s source/index.html
+          test -s www/index.html
+
+      - name: Commit normalized source
+        shell: bash
+        run: |
+          if [ ! -f source/index.part01.b64 ]; then
+            echo "No legacy source parts remain."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add source/index.html
+          git rm source/index.part01.b64 source/index.part02.b64 source/index.part03.b64 source/index.part04.b64
+          git commit -m "refactor: expose readable application source"
+          git push origin HEAD:v16-repository-final
