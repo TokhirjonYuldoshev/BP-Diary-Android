@@ -61,7 +61,7 @@
     if(wasOpen&&!fromHistory&&history.state?.bpMobileSheet===sheet.id){try{history.back()}catch(_){}}
   }
   window.addEventListener('popstate',()=>{
-    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open').at(-1);
+    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open,#mobileReminderSheet.open,#mobileSettingsSheet.open,#mobileUpdateSheet.open').at(-1);
     if(open)closeMobileSheet(open,true);
   });
 
@@ -525,14 +525,139 @@
     return s;
   }
 
+  function semverParts(value){
+    const m=String(value||'').match(/(\d+)\.(\d+)\.(\d+)/);
+    return m?[Number(m[1]),Number(m[2]),Number(m[3])]:[0,0,0];
+  }
+  function isNewerVersion(latest,current=APP_VERSION){
+    const a=semverParts(latest),b=semverParts(current);
+    for(let i=0;i<3;i++){if(a[i]>b[i])return true;if(a[i]<b[i])return false}
+    return false;
+  }
+  function showUpdateSheet(info){
+    const sheet=makeSheet('mobileUpdateSheet',ru()?'Обновление BP Diary':'BP Diary update');
+    const title=q('.mobile-sheet-title',sheet);
+    title.innerHTML='<span>'+(ru()?'Обновление':'Update')+'</span><button type="button" class="mobile-sheet-close" aria-label="'+(ru()?'Закрыть':'Close')+'">×</button>';
+    const g=q('.mobile-sheet-grid',sheet);g.innerHTML='';
+    const latest=String(info?.tag||info?.versionName||'').replace(/^v/i,'')||'—';
+    const newer=isNewerVersion(latest);
+    const card=document.createElement('section');card.className='mobile-update-card '+(newer?'available':'current');
+    card.innerHTML='<div class="mobile-update-icon">'+svgIcon(newer?'update':'heart')+'</div>'+
+      '<div><small>'+(ru()?'Установлено':'Installed')+'</small><strong>'+APP_VERSION+' · '+APP_RELEASE+'</strong></div>'+
+      '<div><small>'+(ru()?'Последний релиз':'Latest release')+'</small><strong>'+latest+'</strong></div>'+
+      '<p>'+(newer?(ru()?'Доступна более новая версия. Обновление устанавливается только по вашему выбору.':'A newer version is available. Installation only starts when you choose it.'):(ru()?'У вас установлена актуальная версия.':'You are running the current version.'))+'</p>';
+    g.appendChild(card);
+    if(newer){
+      const open=document.createElement('button');open.type='button';open.className='mobile-settings-primary';
+      open.innerHTML=svgIcon('update')+'<span>'+(ru()?'Открыть официальный релиз':'Open official release')+'</span>';
+      open.onclick=async()=>{try{await nativeCall('openUrl',{url:info.htmlUrl||info.apkUrl})}catch(err){mobileToast(ru()?'Не удалось открыть релиз':'Could not open release','error')}};
+      g.appendChild(open);
+    }
+    const done=document.createElement('button');done.type='button';done.className='outline';done.textContent=ru()?'Готово':'Done';done.onclick=()=>closeMobileSheet(sheet);g.appendChild(done);
+    q('.mobile-sheet-close',sheet).onclick=()=>closeMobileSheet(sheet);
+    openMobileSheet(sheet);
+  }
+  async function checkForUpdates({quiet=false}={}){
+    if(!nativeBridge()||typeof nativeBridge().checkForUpdate!=='function'){
+      if(!quiet)mobileToast(ru()?'Проверка обновлений доступна только в Android-приложении':'Update checks are available in the Android app','error');
+      return null;
+    }
+    try{
+      if(!quiet)mobileToast(ru()?'Проверяю обновления…':'Checking for updates…','info',1400);
+      const info=await nativeCall('checkForUpdate',{});
+      if(!quiet)showUpdateSheet(info);
+      return info;
+    }catch(err){
+      if(!quiet)mobileToast((ru()?'Не удалось проверить обновления: ':'Could not check for updates: ')+(err?.message||err),'error',4200);
+      return null;
+    }
+  }
+
+  async function reminderStatus(){
+    if(!nativeBridge()||typeof nativeBridge().getReminderStatus!=='function'){
+      return {enabled:false,time:localStorage.getItem('bp_reminder_time')||'09:00',notificationsAllowed:false,native:false};
+    }
+    try{return {...await nativeCall('getReminderStatus',{}),native:true}}catch(_){return {enabled:false,time:'09:00',notificationsAllowed:false,native:true}}
+  }
+  async function showReminderSheet(){
+    if(!nativeBridge()||typeof nativeBridge().scheduleDailyReminder!=='function'){
+      const legacy=q('#reminderBtn');if(legacy){legacy.click();return}
+      mobileToast(ru()?'Напоминание недоступно':'Reminder unavailable','error');return;
+    }
+    const sheet=makeSheet('mobileReminderSheet',ru()?'Напоминание':'Reminder');
+    q('.mobile-sheet-title',sheet).innerHTML='<span>'+(ru()?'Ежедневное напоминание':'Daily reminder')+'</span><button type="button" class="mobile-sheet-close" aria-label="'+(ru()?'Закрыть':'Close')+'">×</button>';
+    const g=q('.mobile-sheet-grid',sheet);g.innerHTML='<div class="mobile-settings-loading">'+(ru()?'Загрузка…':'Loading…')+'</div>';
+    openMobileSheet(sheet);q('.mobile-sheet-close',sheet).onclick=()=>closeMobileSheet(sheet);
+    const status=await reminderStatus();
+    g.innerHTML='';
+    const card=document.createElement('section');card.className='mobile-reminder-card';
+    card.innerHTML='<div class="mobile-reminder-bell">'+svgIcon('bell')+'</div><div><strong>'+(ru()?'Контроль давления':'Blood pressure check')+'</strong><p>'+(ru()?'Нативное Android-уведомление работает даже после закрытия BP Diary и восстанавливается после перезагрузки телефона.':'Native Android notification works after BP Diary is closed and is restored after a phone reboot.')+'</p></div>';
+    const timeWrap=document.createElement('label');timeWrap.className='mobile-settings-field';
+    timeWrap.innerHTML='<span>'+(ru()?'Время':'Time')+'</span><input type="time" id="mobileReminderTime" value="'+(status.time||'09:00')+'">';
+    const perm=document.createElement('div');perm.className='mobile-settings-status '+(status.notificationsAllowed?'ok':'warn');
+    perm.innerHTML='<span>'+(status.notificationsAllowed?'✓':'!')+'</span><div><b>'+(status.notificationsAllowed?(ru()?'Уведомления разрешены':'Notifications allowed'):(ru()?'Нужно разрешение на уведомления':'Notification permission required'))+'</b><small>'+(status.enabled?(ru()?'Напоминание включено':'Reminder enabled'):(ru()?'Напоминание выключено':'Reminder disabled'))+'</small></div>';
+    g.append(card,timeWrap,perm);
+    if(!status.notificationsAllowed){
+      const allow=document.createElement('button');allow.type='button';allow.className='outline';allow.innerHTML=svgIcon('bell')+'<span>'+(ru()?'Разрешить уведомления':'Allow notifications')+'</span>';
+      allow.onclick=async()=>{try{await nativeCall('requestNotificationPermission',{});mobileToast(ru()?'Подтвердите разрешение Android':'Confirm the Android permission','info',2500)}catch(err){mobileToast(ru()?'Не удалось запросить разрешение':'Could not request permission','error')}};
+      g.appendChild(allow);
+    }
+    const actions=document.createElement('div');actions.className='mobile-reminder-actions';
+    const off=document.createElement('button');off.type='button';off.className='outline';off.textContent=ru()?'Выключить':'Turn off';
+    const save=document.createElement('button');save.type='button';save.className='mobile-settings-primary';save.textContent=ru()?'Сохранить':'Save';
+    actions.append(off,save);g.appendChild(actions);
+    off.disabled=!status.enabled;
+    off.onclick=async()=>{try{await nativeCall('cancelDailyReminder',{});try{localStorage.removeItem('bp_reminder_time')}catch(_){}mobileToast(ru()?'Напоминание выключено':'Reminder turned off','success');closeMobileSheet(sheet)}catch(err){mobileToast(ru()?'Не удалось выключить напоминание':'Could not disable reminder','error')}};
+    save.onclick=async()=>{
+      const time=q('#mobileReminderTime',sheet)?.value||'';
+      if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time)){mobileToast(ru()?'Проверьте время':'Check the time','error');return}
+      try{
+        const res=await nativeCall('scheduleDailyReminder',{time,title:'BP Diary',body:ru()?'Пора измерить артериальное давление':'Time to measure your blood pressure'});
+        try{localStorage.setItem('bp_reminder_time',time)}catch(_){}
+        mobileToast((ru()?'Напоминание установлено на ':'Reminder set for ')+time,'success',2500);
+        if(res&&res.notificationsAllowed===false)mobileToast(ru()?'Разрешите уведомления Android, чтобы напоминание появилось':'Allow Android notifications so the reminder can appear','info',3900);
+        closeMobileSheet(sheet);
+      }catch(err){mobileToast((ru()?'Не удалось установить напоминание: ':'Could not set reminder: ')+(err?.message||err),'error',4200)}
+    };
+  }
+
+  async function showSettingsSheet(){
+    const sheet=makeSheet('mobileSettingsSheet',ru()?'Настройки':'Settings');
+    q('.mobile-sheet-title',sheet).innerHTML='<span>'+(ru()?'Настройки':'Settings')+'</span><button type="button" class="mobile-sheet-close" aria-label="'+(ru()?'Закрыть':'Close')+'">×</button>';
+    const g=q('.mobile-sheet-grid',sheet);g.innerHTML='';
+    const version=document.createElement('section');version.className='mobile-settings-version';
+    version.innerHTML='<div class="mobile-settings-version-icon">'+brandHeartIcon()+'</div><div><b>BP Diary '+APP_VERSION+'</b><small>'+APP_RELEASE+' · versionCode '+APP_VERSION_CODE+'</small></div>';
+    g.appendChild(version);
+    const section=(title)=>{const el=document.createElement('section');el.className='mobile-settings-section';el.innerHTML='<h3>'+title+'</h3><div class="mobile-settings-list"></div>';g.appendChild(el);return q('.mobile-settings-list',el)};
+    const appearance=section(ru()?'Интерфейс':'Appearance');
+    const lang=document.createElement('button');lang.type='button';lang.className='mobile-settings-row';lang.innerHTML='<span class="mobile-settings-row-icon">文</span><span><b>'+(ru()?'Язык':'Language')+'</b><small>'+(ru()?'Русский · переключить на English':'English · switch to Русский')+'</small></span><span>›</span>';
+    lang.onclick=()=>{proxy('langSwitchBtn');setTimeout(()=>{try{window.updateAllAnalytics?.();window.updateUITexts?.()}catch(_){}closeMobileSheet(sheet);setup(true);refreshText();setTimeout(showSettingsSheet,120)},100)};
+    const theme=document.createElement('button');theme.type='button';theme.className='mobile-settings-row';theme.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon(document.body.classList.contains('dark')?'sun':'moon')+'</span><span><b>'+(ru()?'Тема':'Theme')+'</b><small>'+(document.body.classList.contains('dark')?(ru()?'Тёмная — переключить на светлую':'Dark — switch to light'):(ru()?'Светлая — переключить на тёмную':'Light — switch to dark'))+'</small></span><span>›</span>';
+    theme.onclick=()=>{document.body.classList.contains('dark')?proxy('lightThemeBtn'):proxy('darkThemeBtn');setTimeout(()=>{closeMobileSheet(sheet);setup(true);refreshText();setTimeout(showSettingsSheet,120)},100)};
+    appearance.append(lang,theme);
+    const system=section(ru()?'Android и данные':'Android & data');
+    const reminder=document.createElement('button');reminder.type='button';reminder.className='mobile-settings-row';reminder.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('bell')+'</span><span><b>'+(ru()?'Напоминание':'Reminder')+'</b><small>'+(ru()?'Нативное ежедневное уведомление':'Native daily notification')+'</small></span><span>›</span>';reminder.onclick=()=>{closeMobileSheet(sheet);setTimeout(showReminderSheet,100)};
+    const backups=document.createElement('button');backups.type='button';backups.className='mobile-settings-row';backups.innerHTML='<span class="mobile-settings-row-icon">↻</span><span><b>'+(ru()?'Авто-бэкапы':'Auto-backups')+'</b><small>'+(ru()?'До пяти локальных копий':'Up to five local copies')+'</small></span><span>›</span>';backups.onclick=()=>{closeMobileSheet(sheet);setTimeout(showAutoBackupSheet,100)};
+    const full=document.createElement('button');full.type='button';full.className='mobile-settings-row';full.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('save')+'</span><span><b>'+(ru()?'Полный бэкап':'Full backup')+'</b><small>'+(ru()?'Экспорт JSON для переноса':'JSON export for migration')+'</small></span><span>›</span>';full.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>q('#fullBackupBtn')?.click(),90)};
+    system.append(reminder,backups,full);
+    const app=section(ru()?'Приложение':'App');
+    const update=document.createElement('button');update.type='button';update.className='mobile-settings-row';update.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('update')+'</span><span><b>'+(ru()?'Проверить обновления':'Check for updates')+'</b><small>'+(ru()?'Только официальный GitHub Release':'Official GitHub Release only')+'</small></span><span>›</span>';update.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>checkForUpdates(),100)};
+    const about=document.createElement('button');about.type='button';about.className='mobile-settings-row';about.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('info')+'</span><span><b>'+(ru()?'О продукте':'About')+'</b><small>BP Diary · '+APP_RELEASE+'</small></span><span>›</span>';about.onclick=()=>{closeMobileSheet(sheet);setTimeout(showAboutSheet,100)};
+    app.append(update,about);
+    q('.mobile-sheet-close',sheet).onclick=()=>closeMobileSheet(sheet);
+    openMobileSheet(sheet);
+  }
+
   function showAboutSheet(){
     const sheet=makeSheet('mobileAboutSheet',ru()?'О продукте':'About');
     q('.mobile-sheet-title',sheet).innerHTML='<span>'+(ru()?'О продукте':'About')+'</span><button type="button" class="mobile-about-close" aria-label="'+(ru()?'Закрыть':'Close')+'">×</button>';
     const g=q('.mobile-sheet-grid',sheet);
-    g.innerHTML='<section class="mobile-about-hero"><div class="mobile-about-icon">'+brandHeartIcon()+'</div><strong>BP Diary</strong><span>'+(ru()?'Дневник артериального давления':'Blood pressure diary')+'</span><small>'+(ru()?'Версия 5.5 · Android V15':'Version 5.5 · Android V15')+'</small></section>'+
+    g.innerHTML='<section class="mobile-about-hero"><div class="mobile-about-icon">'+brandHeartIcon()+'</div><strong>BP Diary</strong><span>'+(ru()?'Дневник артериального давления':'Blood pressure diary')+'</span><small>'+APP_VERSION+' · Android '+APP_RELEASE+'</small></section>'+
       '<section class="mobile-about-intro">'+(ru()?'Персональный дневник артериального давления с аналитикой, отчётами врачу, резервным копированием и голосовыми функциями.':'A personal blood pressure diary with analytics, doctor reports, backups and voice features.')+'</section>'+
       '<div class="mobile-about-list">'+
-        '<button type="button" data-about-action="guide"><span class="mobile-about-row-icon">▶</span><span><b>'+(ru()?'Краткое руководство':'Quick guide')+'</b><small>'+(ru()?'Показать введение V15 ещё раз':'Show the V15 introduction again')+'</small></span><span>›</span></button>'+
+        '<button type="button" data-about-action="settings"><span class="mobile-about-row-icon">'+svgIcon('settings')+'</span><span><b>'+(ru()?'Настройки':'Settings')+'</b><small>'+(ru()?'Напоминания, тема, данные и обновления':'Reminders, theme, data and updates')+'</small></span><span>›</span></button>'+
+        '<button type="button" data-about-action="update"><span class="mobile-about-row-icon">'+svgIcon('update')+'</span><span><b>'+(ru()?'Проверить обновления':'Check for updates')+'</b><small>'+APP_VERSION+' · '+APP_RELEASE+'</small></span><span>›</span></button>'+
+        '<button type="button" data-about-action="guide"><span class="mobile-about-row-icon">▶</span><span><b>'+(ru()?'Краткое руководство':'Quick guide')+'</b><small>'+(ru()?'Показать введение '+APP_RELEASE+' ещё раз':'Show the '+APP_RELEASE+' introduction again')+'</small></span><span>›</span></button>'+
         '<button type="button" data-about-action="backups"><span class="mobile-about-row-icon">↻</span><span><b>'+(ru()?'Авто-бэкапы':'Auto-backups')+'</b><small>'+(ru()?'До пяти локальных резервных копий':'Up to five local backup copies')+'</small></span><span>›</span></button>'+
         '<button type="button" data-about-url="https://github.com/TokhirjonYuldoshev/BP-Diary-Android"><span class="mobile-about-row-icon">⌘</span><span><b>GitHub</b><small>TokhirjonYuldoshev/BP-Diary-Android</small></span><span>›</span></button>'+
         '<button type="button" data-about-url="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues"><span class="mobile-about-row-icon">?</span><span><b>'+(ru()?'Поддержка / обратная связь':'Support / feedback')+'</b><small>'+(ru()?'Сообщить об ошибке или предложить улучшение':'Report a bug or suggest an improvement')+'</small></span><span>›</span></button>'+
@@ -543,6 +668,8 @@
       '<button type="button" class="mobile-about-ok">'+(ru()?'Готово':'Done')+'</button>';
     q('.mobile-about-close',sheet).onclick=()=>closeMobileSheet(sheet);
     q('.mobile-about-ok',sheet).onclick=()=>closeMobileSheet(sheet);
+    const settings=q('[data-about-action="settings"]',sheet);if(settings)settings.onclick=()=>{closeMobileSheet(sheet);setTimeout(showSettingsSheet,100)};
+    const update=q('[data-about-action="update"]',sheet);if(update)update.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>checkForUpdates(),100)};
     const guide=q('[data-about-action="guide"]',sheet);if(guide)guide.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>showOnboarding(true),100)};
     const backups=q('[data-about-action="backups"]',sheet);if(backups)backups.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>showAutoBackupSheet(),100)};
     qa('[data-about-url]',sheet).forEach(b=>b.onclick=async()=>{
@@ -775,11 +902,11 @@
     const slides=ru()?[
       {icon:'heart',title:'Добро пожаловать в BP Diary',text:'Записывайте измерения давления, отслеживайте динамику и храните данные локально на устройстве.'},
       {icon:'document',title:'Отчёт для врача',text:'Выберите период 7, 14, 30 дней или свой диапазон, затем сохраните, распечатайте или отправьте PDF.'},
-      {icon:'save',title:'Данные под защитой',text:'V12 автоматически хранит до пяти локальных резервных копий. Полный ручной бэкап остаётся доступен в Архиве.'}
+      {icon:'save',title:'Данные под защитой',text:'V16 автоматически хранит до пяти локальных резервных копий. Полный ручной бэкап остаётся доступен в Архиве.'}
     ]:[
       {icon:'heart',title:'Welcome to BP Diary',text:'Record blood-pressure readings, follow trends and keep your data locally on the device.'},
       {icon:'document',title:'Doctor reports',text:'Choose 7, 14, 30 days or a custom range, then save, print or share the PDF.'},
-      {icon:'save',title:'Your data is protected',text:'V12 keeps up to five local automatic backups. Full manual backup remains available in Archive.'}
+      {icon:'save',title:'Your data is protected',text:'V16 keeps up to five local automatic backups. Full manual backup remains available in Archive.'}
     ];
     onboardingIndex=0;
     const render=()=>{
@@ -965,7 +1092,7 @@
   function appBar(){
     let bar=q('#mobileAppBar');if(!bar){bar=document.createElement('header');bar.id='mobileAppBar';document.body.prepend(bar)}
     bar.innerHTML=`<button type="button" class="mobile-brand-mark mobile-brand-button" data-top="about" aria-label="${ru()?'О продукте':'About'}">${brandHeartIcon()}</button><div class="mobile-brand-copy"><strong>BP Diary</strong><span>${ru()?'Дневник артериального давления':'Blood pressure diary'}</span></div><div class="mobile-top-actions"><button type="button" data-top="reminder" aria-label="${ru()?'Напоминание':'Reminder'}" title="${ru()?'Напоминание':'Reminder'}">${svgIcon('bell')}</button><button type="button" data-top="lang" aria-label="Language">${ru()?'EN':'RU'}</button><button type="button" data-top="theme" aria-label="Theme">${svgIcon(document.body.classList.contains('dark')?'sun':'moon')}</button></div>`;
-    bar.onclick=e=>{const b=e.target.closest('button[data-top]');if(!b)return;if(b.dataset.top==='about'){showAboutSheet()}else if(b.dataset.top==='reminder'){const reminder=q('#reminderBtn');if(reminder)reminder.click();else mobileToast(ru()?'Напоминание недоступно':'Reminder unavailable','error')}else if(b.dataset.top==='lang'){proxy('langSwitchBtn');setTimeout(()=>{try{window.updateAllAnalytics?.();window.updateUITexts?.()}catch(_){}setup(true);refreshText()},90)}else{document.body.classList.contains('dark')?proxy('lightThemeBtn'):proxy('darkThemeBtn');setTimeout(()=>{appBar();const ps=pages();if(ps[1])polishCharts(ps[1])},60)}};
+    bar.onclick=e=>{const b=e.target.closest('button[data-top]');if(!b)return;if(b.dataset.top==='about'){showAboutSheet()}else if(b.dataset.top==='reminder'){showReminderSheet()}else if(b.dataset.top==='lang'){proxy('langSwitchBtn');setTimeout(()=>{try{window.updateAllAnalytics?.();window.updateUITexts?.()}catch(_){}setup(true);refreshText()},90)}else{document.body.classList.contains('dark')?proxy('lightThemeBtn'):proxy('darkThemeBtn');setTimeout(()=>{appBar();const ps=pages();if(ps[1])polishCharts(ps[1])},60)}};
     return bar;
   }
 
@@ -1246,7 +1373,7 @@
       else q('.mobile-onboarding-skip',onboard)?.click();
       return 'handled';
     }
-    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open').at(-1);
+    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open,#mobileReminderSheet.open,#mobileSettingsSheet.open,#mobileUpdateSheet.open').at(-1);
     if(open){closeMobileSheet(open);return 'handled'}
     const report=q('#mobileReportViewer.open');if(report){report.classList.remove('open');return 'handled'}
     const focused=document.activeElement;
