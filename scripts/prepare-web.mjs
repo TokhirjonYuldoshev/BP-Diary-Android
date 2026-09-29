@@ -1,6 +1,5 @@
 import { cp, mkdir, writeFile, readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { gunzipSync } from 'node:zlib';
 
 const root = process.cwd();
 const www = join(root, 'www');
@@ -35,11 +34,9 @@ function injectBeforeRealBodyClose(html, snippet) {
 
 await ensureDir(www);
 
-const parts = ['index.part01.b64','index.part02.b64','index.part03.b64','index.part04.b64'];
-let encoded = '';
-for (const name of parts) encoded += await readFile(join(root, 'source', name), 'utf8');
-
-let html = gunzipSync(Buffer.from(encoded.trim(), 'base64')).toString('utf8');
+const sourceHtml = join(root, 'source', 'index.html');
+let html = await readFile(sourceHtml, 'utf8');
+if (!html.trim()) throw new Error('source/index.html is empty');
 
 await ensureDir(join(www, 'vendor', 'chart'));
 await ensureDir(join(www, 'vendor', 'fontawesome', 'css'));
