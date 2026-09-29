@@ -1,4 +1,4 @@
 {
-  "publish": true,
-  "notes": "V16 5.6.0 approved after final main Build #115, UI Regression #13, signer verification and device acceptance."
+  "publish": false,
+  "notes": "V16 5.6.0 is released. Gate reset to false; set true only for an intentionally approved future release."
 }
