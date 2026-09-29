@@ -1552,6 +1552,8 @@
     share.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>requestShareDoctorReport(),100)};g.appendChild(share);
 
     const auto=document.createElement('button');auto.type='button';auto.className='mobile-action-blue';auto.innerHTML=svgIcon('save')+'<span>'+(ru()?'Авто-бэкапы':'Auto-backups')+'</span>';auto.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>showAutoBackupSheet(),90)};g.appendChild(auto);
+    const protectedSave=document.createElement('button');protectedSave.type='button';protectedSave.className='mobile-action-blue';protectedSave.innerHTML=svgIcon('key')+'<span>'+(ru()?'Защищённый бэкап':'Protected backup')+'</span>';protectedSave.onclick=()=>{closeMobileSheet(sheet);setTimeout(nativeSaveProtectedBackup,90)};g.appendChild(protectedSave);
+    const protectedRestore=document.createElement('button');protectedRestore.type='button';protectedRestore.className='mobile-action-blue';protectedRestore.innerHTML=svgIcon('restore')+'<span>'+(ru()?'Восстановить защищённый':'Restore protected')+'</span>';protectedRestore.onclick=()=>{closeMobileSheet(sheet);setTimeout(nativeRestoreProtectedBackup,90)};g.appendChild(protectedRestore);
     const allowed=['reportDoctorBtn','fullBackupBtn','restoreBackupBtn','clearAllBtn'];
     allowed.forEach(id=>{
       const src=q('#'+id,archive);if(!src)return;
@@ -1613,7 +1615,7 @@
       else q('.mobile-onboarding-skip',onboard)?.click();
       return 'handled';
     }
-    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open,#mobileReminderSheet.open,#mobileSettingsSheet.open,#mobileUpdateSheet.open').at(-1);
+    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open,#mobileReminderSheet.open,#mobileSettingsSheet.open,#mobileUpdateSheet.open,#mobileSecretSheet.open').at(-1);
     if(open){closeMobileSheet(open);return 'handled'}
     const report=q('#mobileReportViewer.open');if(report){report.classList.remove('open');return 'handled'}
     const focused=document.activeElement;
