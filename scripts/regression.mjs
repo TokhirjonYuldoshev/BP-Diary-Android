@@ -51,7 +51,7 @@ const checks=[
   ['V17 biometric privacy UI',js.includes('toggleBiometricProtection')&&js.includes('mobilePrivacyLock')&&css.includes('#mobilePrivacyLock')],
   ['V17 pre-paint lock',html.includes('bp_biometric_lock_v17')&&css.includes('html.bp-prelocked body')],
   ['native biometric bridge',patch.includes('void getBiometricStatus')&&patch.includes('void authenticateBiometric')&&patch.includes('androidx.biometric:biometric')],
-  ['native privacy shield',patch.includes('void setPrivacyShield')&&patch.includes('FLAG_SECURE')],
+  ['native privacy shield',patch.includes('void setPrivacyShield')&&patch.includes('FLAG_SECURE')&&patch.includes('bp_diary_privacy')&&patch.includes('screen_shield')],
   ['native reminder scheduler',patch.includes('class ReminderScheduler')&&patch.includes('class ReminderReceiver')&&patch.includes('class ReminderRestoreReceiver')],
   ['notification permission handling',patch.includes('POST_NOTIFICATIONS')&&patch.includes('requestNotificationPermission')],
   ['receiver separation',patch.includes('android:name=".ReminderReceiver"')&&patch.includes('android:exported="false"')&&patch.includes('android:name=".ReminderRestoreReceiver"')&&patch.includes('android:exported="true"')],
