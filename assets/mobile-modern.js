@@ -573,6 +573,25 @@
     }
   }
 
+  async function migrateLegacyReminderToNative(){
+    if(!nativeBridge()||typeof nativeBridge().scheduleDailyReminder!=='function')return false;
+    let legacy='',done=false;
+    try{legacy=localStorage.getItem('bp_reminder_time')||'';done=localStorage.getItem('bp_v16_reminder_migrated')==='1'}catch(_){}
+    if(done||!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(legacy))return false;
+    try{
+      const status=await nativeCall('getReminderStatus',{});
+      if(!status?.enabled){
+        await nativeCall('scheduleDailyReminder',{time:legacy,title:'BP Diary',body:ru()?'Пора измерить артериальное давление':'Time to measure your blood pressure'});
+      }
+      try{
+        localStorage.removeItem('bp_reminder_time');
+        localStorage.setItem('bp_v16_reminder_migrated','1');
+        sessionStorage.setItem('bp_v16_reminder_migrated_now','1');
+      }catch(_){}
+      return true;
+    }catch(_){return false}
+  }
+
   async function reminderStatus(){
     if(!nativeBridge()||typeof nativeBridge().getReminderStatus!=='function'){
       return {enabled:false,time:localStorage.getItem('bp_reminder_time')||'09:00',notificationsAllowed:false,native:false};
@@ -613,7 +632,7 @@
       if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time)){mobileToast(ru()?'Проверьте время':'Check the time','error');return}
       try{
         const res=await nativeCall('scheduleDailyReminder',{time,title:'BP Diary',body:ru()?'Пора измерить артериальное давление':'Time to measure your blood pressure'});
-        try{localStorage.setItem('bp_reminder_time',time)}catch(_){}
+        try{localStorage.removeItem('bp_reminder_time')}catch(_){}
         mobileToast((ru()?'Напоминание установлено на ':'Reminder set for ')+time,'success',2500);
         if(res&&res.notificationsAllowed===false)mobileToast(ru()?'Разрешите уведомления Android, чтобы напоминание появилось':'Allow Android notifications so the reminder can appear','info',3900);
         closeMobileSheet(sheet);
@@ -1417,5 +1436,11 @@
 
   function setup(force=false){if(rebuilding||!mq.matches||!q('#app'))return;const ps=pages();if(ps.length<3)return;rebuilding=true;if(observer)observer.disconnect();try{const [m,a,r]=ps;[[m,'measure'],[a,'analysis'],[r,'archive']].forEach(([p,k])=>{p.classList.add('mobile-page','mobile-page-'+k);p.dataset.mobilePage=k});document.body.classList.add('mobile-shell-ready');installReportBridge();installNativeActions();appBar();hero(m);accordions(m);mobilePlaceholders(m);customScoreApplicability();polishControls(m);measureStepper(m);measureActions(m);disclaimer();nav();archiveSheet(r);archiveCards(r);archiveTools(r);enhanceAnalysis(a,r);updateHero(m);applyAccessibility(m,a,r);['recordDate','recordTime','patientSelect','bpContext','primaryArm'].forEach(id=>{const el=q('#'+id);if(el&&!el.dataset.mobileHeroBound){el.dataset.mobileHeroBound='1';el.addEventListener('change',()=>updateHero(m))}});setTab(currentTab,false);installV12Hooks()}finally{rebuilding=false;const app=q('#app');if(observer&&app)observer.observe(app,{childList:true,subtree:true,characterData:true})}}
   function schedule(){clearTimeout(timer);timer=setTimeout(()=>setup(),70)}
-  document.addEventListener('DOMContentLoaded',()=>{setup(true);const app=q('#app');if(app){observer=new MutationObserver(ms=>{if(ms.every(m=>m.target.closest?.('#mobileArchiveCards,#mobileActionSheet,#mobileMeasureActionSheet,.mobile-chart-empty')))return;schedule()});observer.observe(app,{childList:true,subtree:true,characterData:true})}mq.addEventListener?.('change',()=>location.reload())});
+  document.addEventListener('DOMContentLoaded',async()=>{
+    if(await migrateLegacyReminderToNative()){location.reload();return}
+    setup(true);
+    try{if(sessionStorage.getItem('bp_v16_reminder_migrated_now')==='1'){sessionStorage.removeItem('bp_v16_reminder_migrated_now');setTimeout(()=>mobileToast(ru()?'Напоминание перенесено в Android. Проверьте разрешение уведомлений через колокольчик.':'Reminder moved to Android. Check notification permission from the bell.', 'info',4300),450)}}catch(_){}
+    const app=q('#app');if(app){observer=new MutationObserver(ms=>{if(ms.every(m=>m.target.closest?.('#mobileArchiveCards,#mobileActionSheet,#mobileMeasureActionSheet,.mobile-chart-empty')))return;schedule()});observer.observe(app,{childList:true,subtree:true,characterData:true})}
+    mq.addEventListener?.('change',()=>location.reload())
+  });
 })();
