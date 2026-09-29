@@ -1381,3 +1381,48 @@
     transition-delay:0ms!important;
   }
 }
+
+
+/* V17 — Privacy & Resilience */
+html.bp-prelocked body{visibility:hidden!important}
+
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  .mobile-settings-state{
+    min-width:42px;padding:5px 8px;border-radius:999px;font-size:.62rem;font-weight:800;letter-spacing:.03em;text-align:center
+  }
+  .mobile-settings-state.on{background:#daf7e7;color:#117147}
+  .mobile-settings-state.off{background:var(--m-surface-2);color:var(--m-muted)}
+  body.dark .mobile-settings-state.on{background:#123a2a;color:#8ce0b3}
+
+  #mobileSecretSheet .mobile-sheet-panel{max-height:min(82vh,620px)}
+  .mobile-secret-card{
+    display:grid;gap:12px;padding:14px;border:1px solid var(--m-line);border-radius:18px;background:var(--m-surface)
+  }
+  .mobile-secret-message{margin:0;color:var(--m-muted);font-size:.78rem;line-height:1.45}
+  .mobile-secret-note{display:block;color:var(--m-muted);font-size:.68rem;line-height:1.4}
+  #mobileSecretSheet input[type="password"]{font-size:16px!important;letter-spacing:.08em}
+
+  #mobilePrivacyLock{
+    position:fixed;inset:0;z-index:2147483000;display:none;place-items:center;padding:24px;
+    background:linear-gradient(160deg,rgba(5,18,29,.985),rgba(10,36,52,.985));
+    color:#fff
+  }
+  #mobilePrivacyLock.open{display:grid}
+  .mobile-privacy-lock-card{
+    width:min(100%,360px);display:grid;justify-items:center;gap:13px;padding:26px 22px 22px;
+    border:1px solid rgba(255,255,255,.14);border-radius:26px;background:rgba(255,255,255,.075);
+    box-shadow:0 24px 80px rgba(0,0,0,.38);backdrop-filter:blur(18px);text-align:center
+  }
+  .mobile-privacy-lock-icon{width:78px;height:78px}
+  .mobile-privacy-lock-icon svg{width:100%;height:100%;display:block}
+  .mobile-privacy-lock-card h2{margin:2px 0 0;font-size:1.28rem}
+  .mobile-privacy-lock-card p{margin:0;color:rgba(255,255,255,.78);font-size:.78rem;line-height:1.5}
+  .mobile-privacy-lock-card .mobile-settings-primary{
+    width:100%;min-height:48px;margin-top:4px;background:#f7fbfd!important;color:#0b3850!important
+  }
+  .mobile-privacy-lock-card .mobile-settings-primary svg{width:18px;height:18px}
+
+  @media (prefers-reduced-motion:reduce){
+    #mobilePrivacyLock,.mobile-privacy-lock-card{animation:none!important;transition:none!important}
+  }
+}
