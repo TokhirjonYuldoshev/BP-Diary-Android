@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Latest release / Последний релиз
+    url: https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/latest
+    about: Download the latest stable APK / Скачать последний стабильный APK
