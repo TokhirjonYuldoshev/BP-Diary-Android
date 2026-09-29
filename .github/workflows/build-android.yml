@@ -3,7 +3,15 @@ name: Build Android APK
 on:
   push:
     branches: [main, v16-android-integration]
+    paths-ignore:
+      - '**/*.md'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/pull_request_template.md'
   workflow_dispatch:
+
+concurrency:
+  group: android-build-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
