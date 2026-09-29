@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main, v11-ui-ux, v12-functional-upgrades, v13-ui-polish, v15-finalization]
+    branches: [main, v16-repository-final]
   workflow_dispatch:
 
 permissions:
@@ -29,7 +29,7 @@ jobs:
           java-version: '21'
 
       - name: Install npm dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Prepare offline web assets
         run: npm run prepare:web
@@ -68,8 +68,8 @@ jobs:
           fi
           node --check www/mobile-modern.js
 
-      - name: Run V15 regression smoke
-        run: npm run qa:v15
+      - name: Run final regression smoke
+        run: npm run qa
 
       - name: Create Android project
         run: npx cap add android
