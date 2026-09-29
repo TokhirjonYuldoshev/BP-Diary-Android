@@ -38,6 +38,11 @@ const sourceHtml = join(root, 'source', 'index.html');
 let html = await readFile(sourceHtml, 'utf8');
 if (!html.trim()) throw new Error('source/index.html is empty');
 
+const version = JSON.parse(await readFile(join(root, 'version.json'), 'utf8'));
+if (!/^V\d+$/.test(String(version.release||''))) throw new Error('Invalid release label in version.json');
+if (!/^\d+\.\d+\.\d+$/.test(String(version.versionName||''))) throw new Error('Invalid versionName in version.json');
+if (!Number.isInteger(version.versionCode) || version.versionCode < 1) throw new Error('Invalid versionCode in version.json');
+
 await ensureDir(join(www, 'vendor', 'chart'));
 await ensureDir(join(www, 'vendor', 'fontawesome', 'css'));
 await ensureDir(join(www, 'vendor', 'fontawesome', 'webfonts'));
@@ -60,7 +65,15 @@ const replacements = [
 for (const [from, to] of replacements) html = html.split(from).join(to);
 
 await cp(join(root, 'assets', 'mobile-modern.css'), join(www, 'mobile-modern.css'));
-await cp(join(root, 'assets', 'mobile-modern.js'), join(www, 'mobile-modern.js'));
+let mobileJs = await readFile(join(root, 'assets', 'mobile-modern.js'), 'utf8');
+mobileJs = mobileJs
+  .replaceAll('__BP_RELEASE__', String(version.release))
+  .replaceAll('__BP_VERSION_NAME__', String(version.versionName))
+  .replaceAll('__BP_VERSION_CODE__', String(version.versionCode));
+if (mobileJs.includes('__BP_RELEASE__') || mobileJs.includes('__BP_VERSION_NAME__') || mobileJs.includes('__BP_VERSION_CODE__')) {
+  throw new Error('Unresolved version placeholder in mobile-modern.js');
+}
+await writeFile(join(www, 'mobile-modern.js'), mobileJs, 'utf8');
 await cp(join(root, 'node_modules', 'html2canvas', 'dist', 'html2canvas.min.js'), join(www, 'vendor', 'pdf', 'html2canvas.min.js'));
 await cp(join(root, 'node_modules', 'jspdf', 'dist', 'jspdf.umd.min.js'), join(www, 'vendor', 'pdf', 'jspdf.umd.min.js'));
 
@@ -113,4 +126,4 @@ const mobileJsPos = html.indexOf('<script src="mobile-modern.js"></script>');
 if (!(mobileCssPos > 0 && mobileCssPos < realHeadClose)) throw new Error('Mobile CSS was injected outside the real <head>');
 if (!(mobileJsPos > bodyOpen && mobileJsPos < realBodyClose)) throw new Error('Mobile JS was injected outside the real <body>');
 
-console.log(`Prepared offline web app. HTML bytes: ${Buffer.byteLength(html)}; SheetJS bytes: ${xlsxBytes}`);
+console.log(`Prepared offline web app ${version.release} ${version.versionName} (${version.versionCode}). HTML bytes: ${Buffer.byteLength(html)}; SheetJS bytes: ${xlsxBytes}`);
