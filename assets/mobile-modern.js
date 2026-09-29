@@ -610,7 +610,7 @@
     const status=await reminderStatus();
     g.innerHTML='';
     const card=document.createElement('section');card.className='mobile-reminder-card';
-    card.innerHTML='<div class="mobile-reminder-bell">'+svgIcon('bell')+'</div><div><strong>'+(ru()?'Контроль давления':'Blood pressure check')+'</strong><p>'+(ru()?'Нативное Android-уведомление работает даже после закрытия BP Diary и восстанавливается после перезагрузки телефона.':'Native Android notification works after BP Diary is closed and is restored after a phone reboot.')+'</p></div>';
+    card.innerHTML='<div class="mobile-reminder-bell">'+svgIcon('bell')+'</div><div><strong>'+(ru()?'Контроль давления':'Blood pressure check')+'</strong><p>'+(ru()?'Нативное Android-уведомление работает после закрытия BP Diary и восстанавливается после перезагрузки телефона. Android может немного сдвинуть время для экономии батареи.':'Native Android notification works after BP Diary is closed and is restored after a phone reboot. Android may slightly delay delivery to save battery.')+'</p></div>';
     const timeWrap=document.createElement('label');timeWrap.className='mobile-settings-field';
     timeWrap.innerHTML='<span>'+(ru()?'Время':'Time')+'</span><input type="time" id="mobileReminderTime" value="'+(status.time||'09:00')+'">';
     const perm=document.createElement('div');perm.className='mobile-settings-status '+(status.notificationsAllowed?'ok':'warn');
@@ -633,7 +633,7 @@
       try{
         const res=await nativeCall('scheduleDailyReminder',{time,title:'BP Diary',body:ru()?'Пора измерить артериальное давление':'Time to measure your blood pressure'});
         try{localStorage.removeItem('bp_reminder_time')}catch(_){}
-        mobileToast((ru()?'Напоминание установлено на ':'Reminder set for ')+time,'success',2500);
+        mobileToast((ru()?'Напоминание запланировано примерно на ':'Reminder scheduled around ')+time,'success',2800);
         if(res&&res.notificationsAllowed===false)mobileToast(ru()?'Разрешите уведомления Android, чтобы напоминание появилось':'Allow Android notifications so the reminder can appear','info',3900);
         closeMobileSheet(sheet);
       }catch(err){mobileToast((ru()?'Не удалось установить напоминание: ':'Could not set reminder: ')+(err?.message||err),'error',4200)}
