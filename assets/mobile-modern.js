@@ -162,7 +162,7 @@
     if(!['overview','charts'].includes(analyticsMode))analyticsMode='overview';
     analysis.classList.toggle('mobile-mode-overview',analyticsMode==='overview');
     analysis.classList.toggle('mobile-mode-charts',analyticsMode==='charts');
-    qa('#mobileAnalyticsTabs [data-mode]',analysis).forEach(b=>b.classList.toggle('active',b.dataset.mode===analyticsMode));
+    qa('#mobileAnalyticsTabs [data-mode]',analysis).forEach(b=>{const active=b.dataset.mode===analyticsMode;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active))});
     if(analyticsMode==='charts')setTimeout(()=>refreshActiveChart(analysis,false),40);
   }
 
@@ -200,7 +200,7 @@
   }
 
   function applyChartSelection(analysis){
-    qa('#mobileChartSelector [data-chart]',analysis).forEach(b=>b.classList.toggle('active',b.dataset.chart===activeMobileChart));
+    qa('#mobileChartSelector [data-chart]',analysis).forEach(b=>{const active=b.dataset.chart===activeMobileChart;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
   }
 
   function mobileFilteredRecords(){
@@ -1266,7 +1266,15 @@
       const label=btn.title||btn.dataset.top||btn.id;
       if(label)btn.setAttribute('aria-label',label);
     });
-    qa('.profile-section-title',measure).forEach(title=>{title.setAttribute('aria-controls',title.parentElement?.id||'');title.setAttribute('aria-label',title.textContent.trim())});
+    qa('.profile-section-title',measure).forEach((title,index)=>{
+      const section=title.parentElement;if(!section)return;
+      if(!section.id)section.id='mobileProfileSection'+(index+1);
+      title.setAttribute('aria-controls',section.id);title.setAttribute('aria-label',title.textContent.trim());
+    });
+    const analyticsTabs=q('#mobileAnalyticsTabs',analysis);
+    if(analyticsTabs){analyticsTabs.setAttribute('role','tablist');qa('[data-mode]',analyticsTabs).forEach(btn=>{btn.setAttribute('role','tab');btn.setAttribute('aria-selected',String(btn.classList.contains('active')))})}
+    const chartSelector=q('#mobileChartSelector',analysis);
+    if(chartSelector){chartSelector.setAttribute('role','group');chartSelector.setAttribute('aria-label',ru()?'Выбор графика':'Chart selector');qa('[data-chart]',chartSelector).forEach(btn=>btn.setAttribute('aria-pressed',String(btn.classList.contains('active'))))}
     qa('canvas',analysis).forEach(canvas=>{canvas.setAttribute('role','img');if(!canvas.getAttribute('aria-label'))canvas.setAttribute('aria-label',ru()?'График показателей':'Health metrics chart')});
     const hero=q('#mobileMeasureHero',measure);if(hero)hero.setAttribute('aria-label',ru()?'Текущий замер':'Current reading');
     const viewer=q('#mobileReportViewer');if(viewer){viewer.setAttribute('role','dialog');viewer.setAttribute('aria-modal','true');viewer.setAttribute('aria-label',ru()?'Отчёт для врача':'Doctor report')}
