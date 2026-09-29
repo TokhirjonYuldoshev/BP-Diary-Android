@@ -916,8 +916,35 @@ await writeFile(join(resDrawable,'bp_diary_icon.xml'),`<?xml version="1.0" encod
 </vector>
 `,'utf8');
 
+await writeFile(join(resDrawable,'bp_diary_notification.xml'),`<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,21C10.4,19.4 4,15.4 4,9.4C4,6 6.2,4 9,4C10.6,4 11.7,4.7 12.6,6C13.5,4.7 14.6,4 16.2,4C19,4 21,6 21,9.4C21,15.4 14.9,19.4 12,21Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M6.8,11.4L9.2,11.4L10.1,9L12.2,14.2L13.4,11.2L14.5,12.5L17.2,12.5" />
+</vector>
+`,'utf8');
+
+
 const manifestPath=join(app,'src','main','AndroidManifest.xml');
 let manifest=await readFile(manifestPath,'utf8');
+if(!manifest.includes('android.permission.POST_NOTIFICATIONS')){
+  manifest=manifest.replace(/<application\b/, `<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <application`);
+}
+
 if(!manifest.includes('android.intent.action.TTS_SERVICE')){
   manifest=manifest.replace(/<application\b/,`<queries>
         <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
@@ -937,6 +964,29 @@ if(!manifest.includes('.fileprovider')){
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/bp_diary_file_paths" />
         </provider>
+        <receiver
+            android:name=".ReminderReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
+    </application>`);
+}
+if(!manifest.includes('.ReminderReceiver')){
+  manifest=manifest.replace('</application>',`        <receiver
+            android:name=".ReminderReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
     </application>`);
 }
 await writeFile(manifestPath,manifest,'utf8');
