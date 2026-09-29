@@ -66,6 +66,7 @@ test('V16 mobile shell, profile cards, archive and settings remain structurally 
   await expect(page.locator('#mobileSettingsSheet')).toContainText('5.6.0');
   await expect(page.locator('#mobileSettingsSheet')).toContainText('V16');
   await expect(page.locator('#mobileSettingsSheet')).toContainText(/Проверить обновления|Check for updates/);
+  await page.waitForTimeout(80);
   const closeSize=await page.locator('#mobileSettingsSheet .mobile-sheet-close').evaluate(el=>{const r=el.getBoundingClientRect();return {w:r.width,h:r.height}});
   expect(closeSize.w).toBeGreaterThanOrEqual(44);
   expect(closeSize.h).toBeGreaterThanOrEqual(44);
@@ -75,6 +76,7 @@ test('V16 mobile shell, profile cards, archive and settings remain structurally 
   await page.locator('#mobileBottomNav [data-tab="measure"]').click();
   await page.locator('#mobileAppBar [data-top="theme"]').click();
   await expect(page.locator('body')).toHaveClass(/dark/);
+  await page.waitForTimeout(80);
   await page.screenshot({path:shots+'/measure-dark.png',fullPage:true});
 });
 
@@ -106,6 +108,7 @@ test('V16 direct settings access, touch targets and bilingual UI remain usable',
   await expect(page.locator('#mobileSettingsSheet')).toContainText('Settings');
   await expect(page.locator('#mobileSettingsSheet')).toContainText('Reminder');
   await expect(page.locator('#mobileSettingsSheet')).toContainText('Check for updates');
+  await page.waitForTimeout(80);
   await page.screenshot({path:shots+'/settings-en.png',fullPage:true});
 
   await page.evaluate(()=>{document.documentElement.style.fontSize='18px'});
