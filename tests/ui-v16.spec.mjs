@@ -77,10 +77,13 @@ test('V16 direct settings access, touch targets and bilingual UI remain usable',
   await expect(topButtons).toHaveCount(4);
   const sizes=await topButtons.evaluateAll(nodes=>nodes.map(el=>{const r=el.getBoundingClientRect();return {w:r.width,h:r.height,label:el.getAttribute('aria-label')}}));
   for(const size of sizes){
-    expect(size.w).toBeGreaterThanOrEqual(40);
-    expect(size.h).toBeGreaterThanOrEqual(40);
+    expect(size.w).toBeGreaterThanOrEqual(44);
+    expect(size.h).toBeGreaterThanOrEqual(44);
     expect(size.label).toBeTruthy();
   }
+  const brandSize=await page.locator('#mobileAppBar .mobile-brand-mark').evaluate(el=>{const r=el.getBoundingClientRect();return {w:r.width,h:r.height}});
+  expect(brandSize.w).toBeGreaterThanOrEqual(44);
+  expect(brandSize.h).toBeGreaterThanOrEqual(44);
 
   await page.locator('#mobileAppBar [data-top="settings"]').click();
   await expect(page.locator('#mobileSettingsSheet')).toHaveClass(/open/);
