@@ -1369,3 +1369,15 @@
   #mobileArchiveSearchClear{width:44px!important;height:44px!important}
   .mobile-archive-search-wrap{grid-template-columns:22px minmax(0,1fr) 44px!important}
 }
+
+
+/* V16 reduced-motion hardening */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto!important}
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    transition-delay:0ms!important;
+  }
+}
