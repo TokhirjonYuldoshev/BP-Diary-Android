@@ -198,12 +198,6 @@ public class ReminderReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent == null ? null : intent.getAction();
-        if (Intent.ACTION_BOOT_COMPLETED.equals(action)
-            || Intent.ACTION_TIME_CHANGED.equals(action)
-            || Intent.ACTION_TIMEZONE_CHANGED.equals(action)) {
-            ReminderScheduler.scheduleNext(context);
-            return;
-        }
         if (!ReminderScheduler.ACTION_REMINDER.equals(action) || !ReminderScheduler.isEnabled(context)) return;
         showNotification(context);
         ReminderScheduler.scheduleNext(context);
@@ -249,6 +243,26 @@ public class ReminderReceiver extends BroadcastReceiver {
 }
 `;
 await writeFile(join(pkgDir,'ReminderReceiver.java'),reminderReceiver,'utf8');
+
+const reminderRestoreReceiver=`package com.tokhirjonyuldoshev.bpdiary;
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+
+public class ReminderRestoreReceiver extends BroadcastReceiver {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        String action = intent == null ? null : intent.getAction();
+        if (Intent.ACTION_BOOT_COMPLETED.equals(action)
+            || Intent.ACTION_TIME_CHANGED.equals(action)
+            || Intent.ACTION_TIMEZONE_CHANGED.equals(action)) {
+            ReminderScheduler.scheduleNext(context);
+        }
+    }
+}
+`;
+await writeFile(join(pkgDir,'ReminderRestoreReceiver.java'),reminderRestoreReceiver,'utf8');
 
 const plugin=`package com.tokhirjonyuldoshev.bpdiary;
 
@@ -964,23 +978,20 @@ if(!manifest.includes('.fileprovider')){
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/bp_diary_file_paths" />
         </provider>
-        <receiver
-            android:name=".ReminderReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.TIME_SET" />
-                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
-            </intent-filter>
-        </receiver>
     </application>`);
 }
-if(!manifest.includes('.ReminderReceiver')){
+if(!manifest.includes('android:name=".ReminderReceiver"')){
   manifest=manifest.replace('</application>',`        <receiver
             android:name=".ReminderReceiver"
             android:enabled="true"
-            android:exported="false">
+            android:exported="false" />
+    </application>`);
+}
+if(!manifest.includes('android:name=".ReminderRestoreReceiver"')){
+  manifest=manifest.replace('</application>',`        <receiver
+            android:name=".ReminderRestoreReceiver"
+            android:enabled="true"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.TIME_SET" />
