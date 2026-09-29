@@ -104,7 +104,11 @@ jobs:
           grep -q 'void scheduleDailyReminder' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
           grep -q 'void checkForUpdate' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
           grep -q 'class ReminderReceiver' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/ReminderReceiver.java
+          grep -q 'class ReminderRestoreReceiver' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/ReminderRestoreReceiver.java
           grep -q 'class ReminderScheduler' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/ReminderScheduler.java
+          grep -q 'android:name=".ReminderReceiver"' android/app/src/main/AndroidManifest.xml
+          grep -q 'android:name=".ReminderRestoreReceiver"' android/app/src/main/AndroidManifest.xml
+          grep -q 'android:exported="true"' android/app/src/main/AndroidManifest.xml
 
       - name: Sync Capacitor
         run: npx cap sync android
