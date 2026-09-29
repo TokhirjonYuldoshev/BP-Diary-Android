@@ -256,7 +256,8 @@ public class ReminderRestoreReceiver extends BroadcastReceiver {
         String action = intent == null ? null : intent.getAction();
         if (Intent.ACTION_BOOT_COMPLETED.equals(action)
             || Intent.ACTION_TIME_CHANGED.equals(action)
-            || Intent.ACTION_TIMEZONE_CHANGED.equals(action)) {
+            || Intent.ACTION_TIMEZONE_CHANGED.equals(action)
+            || Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)) {
             ReminderScheduler.scheduleNext(context);
         }
     }
@@ -996,6 +997,7 @@ if(!manifest.includes('android:name=".ReminderRestoreReceiver"')){
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
     </application>`);
