@@ -1,23 +1,30 @@
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, stat, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const root=process.cwd();
 const www=join(root,'www');
 const files={
+  source:join(root,'source','index.html'),
   html:join(www,'index.html'),
   js:join(www,'mobile-modern.js'),
   css:join(www,'mobile-modern.css'),
   patch:join(root,'scripts','patch-android.mjs')
 };
 
-const [html,js,css,patch]=await Promise.all([
+const [source,html,js,css,patch]=await Promise.all([
+  readFile(files.source,'utf8'),
   readFile(files.html,'utf8'),
   readFile(files.js,'utf8'),
   readFile(files.css,'utf8'),
   readFile(files.patch,'utf8')
 ]);
 
+const sourceEntries=await readdir(join(root,'source'));
+const legacyParts=sourceEntries.filter(name=>/^index\.part\d+\.b64$/i.test(name));
+
 const checks=[
+  ['readable source/index.html',source.includes('<!DOCTYPE html>')||source.includes('<html')],
+  ['legacy Base64 source removed',legacyParts.length===0],
   ['V15 marker',js.includes('Android V15')],
   ['mobile navigation',js.includes('mobileBottomNav')],
   ['Android Back bridge',js.includes('__bpHandleAndroidBack')],
@@ -69,4 +76,4 @@ if(failed){
   console.error('\nV15 regression smoke failed: '+failed+' check(s).');
   process.exit(1);
 }
-console.log('\nV15 regression smoke: all '+checks.length+' feature checks passed.');
+console.log('\nFinal regression smoke: all '+checks.length+' feature/repository checks passed.');
