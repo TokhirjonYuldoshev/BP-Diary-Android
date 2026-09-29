@@ -1,4 +1,4 @@
 {
   "publish": false,
-  "notes": "V16 5.6.0 is released. Gate reset to false; set true only for an intentionally approved future release."
+  "notes": "V17 Privacy & Resilience candidate. Publish only after CI/UI and real-device privacy/backup acceptance."
 }
