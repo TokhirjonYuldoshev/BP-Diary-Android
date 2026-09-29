@@ -3,6 +3,7 @@ import { mkdir } from 'node:fs/promises';
 
 const BASE='http://127.0.0.1:4173';
 const shots='artifacts/ui-v16';
+// Final V16 visual-acceptance gate.
 
 test.use({ viewport:{width:390,height:844}, deviceScaleFactor:1, reducedMotion:'reduce' });
 
