@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main, v16-android-integration]
+    branches: [main, v17-privacy-resilience]
     paths-ignore:
       - '**/*.md'
       - '.github/ISSUE_TEMPLATE/**'
@@ -75,7 +75,7 @@ jobs:
           grep -q 'mobileToast' www/mobile-modern.js
           grep -q 'mobileConfirmSheet' www/mobile-modern.js
           grep -q 'mobile-report-actions' www/mobile-modern.js
-          grep -q "const APP_RELEASE='V16'" www/mobile-modern.js
+          grep -q "const APP_RELEASE='${APP_RELEASE}'" www/mobile-modern.js
           grep -q 'mobile-cardio-row' www/mobile-modern.js
           grep -q 'mobile-target-shell' www/mobile-modern.js
           grep -q 'date-time-row.mobile-cardio-row' www/mobile-modern.css
@@ -105,6 +105,10 @@ jobs:
           grep -q 'void openUrl' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
           grep -q 'void scheduleDailyReminder' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
           grep -q 'void checkForUpdate' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
+          grep -q 'void getBiometricStatus' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
+          grep -q 'void authenticateBiometric' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
+          grep -q 'void setPrivacyShield' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/NativeBridgePlugin.java
+          grep -q 'androidx.biometric:biometric' android/app/build.gradle
           grep -q 'class ReminderReceiver' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/ReminderReceiver.java
           grep -q 'class ReminderRestoreReceiver' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/ReminderRestoreReceiver.java
           grep -q 'class ReminderScheduler' android/app/src/main/java/com/tokhirjonyuldoshev/bpdiary/ReminderScheduler.java
