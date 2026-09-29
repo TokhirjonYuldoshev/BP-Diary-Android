@@ -1,0 +1,145 @@
+name: Publish Android Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'release-request.json'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Load release metadata
+        shell: bash
+        run: |
+          node <<'NODE' >> "$GITHUB_ENV"
+          const v=require('./version.json');
+          const r=require('./release-request.json');
+          for (const [k,val] of Object.entries({
+            APP_RELEASE:v.release,
+            VERSION_NAME:v.versionName,
+            VERSION_CODE:v.versionCode,
+            RELEASE_TAG:v.tag,
+            ARTIFACT_BASE:v.artifactBase,
+            RELEASE_REQUESTED:r.publish === true ? 'true' : 'false'
+          })) console.log(k+'='+val);
+          NODE
+
+      - name: Require explicit release request
+        run: |
+          if [ "$RELEASE_REQUESTED" != "true" ]; then
+            echo "release-request.json has publish=false; refusing to publish."
+            exit 1
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Prepare and validate web app
+        run: |
+          npm run prepare:web
+          node --check www/mobile-modern.js
+          npm run qa
+
+      - name: Create and patch Android project
+        run: |
+          npx cap add android
+          node scripts/patch-android.mjs
+          npx cap sync android
+          npx capacitor-assets generate --android --iconBackgroundColor '#126f96' --iconBackgroundColorDark '#08131f' --splashBackgroundColor '#eef6fa' --splashBackgroundColorDark '#08131f'
+
+      - name: Configure release version
+        run: |
+          sed -i "s/versionCode 1/versionCode ${VERSION_CODE}/" android/app/build.gradle
+          sed -i "s/versionName \"1.0\"/versionName \"${VERSION_NAME}\"/" android/app/build.gradle
+          grep -E 'versionCode|versionName' android/app/build.gradle
+          grep -q 'signingConfig signingConfigs.bpDiaryStable' android/app/build.gradle
+
+      - name: Build signed release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Verify release signer
+        run: |
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
+          "$APKSIGNER" verify --verbose --print-certs "$APK" | tee /tmp/release-signature.txt
+          KEY_FP="$(keytool -exportcert -keystore android/app/bp-diary-signing.p12 -storetype PKCS12 -storepass android -alias androiddebugkey | sha256sum | awk '{print $1}')"
+          APK_FP="$(grep -m1 'certificate SHA-256 digest' /tmp/release-signature.txt | sed 's/.*digest: //' | tr '[:upper:]' '[:lower:]' | tr -d ':[:space:]')"
+          test "$KEY_FP" = "$APK_FP"
+          echo "Verified release signer: $KEY_FP"
+
+      - name: Prepare release assets and notes
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk "${ARTIFACT_BASE}.apk"
+          sha256sum "${ARTIFACT_BASE}.apk" | tee "${ARTIFACT_BASE}.apk.sha256"
+          cat > /tmp/release-notes.md <<EOF
+          # BP Diary ${VERSION_NAME} — ${APP_RELEASE}
+
+          Reliability & Android Integration release.
+
+          Highlights:
+          - persistent native Android daily reminders;
+          - reminder restoration after reboot/time changes;
+          - dedicated Settings screen;
+          - in-app official GitHub Release update checker;
+          - single-source versioning via version.json;
+          - UI regression tests and visual snapshots;
+          - existing V15 archive, PDF, backup, accessibility, Voice/TTS and Android Back behavior preserved.
+
+          Package: com.tokhirjonyuldoshev.bpdiary
+          Version: ${VERSION_NAME} (versionCode ${VERSION_CODE})
+
+          The direct-distribution APK keeps the existing stable update signer for V8–V16 compatibility. That public-history key is not a secure Google Play production key.
+          EOF
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" --title "BP Diary ${VERSION_NAME} ${APP_RELEASE}" --notes-file /tmp/release-notes.md --latest
+            gh release upload "$RELEASE_TAG" "${ARTIFACT_BASE}.apk" "${ARTIFACT_BASE}.apk.sha256" --clobber
+          else
+            gh release create "$RELEASE_TAG" \
+              "${ARTIFACT_BASE}.apk" \
+              "${ARTIFACT_BASE}.apk.sha256" \
+              --target "$GITHUB_SHA" \
+              --title "BP Diary ${VERSION_NAME} ${APP_RELEASE}" \
+              --notes-file /tmp/release-notes.md \
+              --latest
+          fi
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_BASE }}-Release
+          path: |
+            ${{ env.ARTIFACT_BASE }}.apk
+            ${{ env.ARTIFACT_BASE }}.apk.sha256
+          if-no-files-found: error
+          retention-days: 30
