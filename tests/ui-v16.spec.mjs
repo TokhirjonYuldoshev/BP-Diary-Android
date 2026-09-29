@@ -4,7 +4,7 @@ import { mkdir } from 'node:fs/promises';
 const BASE='http://127.0.0.1:4173';
 const shots='artifacts/ui-v16';
 
-test.use({ viewport:{width:390,height:844}, deviceScaleFactor:1 });
+test.use({ viewport:{width:390,height:844}, deviceScaleFactor:1, reducedMotion:'reduce' });
 
 test.beforeEach(async ({page})=>{
   await mkdir(shots,{recursive:true});
