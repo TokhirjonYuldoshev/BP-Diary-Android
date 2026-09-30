@@ -183,7 +183,7 @@
     if(wasOpen&&!fromHistory&&history.state?.bpMobileSheet===sheet.id){try{history.back()}catch(_){}}
   }
   window.addEventListener('popstate',()=>{
-    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open,#mobileReminderSheet.open,#mobileSettingsSheet.open,#mobileUpdateSheet.open,#mobileSecretSheet.open').at(-1);
+    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open,#mobileReminderSheet.open,#mobileSettingsSheet.open,#mobileUpdateSheet.open,#mobileSecretSheet.open,#mobileGuideSheet.open').at(-1);
     if(open)closeMobileSheet(open,true);
   });
 
@@ -552,24 +552,17 @@
       return nativeWindowOpen(url,target,features);
     };
   }
-  function openPdfSaveSheet(clean){
-    const sheet=makeSheet('mobilePdfSheet',ru()?'Ориентация PDF':'PDF orientation');
-    q('.mobile-sheet-title',sheet).textContent=ru()?'Сохранить отчёт в PDF':'Save report as PDF';
-    const g=q('.mobile-sheet-grid',sheet);g.innerHTML='';
-    const opts=[['portrait','portrait',ru()?'Книжная':'Portrait'],['landscape','landscape',ru()?'Альбомная':'Landscape']];
-    opts.forEach(([val,icon,label])=>{
-      const b=document.createElement('button');b.type='button';b.className='outline mobile-pdf-option';
-      b.innerHTML=svgIcon(icon)+'<span>'+label+'</span>';
-      b.onclick=async()=>{
-        closeMobileSheet(sheet);
-        try{
-          const date=new Date().toISOString().slice(0,10);
-          await nativeCall('printHtml',{html:orientedReportHtml(clean,val),orientation:val,jobName:'BP-Diary-Doctor-Report-'+date});
-        }catch(err){mobileToast((ru()?'Не удалось открыть сохранение PDF: ':'Could not open PDF save: ')+(err?.message||err),'error',4200)}
-      };
-      g.appendChild(b);
-    });
-    openMobileSheet(sheet);
+  async function openPdfSaveSheet(clean){
+    try{
+      const date=new Date().toISOString().slice(0,10);
+      await nativeCall('printHtml',{
+        html:orientedReportHtml(clean,'landscape'),
+        orientation:'landscape',
+        jobName:'BP-Diary-Doctor-Report-'+date
+      });
+    }catch(err){
+      mobileToast(l('Не удалось открыть сохранение PDF: ','Could not open PDF save: ','PDF saqlashni ochib bo‘lmadi: ')+(err?.message||err),'error',4200);
+    }
   }
 
   function showMobileReport(html){
@@ -592,7 +585,7 @@
     q('.mobile-report-print-now',v).onclick=async()=>{
       try{
         const date=new Date().toISOString().slice(0,10);
-        await nativeCall('printHtml',{html:orientedReportHtml(clean,'portrait'),orientation:'portrait',jobName:'BP-Diary-Doctor-Report-'+date});
+        await nativeCall('printHtml',{html:orientedReportHtml(clean,'landscape'),orientation:'landscape',jobName:'BP-Diary-Doctor-Report-'+date});
       }catch(err){mobileToast(l('Не удалось открыть печать: ','Could not open print: ','Chop etishni ochib bo‘lmadi: ')+(err?.message||err),'error',4200)}
     };
     q('.mobile-report-save',v).onclick=()=>openPdfSaveSheet(clean);
@@ -608,13 +601,13 @@
     if(typeof window.html2canvas!=='function'||!window.jspdf?.jsPDF)throw new Error(ru()?'Модуль PDF не загружен':'PDF module is not loaded');
     const frame=document.createElement('iframe');
     frame.setAttribute('aria-hidden','true');
-    frame.style.cssText='position:fixed;left:-12000px;top:0;width:794px;height:1123px;border:0;opacity:.01;pointer-events:none;background:#fff;z-index:-1';
+    frame.style.cssText='position:fixed;left:-12000px;top:0;width:1123px;height:794px;border:0;opacity:.01;pointer-events:none;background:#fff;z-index:-1';
     document.body.appendChild(frame);
     try{
       await new Promise((resolve,reject)=>{
         const timeout=setTimeout(()=>reject(new Error(ru()?'Тайм-аут подготовки отчёта':'Report rendering timeout')),5000);
         frame.onload=()=>{clearTimeout(timeout);resolve()};
-        frame.srcdoc=orientedReportHtml(html,'portrait');
+        frame.srcdoc=orientedReportHtml(html,'landscape');
       });
       const doc=frame.contentDocument;
       if(!doc?.documentElement||!doc.body)throw new Error(ru()?'Не удалось подготовить страницу отчёта':'Could not prepare report page');
@@ -623,8 +616,8 @@
       doc.documentElement.style.background='#fff';
       doc.body.style.background='#fff';
       doc.body.style.color='#111';
-      const width=Math.max(794,doc.documentElement.scrollWidth,doc.body.scrollWidth);
-      const height=Math.max(1123,doc.documentElement.scrollHeight,doc.body.scrollHeight);
+      const width=Math.max(1123,doc.documentElement.scrollWidth,doc.body.scrollWidth);
+      const height=Math.max(794,doc.documentElement.scrollHeight,doc.body.scrollHeight);
       frame.style.width=width+'px';frame.style.height=height+'px';
       const canvas=await window.html2canvas(doc.documentElement,{
         backgroundColor:'#ffffff',
@@ -640,7 +633,7 @@
       });
       if(!canvas.width||!canvas.height)throw new Error(ru()?'PDF получился пустым':'Generated PDF is empty');
       const {jsPDF}=window.jspdf;
-      const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4',compress:true});
+      const pdf=new jsPDF({orientation:'landscape',unit:'pt',format:'a4',compress:true});
       const pageW=pdf.internal.pageSize.getWidth(),pageH=pdf.internal.pageSize.getHeight(),margin=24;
       const targetW=pageW-margin*2,scale=targetW/canvas.width;
       const sourcePageHeight=Math.max(1,Math.floor((pageH-margin*2)/scale));
@@ -650,7 +643,7 @@
         const slice=document.createElement('canvas');slice.width=canvas.width;slice.height=h;
         const ctx=slice.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,slice.width,slice.height);
         ctx.drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h);
-        if(page++)pdf.addPage('a4','portrait');
+        if(page++)pdf.addPage('a4','landscape');
         pdf.addImage(slice.toDataURL('image/png'),'PNG',margin,margin,targetW,h*scale,undefined,'FAST');
       }
       const bytes=new Uint8Array(pdf.output('arraybuffer'));
@@ -1139,6 +1132,16 @@
     version.innerHTML='<div class="mobile-settings-version-icon">'+brandHeartIcon()+'</div><div><b>BP Diary '+APP_VERSION+'</b><small>'+APP_RELEASE+' · versionCode '+APP_VERSION_CODE+'</small></div>';
     g.appendChild(version);
     const section=(title)=>{const el=document.createElement('section');el.className='mobile-settings-section';el.innerHTML='<h3>'+title+'</h3><div class="mobile-settings-list"></div>';g.appendChild(el);return q('.mobile-settings-list',el)};
+    const row=(icon,title,small,action)=>{
+      const b=document.createElement('button');b.type='button';b.className='mobile-settings-row';
+      b.innerHTML='<span class="mobile-settings-row-icon">'+icon+'</span><span><b>'+title+'</b><small>'+small+'</small></span><span>›</span>';
+      b.onclick=action;return b;
+    };
+
+    const everyday=section(l('Напоминания и помощь','Reminders & help','Eslatmalar va yordam'));
+    const reminder=row(svgIcon('bell'),l('Напоминания об измерении','Measurement reminders','O‘lchov eslatmalari'),l('До 3 времён в день · повторы · звук','Up to 3 daily times · repeats · sound','Kuniga 3 vaqtgacha · takror · ovoz'),()=>{closeMobileSheet(sheet);setTimeout(showReminderSheet,100)});
+    const guide=row(svgIcon('info'),l('Руководство','User guide','Foydalanish qo‘llanmasi'),l('Что означают показатели и как пользоваться BP Diary','Understand values and how to use BP Diary','Ko‘rsatkichlar va BP Diary’dan foydalanish'),()=>{closeMobileSheet(sheet);setTimeout(showGuideSheet,100)});
+    everyday.append(reminder,guide);
 
     const appearance=section(l('Интерфейс','Appearance','Interfeys'));
     const languageRow=document.createElement('div');languageRow.className='mobile-settings-control-row';
@@ -1149,7 +1152,14 @@
     themeRow.appendChild(settingsSegment([['light',l('Светлая','Light','Yorug‘')],['dark',l('Тёмная','Dark','Qorong‘i')]],document.body.classList.contains('dark')?'dark':'light',switchMobileTheme,l('Тема приложения','App theme','Ilova mavzusi')));
     appearance.append(languageRow,themeRow);
 
-    const privacy=section(l('Приватность','Privacy','Maxfiylik'));
+    const data=section(l('Данные','Data','Ma’lumotlar'));
+    const backups=row('↻',l('Авто-бэкапы','Auto-backups','Avto-zaxiralar'),l('До пяти локальных копий','Up to five local copies','Beshtagacha mahalliy nusxa'),()=>{closeMobileSheet(sheet);setTimeout(showAutoBackupSheet,100)});
+    const full=row(svgIcon('save'),l('Полный бэкап','Full backup','To‘liq zaxira nusxa'),l('Обычный JSON для совместимости','Plain JSON for compatibility','Moslik uchun oddiy JSON'),()=>{closeMobileSheet(sheet);setTimeout(()=>q('#fullBackupBtn')?.click(),90)});
+    const protectedSave=row(svgIcon('key'),l('Защищённый бэкап','Protected backup','Himoyalangan zaxira'),l('AES‑GCM + пароль · пароль не сохраняется','AES-GCM + password · password is never stored','AES‑GCM + parol · parol saqlanmaydi'),()=>{closeMobileSheet(sheet);setTimeout(nativeSaveProtectedBackup,100)});
+    const protectedRestore=row(svgIcon('restore'),l('Восстановить защищённый','Restore protected backup','Himoyalangan zaxirani tiklash'),l('Выбрать зашифрованный файл','Choose an encrypted backup file','Shifrlangan faylni tanlang'),()=>{closeMobileSheet(sheet);setTimeout(nativeRestoreProtectedBackup,100)});
+    data.append(backups,full,protectedSave,protectedRestore);
+
+    const privacy=section(l('Дополнительно · приватность','Advanced · privacy','Qo‘shimcha · maxfiylik'));
     const biometric=document.createElement('button');biometric.type='button';biometric.className='mobile-settings-row';
     biometric.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('lock')+'</span><span><b>'+l('Блокировка приложения','App lock','Ilova qulfi')+'</b><small>'+(flagEnabled(V17_BIOMETRIC_KEY)
       ?l('Включена · 10 секунд в фоне или сразу после блокировки экрана','Enabled · 10 seconds in background or immediately after screen lock','Yoqilgan · fonda 10 soniya yoki ekran qulflanganda darhol')
@@ -1162,23 +1172,59 @@
     shield.onclick=async()=>{await togglePrivacyShield();setTimeout(showSettingsSheet,80)};
     privacy.append(biometric,shield);
 
-    const system=section(l('Android и данные','Android & data','Android va ma’lumotlar'));
-    const row=(icon,title,small,action)=>{
-      const b=document.createElement('button');b.type='button';b.className='mobile-settings-row';
-      b.innerHTML='<span class="mobile-settings-row-icon">'+icon+'</span><span><b>'+title+'</b><small>'+small+'</small></span><span>›</span>';
-      b.onclick=action;return b;
-    };
-    const reminder=row(svgIcon('bell'),l('Напоминание','Reminder','Eslatma'),l('Нативное ежедневное уведомление','Native daily notification','Mahalliy kunlik bildirishnoma'),()=>{closeMobileSheet(sheet);setTimeout(showReminderSheet,100)});
-    const backups=row('↻',l('Авто-бэкапы','Auto-backups','Avto-zaxiralar'),l('До пяти локальных копий','Up to five local copies','Beshtagacha mahalliy nusxa'),()=>{closeMobileSheet(sheet);setTimeout(showAutoBackupSheet,100)});
-    const full=row(svgIcon('save'),l('Полный бэкап','Full backup','To‘liq zaxira nusxa'),l('Обычный JSON для совместимости','Plain JSON for compatibility','Moslik uchun oddiy JSON'),()=>{closeMobileSheet(sheet);setTimeout(()=>q('#fullBackupBtn')?.click(),90)});
-    const protectedSave=row(svgIcon('key'),l('Защищённый бэкап','Protected backup','Himoyalangan zaxira'),l('AES‑GCM + пароль · пароль не сохраняется','AES-GCM + password · password is never stored','AES‑GCM + parol · parol saqlanmaydi'),()=>{closeMobileSheet(sheet);setTimeout(nativeSaveProtectedBackup,100)});
-    const protectedRestore=row(svgIcon('restore'),l('Восстановить защищённый','Restore protected backup','Himoyalangan zaxirani tiklash'),l('Выбрать зашифрованный файл','Choose an encrypted backup file','Shifrlangan faylni tanlang'),()=>{closeMobileSheet(sheet);setTimeout(nativeRestoreProtectedBackup,100)});
-    system.append(reminder,backups,full,protectedSave,protectedRestore);
-
     const app=section(l('Приложение','App','Ilova'));
     const update=row(svgIcon('update'),l('Проверить обновления','Check for updates','Yangilanishlarni tekshirish'),l('Только официальный GitHub Release','Official GitHub Release only','Faqat rasmiy GitHub Release'),()=>{closeMobileSheet(sheet);setTimeout(()=>checkForUpdates(),100)});
     const about=row(svgIcon('info'),l('О продукте','About','Dastur haqida'),'BP Diary · '+APP_RELEASE,()=>{closeMobileSheet(sheet);setTimeout(showAboutSheet,100)});
     app.append(update,about);
+    q('.mobile-sheet-close',sheet).onclick=()=>closeMobileSheet(sheet);
+    openMobileSheet(sheet);localizeUzTree(sheet);
+  }
+
+  function showGuideSheet(){
+    const sheet=makeSheet('mobileGuideSheet',l('Руководство','User guide','Foydalanish qo‘llanmasi'));
+    q('.mobile-sheet-title',sheet).innerHTML='<span>'+l('Руководство BP Diary','BP Diary user guide','BP Diary foydalanish qo‘llanmasi')+'</span><button type="button" class="mobile-sheet-close" aria-label="'+l('Закрыть','Close','Yopish')+'">×</button>';
+    const g=q('.mobile-sheet-grid',sheet);g.innerHTML='';
+    const guides={
+      ru:[
+        ['1. Новый замер','Перенесите значения с тонометра в поля САД, ДАД и Пульс. «Замер 1–3» объединяет повторные измерения одного сеанса. Приложение не позволит сохранить явно некорректный ввод.'],
+        ['2. САД / SYS','Систолическое («верхнее») артериальное давление — первое число на тонометре.'],
+        ['3. ДАД / DIA','Диастолическое («нижнее») артериальное давление — второе число на тонометре.'],
+        ['4. Пульс','Частота сердечных сокращений в ударах в минуту. Если пульс не вводится, поле можно оставить пустым.'],
+        ['5. Архив и аналитика','Архив хранит сеансы и позволяет искать и фильтровать их. Аналитика строится по сохранённым данным дневника.'],
+        ['6. Отчёт для врача','Выберите период. Отчёт формируется в A4 альбомной ориентации, как на ПК: сводка, профиль и таблица измерений. Его можно просмотреть, сохранить, распечатать или отправить.'],
+        ['7. Напоминания','Можно задать до трёх времён в день, 1–3 сигнала с интервалом, одну из трёх системных мелодий и вибрацию. В уведомлении доступны «Измерено» и «Напомнить позже».'],
+        ['8. Резервные копии','Обычный JSON нужен для совместимости. Защищённый бэкап шифруется паролем; забытый пароль восстановить нельзя.'],
+        ['Важно','BP Diary помогает вести дневник и готовить данные. Он не ставит диагноз и не заменяет рекомендации врача.']
+      ],
+      en:[
+        ['1. New reading','Copy the monitor values into SYS, DIA and Pulse. Reading 1–3 groups repeated measurements in one session. Clearly invalid entry values cannot be saved.'],
+        ['2. SYS','Systolic (“upper”) blood pressure — the first number shown by the monitor.'],
+        ['3. DIA','Diastolic (“lower”) blood pressure — the second number shown by the monitor.'],
+        ['4. Pulse','Heart rate in beats per minute. If pulse is not available, the field may be left empty.'],
+        ['5. Archive & analytics','Archive stores sessions and supports search and filters. Analytics uses saved diary data.'],
+        ['6. Doctor report','Choose a period. The report uses A4 landscape like the desktop version: summary, profile and full measurement table. Preview, save, print or share it.'],
+        ['7. Reminders','Set up to three daily times, 1–3 alerts with an interval, one of three system sounds and vibration. Notifications provide Done and Remind later actions.'],
+        ['8. Backups','Plain JSON keeps compatibility. Protected backup is encrypted with your password; a forgotten password cannot be recovered.'],
+        ['Important','BP Diary helps keep a diary and prepare data. It does not diagnose conditions or replace medical advice.']
+      ],
+      uz:[
+        ['1. Yangi o‘lchov','Tonometrdagi qiymatlarni SAB, DAB va Puls maydonlariga kiriting. O‘lchov 1–3 bitta seansdagi takroriy o‘lchovlarni birlashtiradi. Aniq noto‘g‘ri qiymatlarni saqlab bo‘lmaydi.'],
+        ['2. SAB / SYS','Sistolik (“yuqori”) arterial bosim — tonometr ko‘rsatadigan birinchi son.'],
+        ['3. DAB / DIA','Diastolik (“pastki”) arterial bosim — tonometr ko‘rsatadigan ikkinchi son.'],
+        ['4. Puls','Yurak urish tezligi, bir daqiqadagi urishlar soni. Puls ma’lum bo‘lmasa, maydonni bo‘sh qoldirish mumkin.'],
+        ['5. Arxiv va tahlil','Arxiv seanslarni saqlaydi, qidirish va filtrlash imkonini beradi. Tahlil saqlangan kundalik ma’lumotlari asosida tuziladi.'],
+        ['6. Shifokor hisoboti','Davrni tanlang. Hisobot kompyuter versiyasidagidek A4 landshaft formatida: umumiy ma’lumot, profil va to‘liq o‘lchov jadvali. Uni ko‘rish, saqlash, chop etish yoki ulashish mumkin.'],
+        ['7. Eslatmalar','Kuniga uch vaqtgacha, interval bilan 1–3 signal, uchta tizim ovozidan biri va vibratsiyani tanlash mumkin. Bildirishnomada “O‘lchandi” va “Keyinroq eslatish” amallari bor.'],
+        ['8. Zaxira nusxalar','Oddiy JSON moslik uchun saqlanadi. Himoyalangan zaxira parol bilan shifrlanadi; unutilgan parolni tiklab bo‘lmaydi.'],
+        ['Muhim','BP Diary kundalik yuritish va ma’lumot tayyorlashga yordam beradi. U tashxis qo‘ymaydi va shifokor tavsiyalarini almashtirmaydi.']
+      ]
+    };
+    const list=guides[appLang()]||guides.en;
+    const wrap=document.createElement('div');wrap.className='mobile-guide-list';
+    wrap.innerHTML=list.map(([title,text])=>'<section class="mobile-guide-card"><h3>'+title+'</h3><p>'+text+'</p></section>').join('');
+    const tour=document.createElement('button');tour.type='button';tour.className='outline mobile-guide-tour';tour.innerHTML=svgIcon('chevron')+'<span>'+l('Показать вводный тур','Show introduction tour','Kirish turini ko‘rsatish')+'</span>';
+    tour.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>showOnboarding(true),100)};
+    g.append(wrap,tour);
     q('.mobile-sheet-close',sheet).onclick=()=>closeMobileSheet(sheet);
     openMobileSheet(sheet);localizeUzTree(sheet);
   }
@@ -1191,7 +1237,7 @@
       '<section class="mobile-about-intro">'+l('Персональный дневник артериального давления с аналитикой, отчётами врачу, резервным копированием и голосовыми функциями.','A personal blood pressure diary with analytics, doctor reports, backups and voice features.','Tahlil, shifokor hisobotlari, zaxira nusxalar va ovozli funksiyalarga ega shaxsiy qon bosimi kundaligi.')+'</section>'+
       '<div class="mobile-about-list">'+
         '<button type="button" data-about-action="update"><span class="mobile-about-row-icon">'+svgIcon('update')+'</span><span><b>'+l('Проверить обновления','Check for updates','Yangilanishlarni tekshirish')+'</b><small>'+APP_VERSION+' · '+APP_RELEASE+'</small></span><span>›</span></button>'+
-        '<button type="button" data-about-action="guide"><span class="mobile-about-row-icon">▶</span><span><b>'+l('Краткое руководство','Quick guide','Qisqa qo‘llanma')+'</b><small>'+l('Показать введение '+APP_RELEASE+' ещё раз','Show the '+APP_RELEASE+' introduction again',APP_RELEASE+' kirish qo‘llanmasini yana ko‘rsatish')+'</small></span><span>›</span></button>'+
+        '<button type="button" data-about-action="guide"><span class="mobile-about-row-icon">?</span><span><b>'+l('Руководство','User guide','Foydalanish qo‘llanmasi')+'</b><small>'+l('Показатели, замеры, отчёты и напоминания','Values, readings, reports and reminders','Ko‘rsatkichlar, o‘lchovlar, hisobot va eslatmalar')+'</small></span><span>›</span></button>'+
         '<button type="button" data-about-url="https://github.com/TokhirjonYuldoshev/BP-Diary-Android"><span class="mobile-about-row-icon">⌘</span><span><b>GitHub</b><small>TokhirjonYuldoshev/BP-Diary-Android</small></span><span>›</span></button>'+
         '<button type="button" data-about-url="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues"><span class="mobile-about-row-icon">?</span><span><b>'+l('Поддержка / обратная связь','Support / feedback','Yordam / fikr-mulohaza')+'</b><small>'+l('Сообщить об ошибке или предложить улучшение','Report a bug or suggest an improvement','Xato haqida xabar berish yoki taklif yuborish')+'</small></span><span>›</span></button>'+
         '<div class="mobile-about-row"><span class="mobile-about-row-icon">©</span><span><b>'+l('Разработчик','Developer','Dasturchi')+'</b><small>Tokhirjon Yuldoshev</small></span></div>'+
@@ -1202,7 +1248,7 @@
     q('.mobile-about-close',sheet).onclick=()=>closeMobileSheet(sheet);
     q('.mobile-about-ok',sheet).onclick=()=>closeMobileSheet(sheet);
     const update=q('[data-about-action="update"]',sheet);if(update)update.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>checkForUpdates(),100)};
-    const guide=q('[data-about-action="guide"]',sheet);if(guide)guide.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>showOnboarding(true),100)};
+    const guide=q('[data-about-action="guide"]',sheet);if(guide)guide.onclick=()=>{closeMobileSheet(sheet);setTimeout(showGuideSheet,100)};
     qa('[data-about-url]',sheet).forEach(b=>b.onclick=async()=>{
       try{await nativeCall('openUrl',{url:b.dataset.aboutUrl})}
       catch(_){
@@ -1280,11 +1326,11 @@
     q('.mobile-sheet-title',sheet).textContent=ru()?'Период отчёта врачу':'Doctor report period';
     const g=q('.mobile-sheet-grid',sheet);g.innerHTML='';
     const options=[
-      [7,ru()?'Последние 7 дней':'Last 7 days'],
-      [14,ru()?'Последние 14 дней':'Last 14 days'],
-      [30,ru()?'Последние 30 дней':'Last 30 days'],
-      [0,ru()?'Все данные':'All data'],
-      ['custom',ru()?'Свой период':'Custom period']
+      [7,l('Последние 7 дней','Last 7 days','Oxirgi 7 kun')],
+      [14,l('Последние 14 дней','Last 14 days','Oxirgi 14 kun')],
+      [30,l('Последние 30 дней','Last 30 days','Oxirgi 30 kun')],
+      [0,l('Все данные','All data','Barcha ma’lumotlar')],
+      ['custom',l('Свой период','Custom period','Maxsus davr')]
     ];
     options.forEach(([value,label])=>{
       const b=document.createElement('button');b.type='button';b.className='outline mobile-period-option';
@@ -1414,11 +1460,11 @@
     if(search){search.placeholder=ru()?'Поиск по архиву':'Search archive';search.setAttribute('aria-label',search.placeholder);search.value=archiveSearch}
     if(searchLabel)searchLabel.textContent=ru()?'Поиск по архиву':'Search archive';
     if(clear){clear.innerHTML=svgIcon('close');clear.setAttribute('aria-label',ru()?'Очистить поиск':'Clear search');clear.title=clear.getAttribute('aria-label')}
-    q('[data-archive-period="all"]',tools).textContent=ru()?'Все':'All';
-    q('[data-archive-period="7"]',tools).textContent=ru()?'7 дн.':'7 d';
-    q('[data-archive-period="30"]',tools).textContent=ru()?'30 дн.':'30 d';
-    q('[data-archive-period="90"]',tools).textContent=ru()?'90 дн.':'90 d';
-    qa('[data-archive-period]',tools).forEach(b=>b.setAttribute('aria-label',(ru()?'Период архива: ':'Archive period: ')+b.textContent.trim()));
+    q('[data-archive-period="all"]',tools).textContent=l('Все','All','Barchasi');
+    q('[data-archive-period="7"]',tools).textContent=l('7 дн.','7 d','7 kun');
+    q('[data-archive-period="30"]',tools).textContent=l('30 дн.','30 d','30 kun');
+    q('[data-archive-period="90"]',tools).textContent=l('90 дн.','90 d','90 kun');
+    qa('[data-archive-period]',tools).forEach(b=>b.setAttribute('aria-label',l('Период архива: ','Archive period: ','Arxiv davri: ')+b.textContent.trim()));
     applyArchiveView(archive);
   }
   const V17_ONBOARDING_KEY='bp_v17_onboarding_done';
@@ -1869,10 +1915,10 @@
   function parsePressure(text){const s=(text||'').trim();const m=s.match(/^(\d+)\/(\d+)(?:-(\d+|—))?$/);return m?{bp:`${m[1]}/${m[2]}`,pulse:m[3]&&m[3]!=='—'?m[3]:''}:{bp:s||'—',pulse:''}}
   function archiveCards(archive){
     let host=q('#mobileArchiveCards',archive);if(!host){host=document.createElement('div');host.id='mobileArchiveCards';const tc=q('.table-container',archive);archive.insertBefore(host,tc||null)}host.innerHTML='';const table=q('#recordsTable',archive);if(!table)return;
-    const headers=qa('thead th',table).map(x=>x.textContent.trim()),rows=qa('tbody tr',table).filter(r=>r.dataset.id);if(!rows.length){host.innerHTML='<div class="mobile-archive-empty"><div class="mobile-empty-icon"><i class="fas fa-box-open"></i></div><strong>'+(ru()?'Архив пока пуст':'Archive is empty')+'</strong><span>'+(ru()?'После сохранения замера он появится здесь.':'Saved readings will appear here.')+'</span><button type="button"><i class="fas fa-plus"></i> '+(ru()?'Добавить замер':'Add reading')+'</button></div>';q('.mobile-archive-empty button',host).onclick=()=>setTab('measure');return}
+    const headers=qa('thead th',table).map(x=>x.textContent.trim()),rows=qa('tbody tr',table).filter(r=>r.dataset.id);if(!rows.length){host.innerHTML='<div class="mobile-archive-empty"><div class="mobile-empty-icon"><i class="fas fa-box-open"></i></div><strong>'+l('Архив пока пуст','Archive is empty','Arxiv hozircha bo‘sh')+'</strong><span>'+l('После сохранения замера он появится здесь.','Saved readings will appear here.','Saqlangan o‘lchov shu yerda ko‘rinadi.')+'</span><button type="button"><i class="fas fa-plus"></i> '+l('Добавить замер','Add reading','O‘lchov qo‘shish')+'</button></div>';q('.mobile-archive-empty button',host).onclick=()=>setTab('measure');return}
     rows.slice().reverse().forEach(row=>{const cells=qa('td',row);if(!cells.length)return;const strong=q('strong',cells[0]);const date=strong?.textContent.trim()||'';let time='';cells[0].childNodes.forEach(n=>{if(n.nodeType===3&&n.textContent.trim())time=n.textContent.trim()});const avg=parsePressure(cells[cells.length-2]?.textContent);const card=document.createElement('article');card.className='mobile-record-card';
-      const details=cells.slice(1,-2).map((cell,i)=>{const p=parsePressure(cell.textContent);if(!p.bp||p.bp==='—')return '';return `<div class="mobile-record-item"><small>${headers[i+1]||''}</small><strong>${p.bp}</strong>${p.pulse?`<em>${ru()?'Пульс':'Pulse'} ${p.pulse}</em>`:''}</div>`}).filter(Boolean).join('');
-      card.innerHTML=`<div class="mobile-record-head"><div class="mobile-record-date">${date}<span class="mobile-record-time">${time}</span></div><div class="mobile-record-avg"><strong>${avg.bp}</strong><small>${avg.pulse?(ru()?'Пульс ':'Pulse ')+avg.pulse:(ru()?'Среднее':'Average')}</small></div></div><div class="mobile-record-grid">${details}</div><div class="mobile-record-actions"></div>`;
+      const details=cells.slice(1,-2).map((cell,i)=>{const p=parsePressure(cell.textContent);if(!p.bp||p.bp==='—')return '';return `<div class="mobile-record-item"><small>${headers[i+1]||''}</small><strong>${p.bp}</strong>${p.pulse?`<em>${l('Пульс','Pulse','Puls')} ${p.pulse}</em>`:''}</div>`}).filter(Boolean).join('');
+      card.innerHTML=`<div class="mobile-record-head"><div class="mobile-record-date">${date}<span class="mobile-record-time">${time}</span></div><div class="mobile-record-avg"><strong>${avg.bp}</strong><small>${avg.pulse?l('Пульс ','Pulse ','Puls ')+avg.pulse:l('Среднее','Average','O‘rtacha')}</small></div></div><div class="mobile-record-grid">${details}</div><div class="mobile-record-actions"></div>`;
       card.dataset.dateMs=String(parseArchiveDate(date));
       card.dataset.search=[date,time,...cells.slice(0,-1).map(x=>x.textContent.trim())].join(' ').toLocaleLowerCase();
       card.setAttribute('aria-label',(ru()?'Запись ':'Reading ')+date+(time?' '+time:'')+', '+(ru()?'среднее давление ':'average blood pressure ')+avg.bp);
@@ -1882,7 +1928,7 @@
   function archiveSheet(archive){
     let sub=q('.mobile-screen-subtitle',archive);
     if(!sub){sub=document.createElement('div');sub.className='mobile-screen-subtitle';q('.card-header',archive)?.after(sub)}
-    sub.textContent=ru()?'История измерений и данные':'Measurement history and data';
+    sub.textContent=l('История измерений и данные','Measurement history and data','O‘lchovlar tarixi va ma’lumotlar');
     let more=q('.mobile-archive-more',archive);
     if(!more){more=document.createElement('button');more.type='button';more.className='outline mobile-archive-more';q('.card-header',archive)?.appendChild(more)}
     more.innerHTML=svgIcon('more')+'<span>'+(ru()?'Действия':'Actions')+'</span>';
@@ -1979,7 +2025,7 @@
       else q('.mobile-onboarding-skip',onboard)?.click();
       return 'handled';
     }
-    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open,#mobileReminderSheet.open,#mobileSettingsSheet.open,#mobileUpdateSheet.open,#mobileSecretSheet.open').at(-1);
+    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open,#mobileReminderSheet.open,#mobileSettingsSheet.open,#mobileUpdateSheet.open,#mobileSecretSheet.open,#mobileGuideSheet.open').at(-1);
     if(open){closeMobileSheet(open);return 'handled'}
     const report=q('#mobileReportViewer.open');if(report){report.classList.remove('open');return 'handled'}
     const focused=document.activeElement;
