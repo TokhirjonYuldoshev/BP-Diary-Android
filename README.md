@@ -10,7 +10,7 @@
   <p>
     <a href="#-русский">Русский</a> ·
     <a href="#-english">English</a> ·
-    <a href="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.6.0">V16 Release</a>
+    <a href="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0">V17 Release</a>
   </p>
 </div>
 
@@ -20,24 +20,22 @@
 
 ## Статус проекта
 
-**Текущий стабильный релиз: V16 / 5.6.0 — Reliability & Android Integration.**
+**Текущий стабильный релиз: V17 / 5.7.0 — Reminders, Reports, Privacy & Localization.**
 
-Готовый к релизному пайплайну кандидат: **V17 / 5.7.0 — Reminders, Reports, Privacy & Localization**. Real-device acceptance пройден; публикация остаётся закрыта через `publish=false` до финального переноса в `main`.
-
-- Release tag: `v5.6.0`
-- versionCode: `160`
+- Release tag: `v5.7.0`
+- versionCode: `170`
 - Package ID: `com.tokhirjonyuldoshev.bpdiary`
 - Android shell: Capacitor 8
 - Основной исходник: `source/index.html`
 - Мобильный UI/UX: `assets/mobile-modern.js` + `assets/mobile-modern.css`
 - Native Android bridge: `scripts/patch-android.mjs`
-- Официальный APK: [BP Diary 5.6.0 V16](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.6.0)
+- Официальный APK: [BP Diary 5.7.0 V17](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0)
 
 Финальный APK:
 
 ```text
-BP-Diary-5.6-V16.apk
-SHA-256: 74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
+BP-Diary-5.7-V17.apk
+SHA-256: 5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9
 ```
 
 ## Что умеет BP Diary
@@ -78,7 +76,7 @@ SHA-256: 74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
 - восстановление из Full Backup;
 - safety-backup перед отдельными опасными операциями.
 
-### V17: кандидат, прошедший device acceptance
+### V17: Reminders, Reports, Privacy & Localization
 
 - до **3 времён напоминаний в день**, 1–3 сигнала, интервалы 5/10/15/30 минут, 3 системных звука и вибрация;
 - действия уведомлений **«Измерено»** и **«Напомнить позже»**;
@@ -102,10 +100,10 @@ SHA-256: 74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
 
 ## Установка и обновление
 
-1. Откройте [официальный V16 Release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.6.0).
-2. Скачайте `BP-Diary-5.6-V16.apk`.
+1. Откройте [официальный V17 Release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0).
+2. Скачайте `BP-Diary-5.7-V17.apk`.
 3. Установите APK на Android.
-4. V16 использует ту же signing lineage, что и V8–V15 direct-distribution builds, поэтому его можно устанавливать **поверх V15 без удаления приложения**.
+4. V17 сохраняет существующую direct-distribution signing lineage, поэтому его можно устанавливать **поверх официального V16 без удаления приложения**.
 
 Перед удалением приложения или переносом на другое устройство рекомендуется создать **Полный бэкап**. Android удаляет локальные app/WebView-данные при uninstall.
 
@@ -114,13 +112,13 @@ SHA-256: 74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
 Ожидаемый SHA-256:
 
 ```text
-74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
+5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9
 ```
 
 Пример проверки:
 
 ```bash
-sha256sum BP-Diary-5.6-V16.apk
+sha256sum BP-Diary-5.7-V17.apk
 ```
 
 ## Структура репозитория
@@ -274,24 +272,22 @@ BP Diary предназначен для ведения записей и под
 
 ## Project status
 
-**Current stable release: V16 / 5.6.0 — Reliability & Android Integration.**
+**Current stable release: V17 / 5.7.0 — Reminders, Reports, Privacy & Localization.**
 
-Release-ready candidate: **V17 / 5.7.0 — Reminders, Reports, Privacy & Localization**. Real-device acceptance has passed; publication remains gated by `publish=false` until final integration into `main`.
-
-- Release tag: `v5.6.0`
-- versionCode: `160`
+- Release tag: `v5.7.0`
+- versionCode: `170`
 - Package ID: `com.tokhirjonyuldoshev.bpdiary`
 - Android shell: Capacitor 8
 - Primary source: `source/index.html`
 - Mobile UI/UX: `assets/mobile-modern.js` + `assets/mobile-modern.css`
 - Native Android bridge: `scripts/patch-android.mjs`
-- Official APK: [BP Diary 5.6.0 V16](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.6.0)
+- Official APK: [BP Diary 5.7.0 V17](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0)
 
 Final APK:
 
 ```text
-BP-Diary-5.6-V16.apk
-SHA-256: 74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
+BP-Diary-5.7-V17.apk
+SHA-256: 5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9
 ```
 
 ## Features
@@ -332,7 +328,7 @@ SHA-256: 74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
 - restore from Full Backup;
 - safety backups before selected destructive operations.
 
-### V17 accepted release candidate
+### V17 Reminders, Reports, Privacy & Localization
 
 - up to **3 reminder times per day**, 1–3 alerts, 5/10/15/30-minute intervals, 3 Android system sounds and optional vibration;
 - notification actions for **Done** and **Remind later**;
@@ -356,10 +352,10 @@ SHA-256: 74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
 
 ## Installation and upgrade
 
-1. Open the [official V16 Release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.6.0).
-2. Download `BP-Diary-5.6-V16.apk`.
+1. Open the [official V17 Release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0).
+2. Download `BP-Diary-5.7-V17.apk`.
 3. Install it on Android.
-4. V16 uses the same direct-distribution signing lineage as V8–V15, so it can be installed **over V15 without uninstalling**.
+4. V17 preserves the existing direct-distribution signing lineage, so it can be installed **over official V16 without uninstalling**.
 
 Create a **Full Backup** before uninstalling or moving devices. Android removes the application's local app/WebView data on uninstall.
 
@@ -368,13 +364,13 @@ Create a **Full Backup** before uninstalling or moving devices. Android removes 
 Expected SHA-256:
 
 ```text
-74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
+5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9
 ```
 
 Example:
 
 ```bash
-sha256sum BP-Diary-5.6-V16.apk
+sha256sum BP-Diary-5.7-V17.apk
 ```
 
 ## Repository layout

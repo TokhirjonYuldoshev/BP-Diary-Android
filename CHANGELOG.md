@@ -1,6 +1,6 @@
 # Changelog
 
-## V17 — Reminders, Reports, Privacy & Localization — 5.7.0 release candidate
+## V17 — Reminders, Reports, Privacy & Localization — 5.7.0
 
 ### Added and improved
 - System Android App Lock using biometric authentication and/or device credential/PIN.
@@ -28,13 +28,20 @@
 - Package ID remains `com.tokhirjonyuldoshev.bpdiary`.
 - Direct-distribution signing lineage is unchanged.
 
-### Candidate verification
+### Release verification
 - Android Build #142: **SUCCESS**.
 - UI Regression #37: **SUCCESS**.
 - Candidate APK SHA-256: `0c1b90083461b5adcb917e3a83ca62039b767e25c9ed75f164044afe23a3b18b`.
 - Signing certificate SHA-256: `63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102`.
 - Real-device acceptance: **PASSED — “всё работает” confirmed on 2026-09-30**.
-- Publication gate remains `publish=false` until final integration into `main`.
+- Main Android Build #144: **SUCCESS**.
+- Main UI Regression #39: **SUCCESS**.
+- Publish Android Release workflow #5 (`36689632656`): **SUCCESS**.
+- Official GitHub Release: `v5.7.0` — **FINAL / STABLE / RELEASED**.
+- Official APK: `BP-Diary-5.7-V17.apk`.
+- Official APK SHA-256: `5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9`.
+- Release workflow artifact ID: `11085710121`.
+- Publication gate reset to `publish=false` immediately after release verification.
 
 ### Security note
 BP Diary does not store the protected-backup password. Losing the password means the encrypted file cannot be recovered by the application.

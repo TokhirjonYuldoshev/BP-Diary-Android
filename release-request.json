@@ -1,4 +1,4 @@
 {
-  "publish": true,
-  "notes": "Publish BP Diary V17 / 5.7.0 after final CI, UI and real-device acceptance. Reset to publish=false immediately after the official GitHub Release is verified."
+  "publish": false,
+  "notes": "BP Diary V17 / 5.7.0 released and verified on 2026-09-30. Publication gate closed after successful Release workflow #5."
 }

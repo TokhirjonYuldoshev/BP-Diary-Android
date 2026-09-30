@@ -1,12 +1,12 @@
-# V17 — Final Candidate QA
+# V17 — Final Release QA
 
-Status: **FINAL CANDIDATE — AUTOMATED QA PASSED / REAL-DEVICE ACCEPTANCE PASSED / READY FOR RELEASE PIPELINE**
+Status: **FINAL / STABLE / RELEASED — AUTOMATED QA PASSED / REAL-DEVICE ACCEPTANCE PASSED**
 
 - Release: `V17`
 - Version: `5.7.0`
 - versionCode: `170`
 - Package ID: `com.tokhirjonyuldoshev.bpdiary`
-- Release gate: `publish=false`
+- Release gate: `publish=false` (closed after successful publication)
 
 ## Scope and non-regression boundary
 
@@ -148,8 +148,16 @@ Real-device acceptance was explicitly confirmed by the user on **2026-09-30** wi
 - [x] RU/EN and light/dark work.
 - [x] Accessibility remains usable.
 
-## Release gate
+## Release result
 
-Real-device acceptance is complete. Keep `release-request.json` at `publish=false` until the final documentation/QA commit is green and V17 is intentionally integrated into `main`.
-
-After `main` passes final CI/UI, publication requires a **separate intentional commit** setting `publish=true`. After the GitHub Release is verified, reset the gate to `publish=false`.
+- [x] V17 was integrated into `main` by fast-forward with `publish=false`.
+- [x] Main Android Build #144 passed.
+- [x] Main UI Regression #39 passed.
+- [x] Release gate was intentionally opened in commit `f90498a14a8febac5705543556418a36c83acd69`.
+- [x] Publish Android Release workflow #5 (`36689632656`) completed successfully.
+- [x] Official GitHub Release: `v5.7.0` — non-draft, non-prerelease.
+- [x] Official APK: `BP-Diary-5.7-V17.apk`.
+- [x] Official APK SHA-256: `5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9`.
+- [x] Release signer SHA-256: `63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102`.
+- [x] Release workflow artifact ID: `11085710121`.
+- [x] Publication gate was closed back to `publish=false` immediately after release verification.
