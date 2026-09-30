@@ -1709,3 +1709,100 @@ html.bp-prelocked body{visibility:hidden!important}
     .mobile-onboarding-copy h2{font-size:1.16rem!important}
   }
 }
+
+
+/* V17 real-device corrections — Samsung modal stack, About containment and new onboarding scenes */
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  body.mobile-sheet-open{overflow:hidden!important}
+  body.mobile-sheet-open #mobileBottomNav{pointer-events:none!important}
+  body.mobile-sheet-open::after{pointer-events:none!important}
+
+  /* Protected backup is a real modal layer, not content appended below the current page. */
+  #mobileSecretSheet{
+    display:flex!important;position:fixed!important;inset:0!important;z-index:38000!important;
+    align-items:flex-end!important;justify-content:center!important;
+    padding:12px 12px calc(12px + env(safe-area-inset-bottom))!important;
+    background:rgba(3,12,20,.68)!important;
+    opacity:0!important;pointer-events:none!important;
+    visibility:hidden!important;
+    transition:opacity .18s ease,visibility 0s linear .18s!important;
+    overflow:hidden!important;box-sizing:border-box!important
+  }
+  #mobileSecretSheet.open{
+    opacity:1!important;pointer-events:auto!important;visibility:visible!important;
+    transition:opacity .18s ease!important
+  }
+  #mobileSecretSheet .mobile-sheet-panel{
+    width:min(100%,540px)!important;max-width:540px!important;
+    max-height:min(82dvh,650px)!important;margin:0 auto!important;
+    padding:10px 12px calc(14px + env(safe-area-inset-bottom))!important;
+    overflow:auto!important;overscroll-behavior:contain!important;
+    border:1px solid var(--m-line)!important;border-radius:26px!important;
+    background:var(--m-surface)!important;
+    box-shadow:0 -22px 64px rgba(0,0,0,.34)!important;
+    transform:translateY(24px)!important;
+    transition:transform .2s ease!important
+  }
+  #mobileSecretSheet.open .mobile-sheet-panel{transform:translateY(0)!important}
+  #mobileSecretSheet .mobile-sheet-title{
+    position:sticky!important;top:-10px!important;z-index:3!important;
+    min-height:58px!important;margin:0!important;padding:7px 0 9px!important;
+    background:var(--m-surface)!important
+  }
+  #mobileSecretSheet .mobile-sheet-handle{margin-bottom:2px!important}
+  #mobileSecretSheet .mobile-sheet-grid{padding-bottom:2px!important}
+  #mobileSecretSheet .mobile-secret-card{border-radius:20px!important;padding:15px!important}
+  #mobileSecretSheet .mobile-secret-actions{position:relative;z-index:2}
+  body.dark #mobileSecretSheet{background:rgba(0,6,12,.76)!important}
+  body.dark #mobileSecretSheet .mobile-sheet-panel,
+  body.dark #mobileSecretSheet .mobile-sheet-title{background:#0a1724!important}
+
+  /* About stays exactly inside the physical viewport; no inherited 12px sheet padding. */
+  #mobileAboutSheet{
+    padding:0!important;width:100vw!important;max-width:100vw!important;
+    overflow:hidden!important;box-sizing:border-box!important
+  }
+  #mobileAboutSheet .mobile-sheet-panel{
+    width:100%!important;max-width:100%!important;height:100dvh!important;max-height:100dvh!important;
+    padding:0!important;margin:0!important;overflow-y:auto!important;overflow-x:hidden!important;
+    box-sizing:border-box!important
+  }
+  #mobileAboutSheet .mobile-sheet-title{
+    position:sticky!important;top:0!important;z-index:5!important;
+    width:100%!important;max-width:100%!important;min-height:64px!important;
+    margin:0!important;
+    padding:calc(8px + env(safe-area-inset-top)) 14px 8px!important;
+    box-sizing:border-box!important;
+    background:rgba(244,249,252,.98)!important;
+    border-bottom:1px solid var(--m-line)!important
+  }
+  body.dark #mobileAboutSheet .mobile-sheet-title{background:rgba(8,18,29,.98)!important}
+  #mobileAboutSheet .mobile-sheet-grid{
+    width:100%!important;max-width:100%!important;
+    padding:8px 14px calc(18px + env(safe-area-inset-bottom))!important;
+    box-sizing:border-box!important;overflow-x:hidden!important
+  }
+  #mobileAboutSheet .mobile-about-close{flex:0 0 44px!important}
+
+  /* New V17 onboarding illustrations are full scenes, not the legacy single glyph cards. */
+  .mobile-onboarding-brand>div{display:flex;flex-direction:column;gap:2px}
+  .mobile-onboarding-brand small{
+    color:#86b8ca;font-size:.48rem;font-weight:750;letter-spacing:.035em
+  }
+  .mobile-onboarding-visual{padding:4px 0 2px!important}
+  .mobile-onboarding-scene{
+    width:min(248px,78vw);height:auto;aspect-ratio:320/220;
+    display:grid;place-items:center;position:relative;
+    filter:drop-shadow(0 22px 38px rgba(0,0,0,.22))
+  }
+  .mobile-onboarding-scene svg{display:block;width:100%!important;height:100%!important}
+  .mobile-onboarding-scene::after{
+    content:'';position:absolute;left:18%;right:18%;bottom:2%;
+    height:12px;border-radius:50%;background:rgba(15,183,219,.17);filter:blur(12px)
+  }
+
+  @media (max-height:700px){
+    #mobileSecretSheet .mobile-sheet-panel{max-height:88dvh!important}
+    .mobile-onboarding-scene{width:min(205px,66vw)}
+  }
+}

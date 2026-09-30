@@ -161,37 +161,55 @@ test('V17 protected backup produces an encrypted envelope instead of plaintext b
   expect(saved.content).not.toContain('"patientSettings"');
 });
 
-test('V17 language and theme selectors support RU EN UZ without abrupt row toggles',async({page})=>{
-  await page.locator('#mobileAppBar [data-top="lang"]').click();
-  await expect(page.locator('#mobileSettingsSheet')).toHaveClass(/open/);
+test('V17 top language control cycles directly and UZ mobile UI has no known English leftovers',async({page})=>{
+  const lang=page.locator('#mobileAppBar [data-top="lang"]');
+  await expect(lang).toHaveText('RU');
 
-  const language=page.locator('#mobileSettingsSheet .mobile-settings-segment').first();
-  await expect(language.locator('button')).toHaveCount(3);
-  await expect(language).toContainText('RU');
-  await expect(language).toContainText('EN');
-  await expect(language).toContainText('UZ');
+  await lang.click();
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.lang)).toBe('en');
+  await expect(page.locator('#mobileSettingsSheet')).not.toHaveClass(/open/);
+  await expect(lang).toHaveText('EN');
+  await expect(page.locator('#mobileAppBar')).toContainText('Blood pressure diary');
 
-  await language.locator('[data-value="uz"]').click();
+  await lang.click();
   await expect.poll(()=>page.evaluate(()=>document.documentElement.lang)).toBe('uz');
+  await expect(lang).toHaveText('UZ');
   await expect(page.locator('#mobileAppBar')).toContainText('Qon bosimi kundaligi');
-  await expect(page.locator('#mobileSettingsSheet')).toContainText('Sozlamalar');
   await expect(page.locator('#mobileBottomNav')).toContainText('O‘lchov');
   await expect(page.locator('#mobileBottomNav')).toContainText('Tahlil');
   await expect(page.locator('#mobileBottomNav')).toContainText('Arxiv');
 
+  await page.locator('#mobileBottomNav [data-tab="analysis"]').click();
+  const analysis=page.locator('.mobile-page-analysis');
+  await expect(analysis).toContainText('Asosiy ko‘rsatkichlar va trendlar');
+  await expect(analysis).toContainText('Umumiy');
+  await expect(analysis).toContainText('Grafiklar');
+  await expect(analysis).toContainText(/Barcha ko‘rsatkichlar/);
+  const analysisText=await analysis.innerText();
+  for(const forbidden of ['Key metrics and trends','Overview','Charts','All metrics'])expect(analysisText).not.toContain(forbidden);
+
+  await page.locator('#mobileBottomNav [data-tab="archive"]').click();
+  await page.locator('.mobile-page-archive button').filter({hasText:/Amallar/}).first().click();
+  const actionSheet=page.locator('#mobileActionSheet');
+  await expect(actionSheet).toHaveClass(/open/);
+  const actionText=await actionSheet.innerText();
+  for(const forbidden of ['Restore protected','Doctor report / PDF','Restore backup','Delete all'])expect(actionText).not.toContain(forbidden);
+  await expect(actionSheet).toContainText('Himoyalangan zaxira nusxa');
+  await expect(actionSheet).toContainText('Shifokor hisoboti / PDF');
+  await page.locator('#mobileActionSheet').click({position:{x:4,y:4}});
+  await expect(actionSheet).not.toHaveClass(/open/);
+
+  await page.locator('#mobileAppBar [data-top="settings"]').click();
+  await expect(page.locator('#mobileSettingsSheet')).toContainText('Sozlamalar');
+  const language=page.locator('#mobileSettingsSheet .mobile-settings-segment').first();
+  await expect(language.locator('[data-value="uz"]')).toHaveAttribute('aria-pressed','true');
   const theme=page.locator('#mobileSettingsSheet .mobile-settings-segment').nth(1);
   await theme.locator('[data-value="dark"]').click();
   await expect(page.locator('body')).toHaveClass(/dark/);
-
-  await page.locator('#mobileSettingsSheet .mobile-settings-segment').first().locator('[data-value="en"]').click();
-  await expect.poll(()=>page.evaluate(()=>document.documentElement.lang)).toBe('en');
-  await expect(page.locator('#mobileAppBar')).toContainText('Blood pressure diary');
-  await expect(page.locator('#mobileSettingsSheet')).toContainText('App lock');
-  await expect(page.locator('#mobileSettingsSheet')).toContainText('Protected backup');
-  await page.screenshot({path:shots+'/settings-language-theme-dark-en.png',fullPage:true});
+  await page.screenshot({path:shots+'/settings-language-theme-dark-uz.png',fullPage:true});
 });
 
-test('V17 protected backup prompt is singleton, dismissible and vertically contained',async({page})=>{
+test('V17 protected backup is a true modal above navigation and closes cleanly',async({page})=>{
   await page.evaluate(()=>{
     window.Capacitor={Plugins:{NativeBridge:{
       saveTextFile:async(args)=>({name:args.fileName,uri:'content://test/protected'}),
@@ -207,45 +225,52 @@ test('V17 protected backup prompt is singleton, dismissible and vertically conta
 
   await openProtected();
   await expect(page.locator('#mobileSecretSheet')).toHaveCount(1);
+  await expect(page.locator('body')).toHaveClass(/mobile-sheet-open/);
+
   const layout=await page.locator('#mobileSecretSheet').evaluate(sheet=>{
-    const grid=sheet.querySelector('.mobile-sheet-grid');
+    const panel=sheet.querySelector('.mobile-sheet-panel');
     const actions=sheet.querySelector('.mobile-secret-actions');
-    const gs=getComputedStyle(grid),as=getComputedStyle(actions);
-    const buttons=[...actions.querySelectorAll('button')].map(b=>b.getBoundingClientRect());
+    const nav=document.querySelector('#mobileBottomNav');
+    const ss=getComputedStyle(sheet),ns=getComputedStyle(nav),ps=getComputedStyle(panel);
+    const sr=sheet.getBoundingClientRect(),pr=panel.getBoundingClientRect();
     return {
-      gridColumns:gs.gridTemplateColumns,
-      actionColumns:as.gridTemplateColumns.split(' ').length,
-      actionWidth:actions.getBoundingClientRect().width,
-      buttonWidths:buttons.map(r=>r.width),
-      buttonHeights:buttons.map(r=>r.height)
+      position:ss.position,z:Number(ss.zIndex)||0,navZ:Number(ns.zIndex)||0,navPointer:ns.pointerEvents,
+      sheet:{left:sr.left,top:sr.top,right:sr.right,bottom:sr.bottom},
+      panel:{left:pr.left,top:pr.top,right:pr.right,bottom:pr.bottom},
+      overflowY:ps.overflowY,
+      actionButtons:[...actions.querySelectorAll('button')].map(b=>b.getBoundingClientRect().height)
     };
   });
-  expect(layout.gridColumns).not.toContain('0px 0px');
-  expect(layout.actionColumns).toBe(2);
-  expect(layout.buttonHeights.every(v=>v>=44)).toBeTruthy();
-  expect(layout.buttonWidths.every(v=>v<layout.actionWidth)).toBeTruthy();
+  expect(layout.position).toBe('fixed');
+  expect(layout.z).toBeGreaterThan(layout.navZ);
+  expect(layout.navPointer).toBe('none');
+  expect(layout.sheet.left).toBeGreaterThanOrEqual(0);
+  expect(layout.sheet.top).toBeGreaterThanOrEqual(0);
+  expect(layout.sheet.right).toBeLessThanOrEqual(390);
+  expect(layout.sheet.bottom).toBeLessThanOrEqual(844);
+  expect(layout.panel.left).toBeGreaterThanOrEqual(0);
+  expect(layout.panel.right).toBeLessThanOrEqual(390);
+  expect(layout.panel.bottom).toBeLessThanOrEqual(844);
+  expect(layout.actionButtons.every(v=>v>=44)).toBeTruthy();
 
-  await page.evaluate(()=>{
-    const hidden=[...document.querySelectorAll('#mobileSettingsSheet .mobile-settings-row')]
-      .find(x=>/Защищённый бэкап|Protected backup/.test(x.textContent||''));
-    hidden?.click();
-  });
-  await expect(page.locator('#mobileSecretSheet')).toHaveCount(1);
   await page.locator('#mobileSecretSheet .mobile-sheet-close').click();
   await expect(page.locator('#mobileSecretSheet')).not.toHaveClass(/open/);
+  await expect(page.locator('body')).not.toHaveClass(/mobile-sheet-open/);
 
   await openProtected();
+  await expect(page.locator('#mobileSecretSheet')).toHaveCount(1);
   await page.locator('#mobileSecretSheet .mobile-secret-actions .outline').click();
   await expect(page.locator('#mobileSecretSheet')).not.toHaveClass(/open/);
 });
 
-test('V17 premium onboarding is compact, V17-aware and stays inside the viewport',async({page})=>{
+test('V17 onboarding uses three new full illustrations and stays inside the viewport',async({page})=>{
   await page.locator('#mobileAppBar [data-top="about"]').click();
   await page.locator('#mobileAboutSheet [data-about-action="guide"]').click();
   await expect(page.locator('#mobileOnboarding')).toHaveClass(/open/);
   await expect(page.locator('.mobile-onboarding-top')).toBeVisible();
   await expect(page.locator('.mobile-onboarding-progress')).toBeVisible();
   await expect(page.locator('.mobile-onboarding-card')).toHaveClass(/is-first/);
+  await expect(page.locator('.mobile-onboarding-scene')).toHaveAttribute('data-scene','measure');
 
   const box=await page.locator('.mobile-onboarding-card').boundingBox();
   expect(box.x).toBeGreaterThanOrEqual(0);
@@ -255,10 +280,12 @@ test('V17 premium onboarding is compact, V17-aware and stays inside the viewport
 
   await page.locator('.mobile-onboarding-next').click();
   await expect(page.locator('.mobile-onboarding-step')).toContainText('2');
+  await expect(page.locator('.mobile-onboarding-scene')).toHaveAttribute('data-scene','report');
   await page.locator('.mobile-onboarding-next').click();
   await expect(page.locator('.mobile-onboarding-step')).toContainText('3');
+  await expect(page.locator('.mobile-onboarding-scene')).toHaveAttribute('data-scene','privacy');
   await expect(page.locator('#mobileOnboarding')).toContainText('V17');
-  await page.screenshot({path:shots+'/onboarding-v17-premium.png',fullPage:true});
+  await page.screenshot({path:shots+'/onboarding-v17-new-scenes.png',fullPage:true});
 });
 
 test('V17 fixed navigation and icon-only close controls stay centered and inside safe bounds',async({page})=>{
@@ -271,6 +298,18 @@ test('V17 fixed navigation and icon-only close controls stay centered and inside
   expect(nav.paddingBottom).toBeGreaterThan(nav.height);
 
   await page.locator('#mobileAppBar [data-top="about"]').click();
+  const aboutBounds=await page.locator('#mobileAboutSheet').evaluate(sheet=>{
+    const panel=sheet.querySelector('.mobile-sheet-panel'),header=sheet.querySelector('.mobile-sheet-title');
+    const sr=sheet.getBoundingClientRect(),pr=panel.getBoundingClientRect(),hr=header.getBoundingClientRect();
+    return {sheet:{left:sr.left,right:sr.right},panel:{left:pr.left,right:pr.right},header:{left:hr.left,right:hr.right},viewport:innerWidth};
+  });
+  expect(aboutBounds.sheet.left).toBeGreaterThanOrEqual(0);
+  expect(aboutBounds.sheet.right).toBeLessThanOrEqual(aboutBounds.viewport);
+  expect(aboutBounds.panel.left).toBeGreaterThanOrEqual(0);
+  expect(aboutBounds.panel.right).toBeLessThanOrEqual(aboutBounds.viewport);
+  expect(aboutBounds.header.left).toBeGreaterThanOrEqual(aboutBounds.panel.left-1);
+  expect(aboutBounds.header.right).toBeLessThanOrEqual(aboutBounds.panel.right+1);
+
   const close=await page.locator('#mobileAboutSheet .mobile-about-close').evaluate(el=>{
     const s=getComputedStyle(el),r=el.getBoundingClientRect();
     return {display:s.display,place:s.placeItems,width:r.width,height:r.height};
@@ -303,7 +342,8 @@ test('V17 uses the system authentication prompt with a 10 second background thre
       authenticateBiometric:async()=>new Promise(resolve=>{window.__bpBioResolve=resolve}),
       setPrivacyShield:async()=>({}),
       consumeScreenOffEvent:async()=>({screenOff:false}),
-      backgroundApp:async()=>({})
+      backgroundApp:async()=>({}),
+      addListener:async()=>({remove:async()=>{}})
     }}};
   });
   await page.reload({waitUntil:'domcontentloaded'});
