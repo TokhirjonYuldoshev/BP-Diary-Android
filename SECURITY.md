@@ -1,123 +1,339 @@
-# Security / Безопасность
+# Security / Безопасность / Xavfsizlik
 
-## Русский
+[🇷🇺 Русский](#-русский) · [🇬🇧 English](#-english) · [🇺🇿 O‘zbekcha](#-ozbekcha-lotin)
 
-### Сообщение об уязвимости
-
-Если проблема может раскрывать пользовательские данные, нарушать целостность backup/restore, позволять подмену APK или затрагивать другие security-sensitive сценарии, не публикуйте чувствительные данные в issue.
-
-Для обычных ошибок интерфейса и функциональности используйте GitHub Issues.
-
-### Данные пользователя
-
-BP Diary хранит данные дневника локально в области приложения/WebView. Автоматические резервные копии также локальные.
-
-- не прикладывайте реальные медицинские данные к публичным bug reports;
-- перед uninstall/device migration делайте Full Backup;
-- проверяйте источник APK и SHA-256 при ручном распространении.
-
-### Signing key
-
-В V8–V17 для direct-distribution update path использовался стабильный ключ, который присутствовал в истории публичного репозитория.
-
-Следствие: этот ключ подходит для совместимости существующих тестовых установок, но **не должен считаться безопасным production signing key**.
-
-Для Google Play или другого production channel:
-
-1. создайте новый приватный ключ;
-2. не храните его в Git;
-3. используйте GitHub Actions Secrets / secure CI secret storage;
-4. предпочтительно используйте Google Play App Signing;
-5. публикуйте AAB, если это соответствует каналу распространения.
-
-Смена ключа ломает прямое обновление существующих APK с другой signing lineage, поэтому такую миграцию необходимо планировать отдельно.
+Supported stable line: **BP Diary 5.7.x / V17**
 
 ---
 
-## V17 privacy and notification notes
+## 🇷🇺 Русский
 
-- Native reminders store only schedule/notification configuration in Android app preferences: enabled state, up to three times, title/body, repeat count/interval, sound selection, vibration and action labels. Diary measurements are not stored in reminder preferences.
-- Reminder notifications do not upload diary measurements.
-- The update checker performs a network request **only when the user explicitly taps “Check for updates”**.
-- That request goes to the official GitHub Releases API for this repository.
-- BP Diary does not silently download or install APK updates.
-- Existing diary measurements, backups and medical/profile data remain local unless the user explicitly exports or shares them.
+### Сообщение об уязвимости
 
-## English
+Для обычных UI/functional bugs используйте GitHub Issues.
 
-### Reporting a vulnerability
+Если проблема может:
 
-If an issue could expose user data, compromise backup/restore integrity, enable APK substitution, or otherwise affect a security-sensitive flow, do not place sensitive details in a public issue.
+- раскрывать данные пользователя;
+- нарушать целостность backup/restore;
+- обходить App Lock или Screen Privacy;
+- позволять подмену APK;
+- раскрывать секреты/ключи;
+- влиять на update/release path;
 
-Use GitHub Issues for ordinary UI and functional bugs.
+не публикуйте exploit details, реальные медицинские данные, токены или другие чувствительные материалы в публичном Issue.
 
-### User data
+Если в репозитории доступен private vulnerability reporting, используйте его. Иначе свяжитесь с владельцем репозитория приватным способом через GitHub и сначала передайте минимальное описание без чувствительных данных.
 
-BP Diary stores diary data locally in the app/WebView area. Automatic backups are local as well.
+### Локальные данные
 
-- never attach real medical data to public bug reports;
-- create a Full Backup before uninstalling or migrating devices;
-- verify APK source and SHA-256 when distributing manually.
+BP Diary хранит дневник и профиль локально в области приложения/WebView.
 
-### Signing key
+- обычная работа приложения не отправляет записи дневника в GitHub;
+- автоматические локальные backups остаются на устройстве;
+- reminder preferences содержат только параметры расписания/уведомления;
+- экспорт или Share выполняется только по действию пользователя;
+- перед uninstall или переносом устройства рекомендуется создать Full Backup.
 
-The V8–V17 direct-distribution update path used a stable key that has existed in the public repository history.
+Не прикладывайте реальные медицинские данные к публичным bug reports.
 
-As a result, it preserves compatibility with existing test installations but **must not be treated as a secure production signing key**.
+### Проверка обновлений
 
-For Google Play or another production channel:
+Проверка обновлений выполняет сетевой запрос только после явного действия пользователя.
 
-1. create a new private key;
-2. never commit it to Git;
-3. store it in GitHub Actions Secrets or equivalent secure CI storage;
-4. prefer Google Play App Signing;
-5. publish an AAB when appropriate.
+Запрос направляется к официальному GitHub Releases API этого репозитория.
 
-Changing the signing lineage breaks direct upgrades from APKs signed by a different key, so such a migration must be planned explicitly.
+BP Diary не выполняет скрытую загрузку или автоматическую установку APK.
 
+### Protected Backup
 
-## V17 privacy and notification notes — English
-
-- Native reminders store only schedule/notification configuration in Android app preferences: enabled state, up to three times, title/body, repeat count/interval, sound selection, vibration and action labels. Diary measurements are not stored in reminder preferences.
-- Reminder notifications do not upload diary measurements.
-- The update checker makes a network request **only after the user explicitly chooses “Check for updates”**.
-- The request targets the official GitHub Releases API for this repository.
-- BP Diary does not silently download or install APK updates.
-- Diary measurements, backups and profile/medical data remain local unless the user explicitly exports or shares them.
-
-
-## V17 protected backups
-
-### Русский
-
-V17 добавляет опциональный защищённый Full Backup. Пароль не сохраняется в BP Diary.
-
-Формат использует:
+Защищённый Full Backup использует:
 
 - PBKDF2-SHA-256;
 - 310 000 итераций;
 - случайную 16-байтовую соль;
 - AES-GCM-256;
 - случайный 12-байтовый IV;
-- проверку аутентичности при расшифровке.
+- authenticated decryption.
 
-Неверный пароль или повреждение ciphertext приводит к отказу расшифровки до изменения текущих данных приложения.
+Пароль защищённого бэкапа BP Diary не сохраняет.
 
-Биометрическая блокировка является защитой интерфейса приложения, а не заменой полного шифрования Android-устройства. Опция Screen privacy использует Android `FLAG_SECURE` и сохраняется в native SharedPreferences, чтобы восстанавливаться при следующем запуске.
+Неверный пароль или изменённый ciphertext отклоняется до замены текущих данных приложения.
 
-### English
+Если пароль потерян, приложение не может восстановить или обойти его.
 
-V17 adds an optional password-protected Full Backup. BP Diary does not persist the password.
+### App Lock и Screen Privacy
 
-The format uses:
+App Lock использует системную Android-аутентификацию: biometric и/или device credential в зависимости от устройства.
+
+Screen Privacy использует Android `FLAG_SECURE`.
+
+Эти функции повышают приватность интерфейса, но не заменяют:
+
+- шифрование всего устройства;
+- безопасный PIN/пароль Android;
+- физическую защиту устройства;
+- полноценную модель защиты от root/compromised OS.
+
+### APK integrity
+
+Устанавливайте APK из официального GitHub Release.
+
+Текущий stable asset:
+
+```text
+BP-Diary-5.7-V17.apk
+SHA-256:
+5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9
+```
+
+Официальный Release:
+https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0
+
+### Signing
+
+Текущая direct-distribution signing lineage сохраняет совместимость существующих установок.
+
+Certificate SHA-256:
+
+```text
+63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102
+```
+
+Этот ключ присутствовал в публичной истории проекта, поэтому **не должен использоваться как новый безопасный production signing key для Google Play**.
+
+Для будущего production channel рекомендуется отдельный приватный ключ, secure CI secret storage и Google Play App Signing.
+
+### Медицинские данные
+
+Репозиторий публичный. Никогда не публикуйте в Issues, PR, Actions logs или test fixtures:
+
+- ФИО пациента;
+- реальные показатели, если они позволяют идентифицировать человека;
+- медицинские документы;
+- адреса, телефоны, даты рождения;
+- экспортированные пользовательские backups.
+
+---
+
+## 🇬🇧 English
+
+### Reporting a vulnerability
+
+Use GitHub Issues for ordinary UI and functional bugs.
+
+If a problem could:
+
+- expose user data;
+- compromise backup/restore integrity;
+- bypass App Lock or Screen Privacy;
+- enable APK substitution;
+- expose secrets or keys;
+- affect the update/release path;
+
+do not publish exploit details, real medical data, tokens or other sensitive material in a public Issue.
+
+If private vulnerability reporting is available for the repository, use it. Otherwise contact the repository owner privately through GitHub first and share only the minimum non-sensitive description needed to establish contact.
+
+### Local data
+
+BP Diary keeps diary and profile data locally in the app/WebView storage area.
+
+- normal application use does not upload diary records to GitHub;
+- automatic local backups remain on the device;
+- reminder preferences contain schedule/notification configuration only;
+- export and Share actions happen only after user action;
+- create a Full Backup before uninstalling or migrating devices.
+
+Never attach real medical data to public bug reports.
+
+### Update checking
+
+The update checker performs a network request only after an explicit user action.
+
+It targets the official GitHub Releases API for this repository.
+
+BP Diary does not silently download or automatically install APK updates.
+
+### Protected Backup
+
+Protected Full Backup uses:
 
 - PBKDF2-SHA-256;
 - 310,000 iterations;
-- a random 16-byte salt;
+- random 16-byte salt;
 - AES-GCM-256;
-- a random 12-byte IV;
+- random 12-byte IV;
 - authenticated decryption.
 
-A wrong password or modified ciphertext fails before current application data are changed.
+BP Diary does not persist the protected-backup password.
 
-The biometric app lock protects the application UI and is not a replacement for full-device encryption. Screen privacy uses Android `FLAG_SECURE` and persists its state in native SharedPreferences so it is restored on the next launch.
+A wrong password or modified ciphertext is rejected before current application data are replaced.
+
+If the password is lost, the application cannot recover or bypass it.
+
+### App Lock and Screen Privacy
+
+App Lock uses system Android authentication: biometric and/or device credential depending on the device.
+
+Screen Privacy uses Android `FLAG_SECURE`.
+
+These features improve interface privacy but do not replace:
+
+- full-device encryption;
+- a strong Android PIN/password;
+- physical device security;
+- protection against a rooted or compromised operating system.
+
+### APK integrity
+
+Install APKs from the official GitHub Release.
+
+Current stable asset:
+
+```text
+BP-Diary-5.7-V17.apk
+SHA-256:
+5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9
+```
+
+Official Release:
+https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0
+
+### Signing
+
+The current direct-distribution signing lineage preserves compatibility with existing installations.
+
+Certificate SHA-256:
+
+```text
+63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102
+```
+
+This key has appeared in the public project history and therefore **must not be used as a new secure production signing key for Google Play**.
+
+A future production channel should use a separate private key, secure CI secret storage and Google Play App Signing.
+
+### Medical data
+
+This repository is public. Never place the following in Issues, PRs, Actions logs or test fixtures:
+
+- patient names;
+- identifiable real measurements;
+- medical documents;
+- addresses, phone numbers or dates of birth;
+- exported user backups.
+
+---
+
+## 🇺🇿 O‘zbekcha (Lotin)
+
+### Xavfsizlik muammosini xabar qilish
+
+Oddiy UI va funksional xatolar uchun GitHub Issues’dan foydalaning.
+
+Agar muammo:
+
+- foydalanuvchi ma’lumotlarini oshkor qilishi;
+- backup/restore yaxlitligini buzishi;
+- App Lock yoki Screen Privacy’ni chetlab o‘tishi;
+- APK almashtirishga imkon berishi;
+- secret yoki key’larni oshkor qilishi;
+- update/release jarayoniga ta’sir qilishi mumkin bo‘lsa;
+
+exploit tafsilotlari, haqiqiy tibbiy ma’lumotlar, tokenlar yoki boshqa maxfiy ma’lumotlarni public Issue’da yozmang.
+
+Agar repository private vulnerability reporting’ni qo‘llab-quvvatlasa, undan foydalaning. Aks holda repository egasi bilan GitHub orqali avval shaxsiy aloqa o‘rnating va birinchi xabarda faqat minimal, maxfiy bo‘lmagan ma’lumotni yuboring.
+
+### Lokal ma’lumotlar
+
+BP Diary kundalik va profil ma’lumotlarini ilova/WebView storage hududida lokal saqlaydi.
+
+- ilovaning oddiy ishlashi kundalik yozuvlarini GitHub’ga yubormaydi;
+- avtomatik lokal zaxira nusxalar qurilmada qoladi;
+- reminder preferences faqat jadval/bildirishnoma sozlamalarini saqlaydi;
+- eksport va Share faqat foydalanuvchi amali bilan bajariladi;
+- uninstall yoki qurilma ko‘chirishdan oldin Full Backup yarating.
+
+Public bug report’ga haqiqiy tibbiy ma’lumotlarni biriktirmang.
+
+### Yangilanishni tekshirish
+
+Yangilanishni tekshirish faqat foydalanuvchi aniq amal bajargandan keyin tarmoq so‘rovini yuboradi.
+
+So‘rov ushbu repository’ning rasmiy GitHub Releases API’iga yuboriladi.
+
+BP Diary APK’ni yashirincha yuklab olmaydi va avtomatik o‘rnatmaydi.
+
+### Himoyalangan Backup
+
+Protected Full Backup quyidagilarni ishlatadi:
+
+- PBKDF2-SHA-256;
+- 310 000 iteratsiya;
+- tasodifiy 16 baytli salt;
+- AES-GCM-256;
+- tasodifiy 12 baytli IV;
+- authenticated decryption.
+
+BP Diary himoyalangan zaxira parolini saqlamaydi.
+
+Noto‘g‘ri parol yoki o‘zgartirilgan ciphertext joriy ilova ma’lumotlari almashtirilishidan oldin rad etiladi.
+
+Parol yo‘qolsa, ilova uni tiklay olmaydi yoki chetlab o‘ta olmaydi.
+
+### App Lock va Screen Privacy
+
+App Lock qurilmaga qarab Android tizim biometric va/yoki device credential autentifikatsiyasidan foydalanadi.
+
+Screen Privacy Android `FLAG_SECURE` dan foydalanadi.
+
+Bu funksiyalar interfeys maxfiyligini oshiradi, ammo quyidagilarni almashtirmaydi:
+
+- butun qurilma shifrlanishi;
+- kuchli Android PIN/parol;
+- qurilmaning jismoniy himoyasi;
+- root qilingan yoki buzilgan operatsion tizimdan himoya.
+
+### APK yaxlitligi
+
+APK’ni rasmiy GitHub Release’dan o‘rnating.
+
+Joriy stable asset:
+
+```text
+BP-Diary-5.7-V17.apk
+SHA-256:
+5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9
+```
+
+Rasmiy Release:
+https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0
+
+### Signing
+
+Joriy direct-distribution signing lineage mavjud o‘rnatishlar bilan moslikni saqlaydi.
+
+Certificate SHA-256:
+
+```text
+63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102
+```
+
+Bu key loyiha tarixida public ko‘rinishda bo‘lgan. Shu sababli u Google Play uchun yangi xavfsiz production signing key sifatida ishlatilmasligi kerak.
+
+Kelajakdagi production channel uchun alohida private key, secure CI secret storage va Google Play App Signing tavsiya etiladi.
+
+### Tibbiy ma’lumotlar
+
+Bu repository public. Issues, PR, Actions logs yoki test fixtures ichiga quyidagilarni joylamang:
+
+- bemor F.I.Sh.;
+- odamni aniqlash mumkin bo‘lgan haqiqiy o‘lchovlar;
+- tibbiy hujjatlar;
+- manzil, telefon raqami yoki tug‘ilgan sana;
+- eksport qilingan foydalanuvchi backup’lari.
+
+---
+
+Copyright © 2026 Tokhirjon Yuldoshev · [Apache-2.0](LICENSE)
