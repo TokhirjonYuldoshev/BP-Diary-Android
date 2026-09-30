@@ -195,26 +195,26 @@ version.json
 
 ## QA
 
-V16 прошёл:
+V17 прошёл:
 
 - final regression smoke;
 - JavaScript syntax validation;
-- Android debug build;
-- Android release build;
-- signer verification;
-- Playwright mobile UI regression;
-- light/dark screenshots;
-- проверку ключевой геометрии мобильных карточек;
-- device-acceptance этап перед публикацией.
+- Android debug + release build;
+- permanent signer verification;
+- Playwright V17 mobile UI regression;
+- real-device acceptance;
+- official signed release build and GitHub Release verification;
+- post-release build after closing the publication gate.
 
 Основные финальные прогоны:
 
-- Android Build **#115 — SUCCESS**;
-- UI Regression **#13 — SUCCESS**;
-- final release build **SUCCESS**;
-- GitHub Release publish **SUCCESS**.
+- Android Build **#144 — SUCCESS** на принятом V17 `main`;
+- UI Regression **#39 — SUCCESS**;
+- Publish Android Release **#5 — SUCCESS**;
+- post-release Android Build **#146 — SUCCESS**;
+- publication gate: **CLOSED (`publish=false`)**.
 
-Полная матрица: [QA_V16.md](QA_V16.md).
+Полная матрица: [QA_V17.md](QA_V17.md).
 
 История: [CHANGELOG.md](CHANGELOG.md).
 
@@ -440,26 +440,26 @@ Publication is additionally gated by `release-request.json`. The release workflo
 
 ## QA
 
-V16 passed:
+V17 passed:
 
 - final regression smoke;
 - JavaScript syntax validation;
-- Android debug build;
-- Android release build;
-- signer verification;
-- Playwright mobile UI regression;
-- light/dark screenshots;
-- key mobile-layout geometry checks;
-- the device-acceptance stage before publication.
+- Android debug + release build;
+- permanent signer verification;
+- Playwright V17 mobile UI regression;
+- real-device acceptance;
+- official signed release build and GitHub Release verification;
+- post-release build after closing the publication gate.
 
 Key final runs:
 
-- Android Build **#115 — SUCCESS**;
-- UI Regression **#13 — SUCCESS**;
-- final signed release build **SUCCESS**;
-- GitHub Release publication **SUCCESS**.
+- Android Build **#144 — SUCCESS** on the accepted V17 `main`;
+- UI Regression **#39 — SUCCESS**;
+- Publish Android Release **#5 — SUCCESS**;
+- post-release Android Build **#146 — SUCCESS**;
+- publication gate: **CLOSED (`publish=false`)**.
 
-Full matrix: [QA_V16.md](QA_V16.md).
+Full matrix: [QA_V17.md](QA_V17.md).
 
 History: [CHANGELOG.md](CHANGELOG.md).
 

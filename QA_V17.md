@@ -161,3 +161,6 @@ Real-device acceptance was explicitly confirmed by the user on **2026-09-30** wi
 - [x] Release signer SHA-256: `63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102`.
 - [x] Release workflow artifact ID: `11085710121`.
 - [x] Publication gate was closed back to `publish=false` immediately after release verification.
+- [x] Post-release Android Build #146 (`36689981393`) passed from gate-close commit `f6d640cafa860615bc02cc07ca15e7dae9bb71e3`.
+- [x] Build #146 verified the permanent signer again: `63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102`.
+- [x] Build #146 artifact ID: `11084953920`; candidate APK SHA-256: `b37045d83e304794a79f0ba5b7cac568735b331cbb88284b3acabe7a73daa6a9`.

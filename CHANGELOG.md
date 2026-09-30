@@ -42,6 +42,8 @@
 - Official APK SHA-256: `5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9`.
 - Release workflow artifact ID: `11085710121`.
 - Publication gate reset to `publish=false` immediately after release verification.
+- Post-release Android Build #146 (`36689981393`): **SUCCESS** on gate-close commit `f6d640cafa860615bc02cc07ca15e7dae9bb71e3`.
+- Build #146 signer verification: `63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102`.
 
 ### Security note
 BP Diary does not store the protected-backup password. Losing the password means the encrypted file cannot be recovered by the application.
