@@ -185,7 +185,13 @@ test('V17 top language control cycles directly and UZ mobile UI has no known Eng
   await expect(analysis).toContainText('Asosiy ko‘rsatkichlar va trendlar');
   await expect(analysis).toContainText('Umumiy');
   await expect(analysis).toContainText('Grafiklar');
-  await expect(analysis).toContainText(/Barcha ko‘rsatkichlar/);
+  await page.evaluate(()=>{
+    const probe=document.createElement('div');
+    probe.id='uzPatternProbe';
+    probe.textContent='All metrics (20)';
+    document.querySelector('.mobile-page-analysis')?.appendChild(probe);
+  });
+  await expect(page.locator('#uzPatternProbe')).toHaveText('Barcha ko‘rsatkichlar (20)');
   const analysisText=await analysis.innerText();
   for(const forbidden of ['Key metrics and trends','Overview','Charts','All metrics'])expect(analysisText).not.toContain(forbidden);
 
