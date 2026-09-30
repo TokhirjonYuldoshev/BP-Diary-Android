@@ -1,14 +1,12 @@
 name: Build Android APK
 
 on:
+  # Intentionally run on every branch push so protected-main required checks
+  # can be satisfied on the exact commit SHA before main is updated.
   push:
-    branches: [main, v17-privacy-resilience]
-    paths-ignore:
-      - '**/*.md'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/pull_request_template.md'
-      - 'tests/**'
-      - '.github/workflows/ui-regression.yml'
+    branches: ['**']
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:

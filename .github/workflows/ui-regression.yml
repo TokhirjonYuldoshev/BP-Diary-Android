@@ -1,15 +1,12 @@
 name: UI Regression
 
 on:
+  # Required status checks must exist on the exact commit SHA. Do not path-skip
+  # this workflow once mobile-ui is required by the protected-main ruleset.
   push:
-    branches: [main, v17-privacy-resilience]
-    paths:
-      - 'source/**'
-      - 'assets/**'
-      - 'scripts/prepare-web.mjs'
-      - 'version.json'
-      - 'tests/**'
-      - '.github/workflows/ui-regression.yml'
+    branches: ['**']
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
