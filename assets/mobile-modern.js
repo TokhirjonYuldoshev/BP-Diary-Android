@@ -310,6 +310,8 @@
     }
     const names=ru()?{
       pressureChart:'АД',pulseChart:'Пульс',tempWeightChart:'Темп./вес',timeOfDayChart:'Время суток',weekdayChart:'Дни недели'
+    }:uz()?{
+      pressureChart:'QB',pulseChart:'Puls',tempWeightChart:'Harorat/vazn',timeOfDayChart:'Kun vaqti',weekdayChart:'Hafta kunlari'
     }:{
       pressureChart:'BP',pulseChart:'Pulse',tempWeightChart:'Temp/weight',timeOfDayChart:'Day time',weekdayChart:'Weekdays'
     };
@@ -424,42 +426,44 @@
     const host=q('#mobileNativeChartPanel',analysis);if(!host)return;
     const records=mobileFilteredRecords().slice().sort((a,b)=>String(a.date+a.time).localeCompare(String(b.date+b.time)));
     if(!records.length){
-      host.innerHTML=mobileNoChartData(ru()?'Графики':'Charts',ru()?'Нет данных для выбранного периода':'No data for the selected period');
+      host.innerHTML=mobileNoChartData(l('Графики','Charts','Grafiklar'),l('Нет данных для выбранного периода','No data for the selected period','Tanlangan davr uchun ma’lumot yo‘q'));
       return;
     }
     const labels=records.map(mobileDateLabel);
     const avgs=records.map(mobileRecordAverage);
     const titleMap=ru()?{
       pressureChart:'Динамика давления',pulseChart:'Динамика пульса',tempWeightChart:'Температура и вес',timeOfDayChart:'Среднее по времени суток',weekdayChart:'Среднее по дням недели'
+    }:uz()?{
+      pressureChart:'Qon bosimi dinamikasi',pulseChart:'Puls dinamikasi',tempWeightChart:'Harorat va vazn',timeOfDayChart:'Kun vaqti bo‘yicha o‘rtacha',weekdayChart:'Hafta kunlari bo‘yicha o‘rtacha'
     }:{
       pressureChart:'Blood pressure trend',pulseChart:'Pulse trend',tempWeightChart:'Temperature and weight',timeOfDayChart:'Average by time of day',weekdayChart:'Average by weekday'
     };
-    const no=ru()?'Недостаточно данных для этого графика':'Not enough data for this chart';
+    const no=l('Недостаточно данных для этого графика','Not enough data for this chart','Bu grafik uchun ma’lumot yetarli emas');
     let body='',legend='';
     if(activeMobileChart==='pressureChart'){
       const sys=avgs.map(a=>Number(a.sys)||0),dia=avgs.map(a=>Number(a.dia)||0);
-      body=mobileLineSvg([{values:sys},{values:dia}],labels,ru()?'мм рт. ст.':'mmHg');
-      legend='<div class="mobile-native-legend"><span><i class="mchart-legend-0"></i>'+(ru()?'САД':'SYS')+'</span><span><i class="mchart-legend-1"></i>'+(ru()?'ДАД':'DIA')+'</span></div>';
+      body=mobileLineSvg([{values:sys},{values:dia}],labels,l('мм рт. ст.','mmHg','mm sim. ust.'));
+      legend='<div class="mobile-native-legend"><span><i class="mchart-legend-0"></i>'+l('САД','SYS','SAB')+'</span><span><i class="mchart-legend-1"></i>'+l('ДАД','DIA','DAB')+'</span></div>';
     }else if(activeMobileChart==='pulseChart'){
-      body=mobileLineSvg([{values:avgs.map(a=>Number(a.pulse)||0)}],labels,ru()?'уд/мин':'bpm');
+      body=mobileLineSvg([{values:avgs.map(a=>Number(a.pulse)||0)}],labels,l('уд/мин','bpm','ur/min'));
     }else if(activeMobileChart==='tempWeightChart'){
       const temp=records.map(r=>Number(r.temperature)||0),weight=records.map(r=>Number(r.weight)||0);
       const tempSvg=mobileLineSvg([{values:temp}],labels,'°C',128);
-      const weightSvg=mobileLineSvg([{values:weight}],labels,ru()?'кг':'kg',128);
-      if(tempSvg||weightSvg)body='<div class="mobile-dual-charts">'+(tempSvg?'<div><small>'+(ru()?'Температура':'Temperature')+'</small>'+tempSvg+'</div>':'')+(weightSvg?'<div><small>'+(ru()?'Вес':'Weight')+'</small>'+weightSvg+'</div>':'')+'</div>';
+      const weightSvg=mobileLineSvg([{values:weight}],labels,l('кг','kg','kg'),128);
+      if(tempSvg||weightSvg)body='<div class="mobile-dual-charts">'+(tempSvg?'<div><small>'+l('Температура','Temperature','Harorat')+'</small>'+tempSvg+'</div>':'')+(weightSvg?'<div><small>'+l('Вес','Weight','Vazn')+'</small>'+weightSvg+'</div>':'')+'</div>';
     }else if(activeMobileChart==='timeOfDayChart'){
       const buckets=[[],[],[]];
       records.forEach((r,i)=>{const h=parseInt(String(r.time||'0').slice(0,2),10)||0;const v=Number(avgs[i].sys)||0;if(v>0)buckets[h<12?0:h<18?1:2].push(v)});
       const vals=buckets.map(a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:0);
-      body=mobileBarSvg(vals,ru()?['Утро','День','Вечер']:['AM','Day','PM'],ru()?'мм рт. ст.':'mmHg');
+      body=mobileBarSvg(vals,ru()?['Утро','День','Вечер']:uz()?['Ertalab','Kunduz','Kechqurun']:['AM','Day','PM'],l('мм рт. ст.','mmHg','mm sim. ust.'));
     }else if(activeMobileChart==='weekdayChart'){
       const sums=Array(7).fill(0),cnt=Array(7).fill(0);
       records.forEach((r,i)=>{const d=new Date(String(r.date)+'T12:00:00');if(Number.isNaN(d.getTime()))return;const k=(d.getDay()+6)%7,v=Number(avgs[i].sys)||0;if(v>0){sums[k]+=v;cnt[k]++}});
       const vals=sums.map((s,i)=>cnt[i]?s/cnt[i]:0);
-      body=mobileBarSvg(vals,ru()?['Пн','Вт','Ср','Чт','Пт','Сб','Вс']:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],ru()?'мм рт. ст.':'mmHg');
+      body=mobileBarSvg(vals,ru()?['Пн','Вт','Ср','Чт','Пт','Сб','Вс']:uz()?['Du','Se','Ch','Pa','Ju','Sh','Ya']:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],l('мм рт. ст.','mmHg','mm sim. ust.'));
     }
     if(!body){host.innerHTML=mobileNoChartData(titleMap[activeMobileChart]||'',no);return}
-    host.innerHTML='<div class="mobile-native-chart-head"><strong>'+svgEsc(titleMap[activeMobileChart]||'')+'</strong><span>'+records.length+' '+(ru()?'сеанс.':'sessions')+'</span></div>'+legend+body;
+    host.innerHTML='<div class="mobile-native-chart-head"><strong>'+svgEsc(titleMap[activeMobileChart]||'')+'</strong><span>'+records.length+' '+l('сеанс.','sessions','seans')+'</span></div>'+legend+body;
   }
 
   function refreshActiveChart(analysis){
@@ -937,7 +941,19 @@
   }
 
   const V17_BACKGROUND_LOCK_MS=10000;
-  let privacyNeedsAuth=false,privacyResumeTimer=null,privacyAuthInFlight=false,privacyIgnoreBackgroundUntil=0;
+  let privacyNeedsAuth=false,privacyResumeTimer=null,privacyAuthInFlight=false,privacyIgnoreBackgroundUntil=0,privacyWatchdogTimer=null;
+  function stopPrivacyWatchdog(){
+    if(privacyWatchdogTimer){clearInterval(privacyWatchdogTimer);privacyWatchdogTimer=null}
+  }
+  function startPrivacyWatchdog(){
+    if(privacyWatchdogTimer)return;
+    privacyWatchdogTimer=setInterval(()=>{
+      if(!flagEnabled(V17_BIOMETRIC_KEY)){stopPrivacyWatchdog();document.documentElement.classList.remove('bp-prelocked');return}
+      if(!document.documentElement.classList.contains('bp-prelocked')){stopPrivacyWatchdog();return}
+      if(document.visibilityState!=='visible'||privacyAuthInFlight||privacyPromptActive)return;
+      checkPrivacyOnResume().catch(()=>{});
+    },650);
+  }
 
   async function biometricAuth(reason='unlock'){
     const bridge=nativeBridge();
@@ -962,7 +978,7 @@
   }
   async function lockApplication({automatic=true}={}){
     if(!flagEnabled(V17_BIOMETRIC_KEY)){
-      privacyNeedsAuth=false;document.documentElement.classList.remove('bp-prelocked');return true;
+      privacyNeedsAuth=false;document.documentElement.classList.remove('bp-prelocked');stopPrivacyWatchdog();return true;
     }
     const bridge=nativeBridge();
     if(!bridge||typeof bridge.authenticateBiometric!=='function'){
@@ -972,9 +988,10 @@
     privacyPromptActive=true;privacyNeedsAuth=true;document.documentElement.classList.add('bp-prelocked');
     try{
       await biometricAuth('unlock');
-      privacyNeedsAuth=false;document.documentElement.classList.remove('bp-prelocked');
+      privacyNeedsAuth=false;document.documentElement.classList.remove('bp-prelocked');stopPrivacyWatchdog();
       return true;
     }catch(_){
+      startPrivacyWatchdog();
       if(automatic){try{await nativeCall('backgroundApp',{})}catch(_){}}
       return false;
     }finally{privacyPromptActive=false}
@@ -1011,7 +1028,7 @@
   async function checkPrivacyOnResume(){
     if(privacyAuthInFlight){schedulePrivacyResumeCheck(140);return}
     if(Date.now()<privacyIgnoreBackgroundUntil){schedulePrivacyResumeCheck(80);return}
-    if(!flagEnabled(V17_BIOMETRIC_KEY)){privacyNeedsAuth=false;document.documentElement.classList.remove('bp-prelocked');return}
+    if(!flagEnabled(V17_BIOMETRIC_KEY)){privacyNeedsAuth=false;document.documentElement.classList.remove('bp-prelocked');stopPrivacyWatchdog();return}
     let screenOff=false;
     try{screenOff=!!(await nativeCall('consumeScreenOffEvent',{}))?.screenOff}catch(_){}
     const elapsed=privacyHiddenAt?Date.now()-privacyHiddenAt:0;
@@ -1021,8 +1038,8 @@
   window.__bpPrivacyLockMs=V17_BACKGROUND_LOCK_MS;
   async function initPrivacyProtection(){
     await applyPrivacyShield();
-    if(flagEnabled(V17_BIOMETRIC_KEY))await lockApplication({automatic:true});
-    else document.documentElement.classList.remove('bp-prelocked');
+    if(flagEnabled(V17_BIOMETRIC_KEY)){startPrivacyWatchdog();await lockApplication({automatic:true});}
+    else{document.documentElement.classList.remove('bp-prelocked');stopPrivacyWatchdog();}
     privacyHiddenAt=Date.now();
     if(!document.documentElement.dataset.bpPrivacyBound){
       document.documentElement.dataset.bpPrivacyBound='1';
@@ -1033,6 +1050,7 @@
             if(!flagEnabled(V17_BIOMETRIC_KEY))return;
             privacyNeedsAuth=true;
             document.documentElement.classList.add('bp-prelocked');
+            startPrivacyWatchdog();
           })).catch(()=>{});
         }catch(_){}
       }
@@ -1341,13 +1359,13 @@
     sorted.forEach(card=>host.appendChild(card));
     const visible=cards.filter(x=>!x.hidden).length;
     const count=q('.mobile-archive-count',archive);
-    if(count)count.textContent=(ru()?'Показано: ':'Shown: ')+visible+' / '+cards.length;
+    if(count)count.textContent=l('Показано: ','Shown: ','Ko‘rsatilgan: ')+visible+' / '+cards.length;
     qa('#mobileArchiveTools [data-archive-period]',archive).forEach(b=>b.classList.toggle('active',b.dataset.archivePeriod===archivePeriod));
-    const sort=q('#mobileArchiveSort',archive);if(sort)sort.innerHTML=svgIcon('reset')+'<span>'+(archiveSort==='newest'?(ru()?'Сначала новые':'Newest first'):(ru()?'Сначала старые':'Oldest first'))+'</span>';
+    const sort=q('#mobileArchiveSort',archive);if(sort)sort.innerHTML=svgIcon('reset')+'<span>'+(archiveSort==='newest'?l('Сначала новые','Newest first','Avval yangilari'):l('Сначала старые','Oldest first','Avval eskilari'))+'</span>';
     const search=q('#mobileArchiveSearch',archive);if(search&&search.value!==archiveSearch)search.value=archiveSearch;
     let empty=q('#mobileArchiveNoResults',archive);
     if(!empty){empty=document.createElement('div');empty.id='mobileArchiveNoResults';empty.className='mobile-archive-no-results';empty.setAttribute('role','status');empty.setAttribute('aria-live','polite');host.before(empty)}
-    empty.textContent=ru()?'По вашему запросу ничего не найдено.':'No readings match your search.';
+    empty.textContent=l('По вашему запросу ничего не найдено.','No readings match your search.','Qidiruvga mos o‘lchov topilmadi.');
     empty.hidden=visible!==0||cards.length===0;
   }
   function archiveTools(archive){

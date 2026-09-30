@@ -160,6 +160,27 @@
             .score-row #scoreSysFromDiaryBtn { width:100%; }
         }
     
+        input.profile-input-invalid, select.profile-input-invalid {
+            border-color:#dc3545 !important;
+            box-shadow:0 0 0 3px rgba(220,53,69,.14) !important;
+            background-color:rgba(220,53,69,.04) !important;
+        }
+        .profile-validation-error {
+            display:block;
+            margin-top:5px;
+            color:#c62838;
+            font-size:11px;
+            line-height:1.3;
+            font-weight:700;
+            max-width:210px;
+        }
+        body.dark .profile-validation-error { color:#ff8f9b; }
+        body.dark input.profile-input-invalid, body.dark select.profile-input-invalid {
+            border-color:#ff6675 !important;
+            box-shadow:0 0 0 3px rgba(255,102,117,.16) !important;
+            background-color:rgba(255,102,117,.06) !important;
+        }
+
         @media (max-width: 900px) {
             .measurement-bottom-row { align-items:stretch; }
             .measurement-flags { width:100%; }
@@ -956,28 +977,121 @@
         savePatientSettings();
     }
     function debouncedAutoSaveProfile() { clearTimeout(profileSaveTimer); profileSaveTimer=setTimeout(autoSaveProfile,300); }
+
+    const PROFILE_NUMERIC_RULES = {
+        temperature:{min:25,max:45,label:()=>t('temperature'),range:()=>tx('25–45 °C','25–45 °C','25–45 °C')},
+        weight:{min:1,max:500,label:()=>t('weight'),range:()=>tx('1–500 кг','1–500 kg','1–500 kg')},
+        height:{min:30,max:260,label:()=>t('height'),range:()=>tx('30–260 см','30–260 cm','30–260 sm')},
+        age:{min:1,max:120,label:()=>t('age'),range:()=>tx('1–120 лет','1–120 years','1–120 yosh')},
+        cholTotal:{minExclusive:.1,max:30,label:()=>t('cholesterolTotal'),range:()=>tx('>0,1 и ≤30 ммоль/л','>0.1 and ≤30 mmol/L','>0,1 va ≤30 mmol/l')},
+        cholHDL:{minExclusive:.1,max:10,label:()=>t('cholesterolHDL'),range:()=>tx('>0,1 и ≤10 ммоль/л','>0.1 and ≤10 mmol/L','>0,1 va ≤10 mmol/l')},
+        diabetesAge:{min:1,max:100,label:()=>t('diabetesAge'),range:()=>tx('1–100 лет','1–100 years','1–100 yosh')},
+        egfr:{min:1,max:200,label:()=>t('egfr'),range:()=>tx('1–200','1–200','1–200')},
+        uacr:{min:0,max:10000,label:()=>t('uacr'),range:()=>tx('0–10000','0–10000','0–10000')},
+        scoreSysInput:{min:70,max:260,label:()=>t('scoreSys'),range:()=>tx('70–260 мм рт. ст.','70–260 mmHg','70–260 mm sim. ust.')},
+        targetSysMinInput:{min:40,max:250,required:true,label:()=>t('targetSysMin'),range:()=>tx('40–250 мм рт. ст.','40–250 mmHg','40–250 mm sim. ust.')},
+        targetDiaMinInput:{min:20,max:150,required:true,label:()=>t('targetDiaMin'),range:()=>tx('20–150 мм рт. ст.','20–150 mmHg','20–150 mm sim. ust.')},
+        targetSysInput:{min:50,max:300,required:true,label:()=>t('targetSysMax'),range:()=>tx('50–300 мм рт. ст.','50–300 mmHg','50–300 mm sim. ust.')},
+        targetDiaInput:{min:30,max:200,required:true,label:()=>t('targetDiaMax'),range:()=>tx('30–200 мм рт. ст.','30–200 mmHg','30–200 mm sim. ust.')},
+        targetPulseInput:{min:20,max:250,label:()=>t('targetPulse'),range:()=>tx('20–250 уд/мин','20–250 bpm','20–250 ur/min')},
+        targetTTRInput:{min:0,max:100,required:true,label:()=>t('targetTTRlabel'),range:()=>tx('0–100 %','0–100%','0–100 %')}
+    };
+
+    function profileValidationReason(id) {
+        const el=document.getElementById(id); if(!el)return '';
+        const raw=String(el.value??'').trim(),rule=PROFILE_NUMERIC_RULES[id];
+        if(rule){
+            if(raw==='') return rule.required ? tx('Поле обязательно.','This field is required.','Maydon majburiy.') : '';
+            const value=safeParseFloat(raw);
+            if(!Number.isFinite(value)) return tx('Введите число.','Enter a number.','Son kiriting.');
+            if(rule.min!==undefined && value<rule.min) return tx('Допустимый диапазон: ','Allowed range: ','Ruxsat etilgan oraliq: ')+rule.range()+'.';
+            if(rule.minExclusive!==undefined && value<=rule.minExclusive) return tx('Допустимый диапазон: ','Allowed range: ','Ruxsat etilgan oraliq: ')+rule.range()+'.';
+            if(rule.max!==undefined && value>rule.max) return tx('Допустимый диапазон: ','Allowed range: ','Ruxsat etilgan oraliq: ')+rule.range()+'.';
+        }
+        const num=x=>safeParseFloat(document.getElementById(x)?.value);
+        if(id==='cholHDL'){
+            const h=num('cholHDL'),tc=num('cholTotal');
+            if(Number.isFinite(h)&&Number.isFinite(tc)&&h>=tc) return tx('ЛПВП должен быть ниже общего холестерина.','HDL must be below total cholesterol.','HDL umumiy xolesterindan past bo‘lishi kerak.');
+        }
+        if(id==='diabetesAge' && document.getElementById('diabetes')?.value==='1'){
+            const dm=num('diabetesAge'),age=num('age');
+            if(Number.isFinite(dm)&&Number.isFinite(age)&&dm>age) return tx('Возраст диагноза не может быть больше текущего возраста.','Diagnosis age cannot exceed current age.','Tashxis yoshi joriy yoshdan katta bo‘lishi mumkin emas.');
+        }
+        const minS=num('targetSysMinInput'),maxS=num('targetSysInput'),minD=num('targetDiaMinInput'),maxD=num('targetDiaInput');
+        if((id==='targetSysMinInput'||id==='targetSysInput')&&Number.isFinite(minS)&&Number.isFinite(maxS)&&minS>=maxS) return tx('Минимальное САД должно быть ниже максимального.','Minimum SBP must be below maximum SBP.','Minimal SAB maksimal SAB dan past bo‘lishi kerak.');
+        if((id==='targetDiaMinInput'||id==='targetDiaInput')&&Number.isFinite(minD)&&Number.isFinite(maxD)&&minD>=maxD) return tx('Минимальное ДАД должно быть ниже максимального.','Minimum DBP must be below maximum DBP.','Minimal DAB maksimal DAB dan past bo‘lishi kerak.');
+        if(id==='hba1c'){
+            const value=num('hba1c'),unit=document.getElementById('hba1cUnit')?.value,raw=String(el.value??'').trim();
+            if(raw!==''){
+                if(!Number.isFinite(value)) return tx('Введите число.','Enter a number.','Son kiriting.');
+                if(unit==='percent'&&(value<3||value>20)) return tx('Допустимо: 3–20 %.','Allowed: 3–20%.','Ruxsat etiladi: 3–20 %.');
+                if(unit==='mmolmol'&&(value<9||value>195)) return tx('Допустимо: 9–195 ммоль/моль.','Allowed: 9–195 mmol/mol.','Ruxsat etiladi: 9–195 mmol/mol.');
+            }
+        }
+        return '';
+    }
+
+    function setProfileFieldValidation(id,reason='') {
+        const el=document.getElementById(id); if(!el)return;
+        const field=el.closest('.field')||el.parentElement;
+        let note=field?.querySelector('.profile-validation-error[data-for="'+id+'"]');
+        if(reason){
+            el.classList.add('profile-input-invalid'); el.setAttribute('aria-invalid','true');
+            if(!note&&field){note=document.createElement('small');note.className='profile-validation-error';note.dataset.for=id;field.appendChild(note);}
+            if(note)note.textContent=reason;
+        }else{
+            el.classList.remove('profile-input-invalid');el.removeAttribute('aria-invalid');
+            note?.remove();
+        }
+    }
+
+    function validateProfileField(id) {
+        const related=new Set([id]);
+        if(id==='cholTotal'||id==='cholHDL'){related.add('cholTotal');related.add('cholHDL');}
+        if(id==='age'||id==='diabetesAge'){related.add('age');related.add('diabetesAge');}
+        if(id==='targetSysMinInput'||id==='targetSysInput'){related.add('targetSysMinInput');related.add('targetSysInput');}
+        if(id==='targetDiaMinInput'||id==='targetDiaInput'){related.add('targetDiaMinInput');related.add('targetDiaInput');}
+        let ok=true;
+        related.forEach(fieldId=>{const reason=profileValidationReason(fieldId);setProfileFieldValidation(fieldId,reason);if(reason)ok=false;});
+        return ok;
+    }
+
+    function profileValidationIds() {
+        return ['temperature','weight','height','age','cholTotal','cholHDL','diabetesAge','hba1c','egfr','uacr','scoreSysInput','targetSysMinInput','targetDiaMinInput','targetSysInput','targetDiaInput','targetPulseInput','targetTTRInput'];
+    }
+
     function bindAutoSave() {
         const ids=['temperature','weight','height','age','gender','smoking','cholTotal','cholHDL','diabetes','diabetesType','diabetesAge','hba1c','hba1cUnit','egfr','uacr','scoreEligibility','scoreCountry','riskRegion','scoreSysInput','bpContext','primaryArm','targetSysMinInput','targetDiaMinInput','targetSysInput','targetDiaInput','targetPulseInput','targetTTRInput'];
         ids.forEach(id=>{
             const el=document.getElementById(id); if(!el)return;
-            el.onchange=()=>{updateConditionalProfileUI(); debouncedAutoSaveProfile(); updateAllAnalytics();};
+            if(el.matches('input[type="number"]')){
+                el.addEventListener('input',()=>validateProfileField(id));
+                el.addEventListener('blur',()=>validateProfileField(id));
+            }
+            el.onchange=()=>{
+                updateConditionalProfileUI();
+                const valid=validateProfileInputs(false);
+                if(valid){debouncedAutoSaveProfile();updateAllAnalytics();}
+            };
         });
         updateConditionalProfileUI();
+        validateProfileInputs(false);
     }
 
     function validateProfileInputs(showAlert=true) {
-        const num=id=>safeParseFloat(document.getElementById(id)?.value), raw=id=>document.getElementById(id)?.value??'';
-        const fail=()=>{if(showAlert)alert(t('profileValidationError'));return false;};
-        const temp=num('temperature'),weight=num('weight'),height=num('height'),age=num('age'),tc=num('cholTotal'),hdl=num('cholHDL'),dm=raw('diabetes')==='1',dmAge=num('diabetesAge'),hb=num('hba1c'),unit=raw('hba1cUnit'),egfr=num('egfr'),uacr=num('uacr'),scoreSys=num('scoreSysInput');
-        if(raw('temperature')!==''&&(!(temp>=25)||temp>45))return fail(); if(raw('weight')!==''&&(!(weight>=1)||weight>500))return fail(); if(raw('height')!==''&&(!(height>=30)||height>260))return fail();
-        if(raw('age')!==''&&(!(age>=1)||age>120))return fail();
-        if(raw('cholTotal')!==''&&(!(tc>0.1)||tc>30))return fail(); if(raw('cholHDL')!==''&&(!(hdl>0.1)||hdl>10))return fail(); if(tc>0&&hdl>0&&hdl>=tc)return fail();
-        if(dm){if(dmAge>0&&age>0&&dmAge>age)return fail(); if(raw('hba1c')!==''){if(unit==='percent'&&(!(hb>=3)||hb>20))return fail(); if(unit==='mmolmol'&&(!(hb>=9)||hb>195))return fail();} if(raw('egfr')!==''&&(!(egfr>=1)||egfr>200))return fail(); if(raw('uacr')!==''&&(!(uacr>=0)||uacr>10000))return fail();}
-        if(raw('scoreSysInput')!==''&&(!(scoreSys>=70)||scoreSys>260))return fail();
-        const minS=num('targetSysMinInput'),minD=num('targetDiaMinInput'),maxS=num('targetSysInput'),maxD=num('targetDiaInput');
-        if(!(minS>0&&minD>0&&maxS>0&&maxD>0&&minS<maxS&&minD<maxD)){if(showAlert)alert(t('targetRangeInvalid'));return false;}
-        const tp=num('targetPulseInput'),tt=num('targetTTRInput'); if(raw('targetPulseInput')!==''&&(!(tp>=20)||tp>250))return fail(); if(raw('targetTTRInput')!==''&&(!(tt>=0)||tt>100))return fail();
-        return true;
+        const ids=profileValidationIds(),errors=[];
+        ids.forEach(id=>{const reason=profileValidationReason(id);setProfileFieldValidation(id,reason);if(reason)errors.push({id,reason});});
+        if(!errors.length)return true;
+        if(showAlert){
+            const first=errors[0],rule=PROFILE_NUMERIC_RULES[first.id],el=document.getElementById(first.id);
+            const label=rule?.label?.()||el?.closest('.field')?.querySelector('label')?.textContent?.trim()||first.id;
+            const prefix=errors.length>1
+                ?tx('Исправьте выделенные поля. Первое: ','Fix the highlighted fields. First: ','Ajratilgan maydonlarni tuzating. Birinchisi: ')
+                :tx('Исправьте поле: ','Fix this field: ','Maydonni tuzating: ');
+            alert(prefix+label+'. '+first.reason);
+            try{el?.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>el?.focus(),220);}catch(_){}
+        }
+        return false;
     }
     function loadData() {
         isLoading=true;

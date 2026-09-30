@@ -185,6 +185,15 @@ test('V17 top language control cycles directly and UZ mobile UI has no known Eng
   await expect(analysis).toContainText('Asosiy ko‘rsatkichlar va trendlar');
   await expect(analysis).toContainText('Umumiy');
   await expect(analysis).toContainText('Grafiklar');
+  await page.locator('#mobileAnalyticsTabs [data-mode="charts"]').click();
+  await expect(page.locator('#mobileChartSelector')).toContainText('QB');
+  await expect(page.locator('#mobileChartSelector')).toContainText('Puls');
+  await expect(page.locator('#mobileChartSelector')).toContainText('Harorat/vazn');
+  await expect(page.locator('#mobileChartSelector')).toContainText('Kun vaqti');
+  await expect(page.locator('#mobileChartSelector')).toContainText('Hafta kunlari');
+  await expect(page.locator('#mobileNativeChartPanel')).toContainText('Grafiklar');
+  await page.locator('#mobileAnalyticsTabs [data-mode="overview"]').click();
+
   await page.evaluate(()=>{
     const probe=document.createElement('div');
     probe.id='uzPatternProbe';
@@ -214,6 +223,49 @@ test('V17 top language control cycles directly and UZ mobile UI has no known Eng
   await theme.locator('[data-value="dark"]').click();
   await expect(page.locator('body')).toHaveClass(/dark/);
   await page.screenshot({path:shots+'/settings-language-theme-dark-uz.png',fullPage:true});
+});
+
+test('V17 medical profile fields validate live and identify the exact invalid field',async({page})=>{
+  const invalidCases=[
+    ['temperature','-2'],
+    ['weight','0'],
+    ['height','-6'],
+    ['age','0'],
+    ['cholTotal','0'],
+    ['cholHDL','-1']
+  ];
+
+  for(const [id,value] of invalidCases){
+    await page.evaluate(({id,value})=>{
+      const el=document.getElementById(id);
+      el.value=value;
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+    },{id,value});
+    await expect(page.locator('#'+id)).toHaveAttribute('aria-invalid','true');
+    await expect(page.locator('#'+id).locator('xpath=..').locator('.profile-validation-error')).toBeVisible();
+  }
+
+  await page.evaluate(()=>{
+    const values={temperature:'36.6',weight:'75',height:'175',age:'40',cholTotal:'5.0',cholHDL:'1.3'};
+    for(const [id,value] of Object.entries(values)){
+      const el=document.getElementById(id);
+      el.value=value;
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+  });
+
+  for(const id of ['temperature','weight','height','age','cholTotal','cholHDL']){
+    await expect(page.locator('#'+id)).not.toHaveAttribute('aria-invalid','true');
+  }
+
+  await page.evaluate(()=>{
+    const min=document.getElementById('targetSysMinInput'),max=document.getElementById('targetSysInput');
+    min.value='140';max.value='130';
+    min.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+  await expect(page.locator('#targetSysMinInput')).toHaveAttribute('aria-invalid','true');
+  await expect(page.locator('#targetSysInput')).toHaveAttribute('aria-invalid','true');
+  await expect(page.locator('#targetSysMinInput').locator('xpath=..').locator('.profile-validation-error')).toContainText(/миним|minimum|Minimal/i);
 });
 
 test('V17 protected backup is a true modal above navigation and closes cleanly',async({page})=>{
@@ -358,6 +410,13 @@ test('V17 uses the system authentication prompt with a 10 second background thre
   expect(await page.evaluate(()=>window.__bpPrivacyLockMs)).toBe(10000);
   expect(await page.locator('#mobilePrivacyLock').count()).toBe(0);
   expect(await page.evaluate(()=>document.documentElement.classList.contains('bp-prelocked'))).toBe(true);
+  const prelockStyle=await page.evaluate(()=>({
+    bodyVisibility:getComputedStyle(document.body).visibility,
+    bodyBackground:getComputedStyle(document.body).backgroundColor,
+    firstChildVisibility:getComputedStyle(document.body.firstElementChild).visibility
+  }));
+  expect(prelockStyle.bodyVisibility).toBe('visible');
+  expect(prelockStyle.firstChildVisibility).toBe('hidden');
   await page.evaluate(()=>window.__bpBioResolve({authenticated:true}));
   await expect.poll(()=>page.evaluate(()=>document.documentElement.classList.contains('bp-prelocked'))).toBe(false);
 });
@@ -383,7 +442,6 @@ test('V17 screen-off event hides content immediately and requires re-authenticat
   await expect.poll(()=>page.evaluate(()=>document.documentElement.classList.contains('bp-prelocked'))).toBe(true);
 
   const before=await page.evaluate(()=>window.__screenAuthCalls);
-  await page.evaluate(()=>window.__bpPrivacyResumeCheck());
-  await expect.poll(()=>page.evaluate(()=>window.__screenAuthCalls)).toBeGreaterThan(before);
+  await expect.poll(()=>page.evaluate(()=>window.__screenAuthCalls),{timeout:2500}).toBeGreaterThan(before);
   await expect.poll(()=>page.evaluate(()=>document.documentElement.classList.contains('bp-prelocked'))).toBe(false);
 });
