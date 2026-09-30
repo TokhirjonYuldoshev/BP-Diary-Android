@@ -22,7 +22,7 @@
 
 **Текущий стабильный релиз: V16 / 5.6.0 — Reliability & Android Integration.**
 
-Следующий кандидат: **V17 / 5.7.0 — Privacy & Resilience**.
+Готовый к релизному пайплайну кандидат: **V17 / 5.7.0 — Reminders, Reports, Privacy & Localization**. Real-device acceptance пройден; публикация остаётся закрыта через `publish=false` до финального переноса в `main`.
 
 - Release tag: `v5.6.0`
 - versionCode: `160`
@@ -50,7 +50,7 @@ SHA-256: 74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
 - персональный диапазон и цели;
 - голосовой ввод;
 - TTS-озвучивание;
-- русский и английский языки;
+- русский, английский и узбекский (Latin) языки;
 - светлая и тёмная темы.
 
 ### Архив и аналитика
@@ -77,6 +77,16 @@ SHA-256: 74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
 - ручной Full Backup в JSON;
 - восстановление из Full Backup;
 - safety-backup перед отдельными опасными операциями.
+
+### V17: кандидат, прошедший device acceptance
+
+- до **3 времён напоминаний в день**, 1–3 сигнала, интервалы 5/10/15/30 минут, 3 системных звука и вибрация;
+- действия уведомлений **«Измерено»** и **«Напомнить позже»**;
+- проверка новых/редактируемых замеров до сохранения;
+- полноценное руководство **RU / EN / UZ**;
+- мобильный отчёт врача **A4 landscape**, как ПК-версия;
+- App Lock через системную Android-аутентификацию, Screen privacy и защищённый AES-GCM backup;
+- medical/core расчёты, SCORE2, формулы отчёта, Package ID и signing lineage не изменены.
 
 ### V16: Android-интеграция
 
@@ -128,7 +138,8 @@ BP-Diary-Android/
 │   ├── patch-android.mjs        # native Android bridge
 │   └── regression.mjs           # regression smoke
 ├── tests/
-│   └── ui-v16.spec.mjs          # Playwright mobile UI regression
+│   ├── ui-v16.spec.mjs          # V16 Playwright regression
+│   └── ui-v17.spec.mjs          # V17 Playwright regression
 ├── .github/workflows/
 │   ├── build-android.yml        # debug + release CI
 │   ├── ui-regression.yml        # visual/mobile regression
@@ -168,7 +179,7 @@ Android-проект после этого находится в `android/`.
 
 ## Версионирование и Release
 
-V16 использует один источник истины:
+BP Diary использует один источник истины:
 
 ```text
 version.json
@@ -226,13 +237,13 @@ V16 прошёл:
 
 V16 обращается к GitHub Releases API **только после явного нажатия пользователем «Проверить обновления»**.
 
-Нативное напоминание хранит только настройки напоминания: включено/выключено, время и текст уведомления.
+Нативные напоминания хранят только настройки расписания/уведомления (времена, повторы, интервал, звук, вибрация и подписи действий); данные измерений в reminder preferences не записываются.
 
 Подробнее: [SECURITY.md](SECURITY.md).
 
 ### Signing
 
-Direct-distribution APK V8–V16 сохраняет существующий update signer:
+Direct-distribution APK V8–V17 сохраняет существующий update signer:
 
 ```text
 SHA-256 certificate:
@@ -265,7 +276,7 @@ BP Diary предназначен для ведения записей и под
 
 **Current stable release: V16 / 5.6.0 — Reliability & Android Integration.**
 
-Next candidate: **V17 / 5.7.0 — Privacy & Resilience**.
+Release-ready candidate: **V17 / 5.7.0 — Reminders, Reports, Privacy & Localization**. Real-device acceptance has passed; publication remains gated by `publish=false` until final integration into `main`.
 
 - Release tag: `v5.6.0`
 - versionCode: `160`
@@ -293,7 +304,7 @@ SHA-256: 74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
 - personal target range;
 - voice input;
 - TTS;
-- Russian and English;
+- Russian, English and Uzbek (Latin);
 - light and dark themes.
 
 ### Archive and analytics
@@ -320,6 +331,16 @@ SHA-256: 74cd50bf017c6d02936adc6da947eadb7908e99931559e7b527755df1ad7c6dc
 - manual Full Backup JSON export;
 - restore from Full Backup;
 - safety backups before selected destructive operations.
+
+### V17 accepted release candidate
+
+- up to **3 reminder times per day**, 1–3 alerts, 5/10/15/30-minute intervals, 3 Android system sounds and optional vibration;
+- notification actions for **Done** and **Remind later**;
+- input guardrails for new/edited measurements before persistence;
+- full in-app **RU / EN / UZ** user guide;
+- mobile doctor report in **A4 landscape**, matching the desktop-style report;
+- system Android App Lock, Screen privacy and password-protected AES-GCM backup;
+- medical/core calculations, SCORE2, report formulas, Package ID and signing lineage remain unchanged.
 
 ### V16 Android integration
 
@@ -411,7 +432,7 @@ The generated Android project is written to `android/`.
 
 ## Versioning and release
 
-V16 uses a single source of truth:
+BP Diary uses a single source of truth:
 
 ```text
 version.json
@@ -463,13 +484,13 @@ Measurements, profile data and local backups are not sent to GitHub when checkin
 
 V16 contacts the GitHub Releases API **only after the user explicitly taps “Check for updates.”**
 
-The native reminder stores reminder configuration only: enabled state, time and notification text.
+Native reminders store only schedule/notification configuration (times, repeats, interval, sound, vibration and action labels); measurement data are not stored in reminder preferences.
 
 See [SECURITY.md](SECURITY.md).
 
 ### APK signing
 
-Direct-distribution builds V8–V16 retain the existing update signer:
+Direct-distribution builds V8–V17 retain the existing update signer:
 
 ```text
 SHA-256 certificate:

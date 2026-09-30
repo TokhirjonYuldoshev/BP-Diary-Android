@@ -1,28 +1,43 @@
 # Changelog
 
-## V17 — Privacy & Resilience — candidate
+## V17 — Reminders, Reports, Privacy & Localization — 5.7.0 release candidate
 
-### Added
-- Optional biometric application lock.
-- Automatic re-lock after the app remains in the background for 15 seconds.
-- Optional Android `FLAG_SECURE` protection for screenshots and Recent Apps previews.
-- Password-protected Full Backup format.
-- PBKDF2-SHA-256 password derivation with 310,000 iterations.
-- AES-GCM-256 authenticated encryption with random per-file salt and IV.
-- Protected-backup restore with wrong-password/corruption rejection.
-- Pre-paint privacy guard to reduce content exposure before the biometric layer starts.
-- V17 automated UI/privacy regression coverage.
+### Added and improved
+- System Android App Lock using biometric authentication and/or device credential/PIN.
+- Automatic App Lock after **10 seconds** in the background and immediate re-authentication after physical screen lock.
+- Optional Android `FLAG_SECURE` screen privacy for screenshots and Recent Apps previews.
+- Password-protected Full Backup using PBKDF2-SHA-256 (310,000 iterations) and AES-GCM-256.
+- Protected-backup restore with wrong-password/corruption rejection before application data are modified.
+- Pre-paint privacy guard so protected diary content is hidden before system authentication completes.
+- **Uzbek (Latin) UI localization** alongside Russian and English, including Archive period labels such as `7 kun / 30 kun / 90 kun`.
+- Input guardrails for newly entered/edited measurements: SYS 60–260 mmHg, DIA 40–160 mmHg, optional pulse 30–220 bpm, and SYS > DIA.
+- Existing historical records are not rewritten by the new entry guardrails.
+- Configurable native measurement reminders with up to **three daily times**.
+- Reminder repeat count **1–3**, repeat interval **5 / 10 / 15 / 30 minutes**, three Android system sound choices and optional vibration.
+- Reminder notification actions for **Done / Измерено / O‘lchandi** and **Remind later / Напомнить позже / Keyinroq eslatish**.
+- Reminder test-sound control and restoration after reboot, time/timezone changes and application updates.
+- Full in-app **RU / EN / UZ user guide** explaining readings, SYS/DIA/pulse, Archive/Analytics, reports, reminders and backups.
+- Mobile doctor report export aligned with the desktop report: **A4 landscape** for Save PDF, Print and Share.
+- Pre-save safety warning remains in place for accepted extreme readings.
+- Expanded static and Playwright regression coverage for V17.
 
-### Compatibility
-- Plain JSON Full Backup remains available.
-- V16 automatic backups remain unchanged.
-- V16 native reminders and update checker remain unchanged.
-- Package ID, application data schema and direct-update signing lineage remain unchanged.
-- Medical/core calculations are intentionally untouched.
+### Preserved
+- Blood-pressure calculations, session-average formulas, SCORE2 logic, target-range calculations, report formulas and existing patient/data schema remain unchanged.
+- Plain JSON Full Backup and automatic local backups remain available.
+- Update checker, Archive, Voice/TTS, Android Back, light/dark and existing V16 flows remain available.
+- Package ID remains `com.tokhirjonyuldoshev.bpdiary`.
+- Direct-distribution signing lineage is unchanged.
+
+### Candidate verification
+- Android Build #142: **SUCCESS**.
+- UI Regression #37: **SUCCESS**.
+- Candidate APK SHA-256: `0c1b90083461b5adcb917e3a83ca62039b767e25c9ed75f164044afe23a3b18b`.
+- Signing certificate SHA-256: `63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102`.
+- Real-device acceptance: **PASSED — “всё работает” confirmed on 2026-09-30**.
+- Publication gate remains `publish=false` until final integration into `main`.
 
 ### Security note
 BP Diary does not store the protected-backup password. Losing the password means the encrypted file cannot be recovered by the application.
-
 
 ## V16 — Reliability & Android Integration — 5.6.0
 

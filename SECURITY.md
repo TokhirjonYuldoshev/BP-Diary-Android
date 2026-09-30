@@ -18,7 +18,7 @@ BP Diary хранит данные дневника локально в обла
 
 ### Signing key
 
-В V8–V15 для direct-distribution update path использовался стабильный ключ, который присутствовал в истории публичного репозитория.
+В V8–V17 для direct-distribution update path использовался стабильный ключ, который присутствовал в истории публичного репозитория.
 
 Следствие: этот ключ подходит для совместимости существующих тестовых установок, но **не должен считаться безопасным production signing key**.
 
@@ -34,9 +34,9 @@ BP Diary хранит данные дневника локально в обла
 
 ---
 
-## V16 privacy notes
+## V17 privacy and notification notes
 
-- Native reminders store only reminder configuration (enabled/time/title/body) in Android app preferences.
+- Native reminders store only schedule/notification configuration in Android app preferences: enabled state, up to three times, title/body, repeat count/interval, sound selection, vibration and action labels. Diary measurements are not stored in reminder preferences.
 - Reminder notifications do not upload diary measurements.
 - The update checker performs a network request **only when the user explicitly taps “Check for updates”**.
 - That request goes to the official GitHub Releases API for this repository.
@@ -61,7 +61,7 @@ BP Diary stores diary data locally in the app/WebView area. Automatic backups ar
 
 ### Signing key
 
-The V8–V15 direct-distribution update path used a stable key that has existed in the public repository history.
+The V8–V17 direct-distribution update path used a stable key that has existed in the public repository history.
 
 As a result, it preserves compatibility with existing test installations but **must not be treated as a secure production signing key**.
 
@@ -76,9 +76,9 @@ For Google Play or another production channel:
 Changing the signing lineage breaks direct upgrades from APKs signed by a different key, so such a migration must be planned explicitly.
 
 
-## V16 privacy notes — English
+## V17 privacy and notification notes — English
 
-- Native reminders store only reminder configuration (enabled/time/title/body) in Android app preferences.
+- Native reminders store only schedule/notification configuration in Android app preferences: enabled state, up to three times, title/body, repeat count/interval, sound selection, vibration and action labels. Diary measurements are not stored in reminder preferences.
 - Reminder notifications do not upload diary measurements.
 - The update checker makes a network request **only after the user explicitly chooses “Check for updates”**.
 - The request targets the official GitHub Releases API for this repository.

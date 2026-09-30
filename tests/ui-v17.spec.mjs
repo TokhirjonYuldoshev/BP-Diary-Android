@@ -1,3 +1,4 @@
+// V17 final acceptance checkpoint: documentation/QA closeout; no test behavior change.
 import { test, expect } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 

@@ -228,19 +228,22 @@ Only modify core/medical logic in `source/index.html` when necessary and with de
 
 ---
 
-## V17 Privacy & Resilience
+## V17 Reminders, Reports, Privacy & Localization
 
 ### Русский
 
-V17 добавляет слой приватности поверх существующей архитектуры без переноса медицинских расчётов из core.
+V17 расширяет mobile/native слой напоминаниями, локализацией, руководством, desktop-style отчётом и функциями приватности без переноса медицинских расчётов из core.
 
 - **Biometric bridge** находится в `NativeBridgePlugin` и использует AndroidX Biometric.
 - **Screen privacy** управляет Android `FLAG_SECURE`; состояние также сохраняется в native SharedPreferences.
-- **Pre-paint guard** добавляется в `scripts/prepare-web.mjs`, чтобы при включённой биометрии содержимое дневника не отображалось до инициализации lock-overlay.
+- **Pre-paint guard** добавляется в `scripts/prepare-web.mjs`, чтобы при включённом App Lock содержимое дневника не отображалось до завершения системной Android-аутентификации.
 - **Protected Backup** шифруется в WebView через Web Crypto API до передачи в Android file picker.
 - Android получает уже зашифрованный JSON-envelope и отвечает только за сохранение/чтение файла.
 - Пароль не передаётся в native storage и не сохраняется в localStorage.
 - Restore сначала расшифровывает и проверяет файл, затем просит подтверждение и создаёт safety auto-backup перед заменой данных.
+- **ReminderScheduler / ReminderReceiver** поддерживают до трёх ежедневных времён, повторные сигналы, интервалы, системные звуки, вибрацию и действия Done/Remind later; системные broadcast-события восстанавливают расписание.
+- **User guide** реализован в mobile UX-слое на RU / EN / UZ.
+- **Doctor report** сохраняет core-расчёты, а мобильный export принудительно использует A4 landscape для Save/Print/Share.
 
 ```text
 backupSnapshot()
@@ -260,12 +263,15 @@ NativeBridge.saveTextFile()
 
 ### English
 
-V17 adds a privacy layer around the existing architecture without moving medical calculations out of the core.
+V17 expands the mobile/native layer with reminders, localization, an in-app guide, desktop-style report export and privacy features without moving medical calculations out of the core.
 
 - The **biometric bridge** lives in `NativeBridgePlugin` and uses AndroidX Biometric.
 - **Screen privacy** controls Android `FLAG_SECURE`, with state also persisted in native SharedPreferences.
-- A **pre-paint guard** is injected by `scripts/prepare-web.mjs` so protected diary content is not displayed before the biometric lock overlay initializes.
+- A **pre-paint guard** is injected by `scripts/prepare-web.mjs` so protected diary content is not displayed before system Android authentication completes.
 - **Protected Backup** encryption happens in the WebView through the Web Crypto API before data are handed to the Android file picker.
 - Android receives only the encrypted JSON envelope for saving/reading.
 - The password is not stored in native preferences or localStorage.
 - Restore decrypts and validates first, then asks for confirmation and creates a safety auto-backup before replacing data.
+- **ReminderScheduler / ReminderReceiver** support up to three daily times, repeat alerts, intervals, system sounds, vibration and Done/Remind later actions; Android system broadcasts restore the schedule.
+- The **user guide** lives in the mobile UX layer and is available in RU / EN / UZ.
+- **Doctor report** calculations remain in core while mobile Save/Print/Share export uses A4 landscape.

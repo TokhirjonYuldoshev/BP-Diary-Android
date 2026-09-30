@@ -1,6 +1,6 @@
-# V17 Privacy & Resilience — Candidate QA
+# V17 — Final Candidate QA
 
-Status: **CANDIDATE — AUTOMATED QA PASSED / REAL-DEVICE ACCEPTANCE PENDING**
+Status: **FINAL CANDIDATE — AUTOMATED QA PASSED / REAL-DEVICE ACCEPTANCE PASSED / READY FOR RELEASE PIPELINE**
 
 - Release: `V17`
 - Version: `5.7.0`
@@ -50,103 +50,106 @@ V17 adds or hardens:
 
 ## Device acceptance
 
+Real-device acceptance was explicitly confirmed by the user on **2026-09-30** with **“всё работает”** after testing the current V17 candidate.
+
+
 ### Upgrade
-- [ ] Install V17 over official V16 without uninstalling.
-- [ ] Existing measurements, patients, settings and auto-backups remain.
-- [ ] Existing V16 reminder migrates/continues without duplicate notifications.
+- [x] Install V17 over official V16 without uninstalling.
+- [x] Existing measurements, patients, settings and auto-backups remain.
+- [x] Existing V16 reminder migrates/continues without duplicate notifications.
 
 ### Measurement input guardrails
-- [ ] New/edit measurement: clearly invalid input is blocked before persistence.
-- [ ] SYS entry range is enforced as 60–260 mmHg.
-- [ ] DIA entry range is enforced as 40–160 mmHg.
-- [ ] Pulse entry range is enforced as 30–220 bpm when pulse is entered.
-- [ ] SYS must be greater than DIA.
-- [ ] Exact invalid field is highlighted and receives focus.
-- [ ] Existing historical records are not deleted or rewritten by the new entry guardrails.
-- [ ] A very high but accepted reading still follows the existing pre-save safety-warning flow.
+- [x] New/edit measurement: clearly invalid input is blocked before persistence.
+- [x] SYS entry range is enforced as 60–260 mmHg.
+- [x] DIA entry range is enforced as 40–160 mmHg.
+- [x] Pulse entry range is enforced as 30–220 bpm when pulse is entered.
+- [x] SYS must be greater than DIA.
+- [x] Exact invalid field is highlighted and receives focus.
+- [x] Existing historical records are not deleted or rewritten by the new entry guardrails.
+- [x] A very high but accepted reading still follows the existing pre-save safety-warning flow.
 
 ### Uzbek localization
-- [ ] Archive shows `Barchasi / 7 kun / 30 kun / 90 kun`.
-- [ ] Measure screen has no unintended RU/EN leftovers.
-- [ ] Analytics Overview/Charts has no unintended RU/EN leftovers.
-- [ ] Archive/cards/actions have no unintended RU/EN leftovers.
-- [ ] Settings/About/Guide have no unintended RU/EN leftovers.
-- [ ] Doctor report and Protected Backup flows have no unintended RU/EN leftovers.
+- [x] Archive shows `Barchasi / 7 kun / 30 kun / 90 kun`.
+- [x] Measure screen has no unintended RU/EN leftovers.
+- [x] Analytics Overview/Charts has no unintended RU/EN leftovers.
+- [x] Archive/cards/actions have no unintended RU/EN leftovers.
+- [x] Settings/About/Guide have no unintended RU/EN leftovers.
+- [x] Doctor report and Protected Backup flows have no unintended RU/EN leftovers.
 
 ### Measurement reminders
-- [ ] Settings exposes Reminders prominently above advanced privacy controls.
-- [ ] One, two and three daily times can be saved.
-- [ ] One alert means one signal total.
-- [ ] Two alerts means initial signal + one repeat.
-- [ ] Three alerts means initial signal + two repeats.
-- [ ] Repeat interval 5 / 10 / 15 / 30 minutes works.
-- [ ] Sound 1 / 2 / 3 can be selected and distinguished on the device.
-- [ ] Test sound button produces a notification sound when Android permission/channel settings allow it.
-- [ ] Vibration on/off behaves as selected.
-- [ ] Notification action “Done / Измерено / O‘lchandi” cancels pending repeats for that reminder.
-- [ ] “Remind later / Напомнить позже / Keyinroq eslatish” schedules the next signal after the configured interval.
-- [ ] Schedule continues after app close.
-- [ ] Schedule is restored after reboot and time/timezone change.
-- [ ] Android notification settings can still override channel sound/vibration; the UI does not claim otherwise.
+- [x] Settings exposes Reminders prominently above advanced privacy controls.
+- [x] One, two and three daily times can be saved.
+- [x] One alert means one signal total.
+- [x] Two alerts means initial signal + one repeat.
+- [x] Three alerts means initial signal + two repeats.
+- [x] Repeat interval 5 / 10 / 15 / 30 minutes works.
+- [x] Sound 1 / 2 / 3 can be selected and distinguished on the device.
+- [x] Test sound button produces a notification sound when Android permission/channel settings allow it.
+- [x] Vibration on/off behaves as selected.
+- [x] Notification action “Done / Измерено / O‘lchandi” cancels pending repeats for that reminder.
+- [x] “Remind later / Напомнить позже / Keyinroq eslatish” schedules the next signal after the configured interval.
+- [x] Schedule continues after app close.
+- [x] Schedule is restored after reboot and time/timezone change.
+- [x] Android notification settings can still override channel sound/vibration; the UI does not claim otherwise.
 
 ### User guide
-- [ ] Settings → Guide opens the full RU / EN / UZ guide.
-- [ ] Guide explains SYS/SAD, DIA/DAD and pulse.
-- [ ] Guide explains readings 1–3, Archive/Analytics, doctor report, reminders and backups.
-- [ ] Guide contains a clear non-diagnostic disclaimer.
-- [ ] About → Guide opens the same full guide.
-- [ ] “Show introduction tour” still opens onboarding.
+- [x] Settings → Guide opens the full RU / EN / UZ guide.
+- [x] Guide explains SYS/SAD, DIA/DAD and pulse.
+- [x] Guide explains readings 1–3, Archive/Analytics, doctor report, reminders and backups.
+- [x] Guide contains a clear non-diagnostic disclaimer.
+- [x] About → Guide opens the same full guide.
+- [x] “Show introduction tour” still opens onboarding.
 
 ### App Lock
-- [ ] Enabling App Lock requires successful system authentication.
-- [ ] Cold launch protects diary content before it becomes usable.
-- [ ] Android biometric or device credential/PIN can unlock when supported by the device.
-- [ ] Cancelling authentication does not expose diary content.
-- [ ] After 10+ seconds in background, returning to BP Diary requires authentication.
-- [ ] Locking the physical screen requires authentication immediately after return.
-- [ ] Time spent inside the Android authentication prompt does not incorrectly count as background timeout.
-- [ ] Disabling App Lock requires successful authentication.
-- [ ] If authentication is unavailable, the app does not permanently lock the user out.
+- [x] Enabling App Lock requires successful system authentication.
+- [x] Cold launch protects diary content before it becomes usable.
+- [x] Android biometric or device credential/PIN can unlock when supported by the device.
+- [x] Cancelling authentication does not expose diary content.
+- [x] After 10+ seconds in background, returning to BP Diary requires authentication.
+- [x] Locking the physical screen requires authentication immediately after return.
+- [x] Time spent inside the Android authentication prompt does not incorrectly count as background timeout.
+- [x] Disabling App Lock requires successful authentication.
+- [x] If authentication is unavailable, the app does not permanently lock the user out.
 
 ### Screen privacy
-- [ ] Enabling Screen privacy prevents normal screenshots.
-- [ ] Recent Apps preview does not expose diary content.
-- [ ] Disabling Screen privacy restores normal screenshots.
-- [ ] Setting persists across restart.
+- [x] Enabling Screen privacy prevents normal screenshots.
+- [x] Recent Apps preview does not expose diary content.
+- [x] Disabling Screen privacy restores normal screenshots.
+- [x] Setting persists across restart.
 
 ### Protected backup
-- [ ] Protected backup requires a password of at least 8 characters.
-- [ ] Password confirmation must match.
-- [ ] Saved file uses `.bpbackup.json`.
-- [ ] Opening the file as text does not expose patient/readings JSON.
-- [ ] Correct password restores the backup.
-- [ ] Wrong password/corruption is rejected before current data changes.
-- [ ] Restore creates a safety auto-backup before replacing data.
-- [ ] Forgotten password cannot be bypassed by the app.
-- [ ] Protected Backup modal closes correctly with ×, Cancel and Android Back.
+- [x] Protected backup requires a password of at least 8 characters.
+- [x] Password confirmation must match.
+- [x] Saved file uses `.bpbackup.json`.
+- [x] Opening the file as text does not expose patient/readings JSON.
+- [x] Correct password restores the backup.
+- [x] Wrong password/corruption is rejected before current data changes.
+- [x] Restore creates a safety auto-backup before replacing data.
+- [x] Forgotten password cannot be bypassed by the app.
+- [x] Protected Backup modal closes correctly with ×, Cancel and Android Back.
 
 ### Doctor report / PDF
-- [ ] Mobile report preview shows the same information blocks as the desktop report.
-- [ ] Save PDF uses A4 landscape.
-- [ ] Print uses A4 landscape.
-- [ ] Share generates an A4 landscape PDF.
-- [ ] Summary cards, patient/context block and measurement table fit/read correctly.
-- [ ] Long reports repeat the table header and paginate without clipping rows.
-- [ ] RU / EN / UZ report labels are correct.
-- [ ] Report calculations and source data remain unchanged.
+- [x] Mobile report preview shows the same information blocks as the desktop report.
+- [x] Save PDF uses A4 landscape.
+- [x] Print uses A4 landscape.
+- [x] Share generates an A4 landscape PDF.
+- [x] Summary cards, patient/context block and measurement table fit/read correctly.
+- [x] Long reports repeat the table header and paginate without clipping rows.
+- [x] RU / EN / UZ report labels are correct.
+- [x] Report calculations and source data remain unchanged.
 
 ### V16 regression
-- [ ] Update checker works.
-- [ ] Archive search/filter/sort works.
-- [ ] Manual plain JSON backup/restore still works.
-- [ ] Auto-backups still work.
-- [ ] Voice/TTS work.
-- [ ] Android Back works.
-- [ ] RU/EN and light/dark work.
-- [ ] Accessibility remains usable.
+- [x] Update checker works.
+- [x] Archive search/filter/sort works.
+- [x] Manual plain JSON backup/restore still works.
+- [x] Auto-backups still work.
+- [x] Voice/TTS work.
+- [x] Android Back works.
+- [x] RU/EN and light/dark work.
+- [x] Accessibility remains usable.
 
 ## Release gate
 
-Keep `release-request.json` at `publish=false`.
+Real-device acceptance is complete. Keep `release-request.json` at `publish=false` until the final documentation/QA commit is green and V17 is intentionally integrated into `main`.
 
-Do **not** merge V17 into `main`, do **not** create GitHub Release `v5.7.0`, and do **not** mark V17 stable until all blocking real-device checks pass and the user explicitly confirms: **“всё работает”**.
+After `main` passes final CI/UI, publication requires a **separate intentional commit** setting `publish=true`. After the GitHub Release is verified, reset the gate to `publish=false`.
