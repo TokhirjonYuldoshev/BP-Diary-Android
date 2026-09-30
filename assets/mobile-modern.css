@@ -1844,3 +1844,68 @@ html.bp-prelocked body::before{
     background:rgba(255,113,128,.065)!important
   }
 }
+
+
+/* V17 pre-save medical safety alert and inline validation focus */
+.profile-validation-summary{
+  margin:0 0 10px;padding:9px 11px;border:1px solid rgba(226,67,76,.48);border-radius:12px;
+  background:rgba(226,67,76,.08);color:#b32631;font-size:.72rem;font-weight:760;line-height:1.4
+}
+body.dark .profile-validation-summary{
+  color:#ffabb0;background:rgba(239,91,100,.09);border-color:rgba(239,91,100,.38)
+}
+.profile-input-invalid{
+  border-color:#df4852!important;box-shadow:0 0 0 2px rgba(223,72,82,.10)!important
+}
+.profile-input-error{
+  color:#d53d48!important;font-size:.58rem!important;font-weight:760!important;line-height:1.3!important;margin-top:4px!important
+}
+
+@media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
+  #mobileSafetyAlertSheet{
+    display:flex!important;position:fixed!important;inset:0!important;z-index:41000!important;
+    align-items:flex-end!important;justify-content:center!important;
+    padding:12px 12px calc(12px + env(safe-area-inset-bottom))!important;
+    background:rgba(18,3,6,.74)!important;
+    opacity:0!important;visibility:hidden!important;pointer-events:none!important;
+    transition:opacity .18s ease,visibility 0s linear .18s!important
+  }
+  #mobileSafetyAlertSheet.open{
+    opacity:1!important;visibility:visible!important;pointer-events:auto!important;transition:opacity .18s ease!important
+  }
+  #mobileSafetyAlertSheet .mobile-sheet-panel{
+    width:min(100%,540px)!important;max-width:540px!important;margin:0 auto!important;
+    border:1px solid rgba(239,91,100,.50)!important;border-radius:25px!important;
+    background:var(--m-surface)!important;box-shadow:0 -24px 72px rgba(91,10,18,.35)!important;
+    overflow:hidden!important
+  }
+  #mobileSafetyAlertSheet .mobile-sheet-title{
+    min-height:54px!important;padding:12px 14px!important;margin:0!important;
+    background:linear-gradient(135deg,#a91f2b,#d9434d)!important;color:#fff!important;
+    display:flex!important;align-items:center!important
+  }
+  #mobileSafetyAlertSheet .mobile-sheet-grid{
+    display:grid!important;grid-template-columns:1fr!important;gap:12px!important;padding:14px!important
+  }
+  .mobile-safety-card{
+    display:grid;grid-template-columns:46px minmax(0,1fr);gap:12px;padding:14px;
+    border:1px solid rgba(223,72,82,.32);border-radius:18px;background:rgba(223,72,82,.07)
+  }
+  .mobile-safety-card.critical{background:rgba(211,48,60,.11);border-color:rgba(225,63,74,.48)}
+  .mobile-safety-icon{
+    width:44px;height:44px;display:grid;place-items:center;border-radius:14px;
+    background:#d93643;color:#fff;font-size:1.2rem;font-weight:950
+  }
+  .mobile-safety-body{min-width:0}
+  .mobile-safety-body strong{display:block;color:#d93643;font-size:.84rem;font-weight:900;line-height:1.2}
+  body.dark .mobile-safety-body strong{color:#ff8f98}
+  .mobile-safety-body b{display:block;margin-top:5px;color:var(--m-ink);font-size:.76rem;line-height:1.35}
+  .mobile-safety-body p{margin:9px 0 0;color:var(--m-ink);font-size:.70rem;line-height:1.48}
+  .mobile-safety-body small{display:block;margin-top:9px;color:var(--m-muted);font-size:.57rem;line-height:1.4}
+  .mobile-safety-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .mobile-safety-actions button{
+    min-height:50px!important;display:flex!important;align-items:center!important;
+    justify-content:center!important;text-align:center!important
+  }
+  .mobile-safety-save{background:#d93643!important;border-color:#d93643!important;color:#fff!important}
+}

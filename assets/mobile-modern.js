@@ -261,6 +261,36 @@
     });
   }
 
+  window.bpPreSaveSafetyAlert=function(warning){
+    return new Promise(resolve=>{
+      const sheet=makeSheet('mobileSafetyAlertSheet',warning?.title||l('Важное предупреждение','Important warning','Muhim ogohlantirish'));
+      q('.mobile-sheet-title',sheet).innerHTML='<span>'+l('⚠ Важное медицинское предупреждение','⚠ Important medical warning','⚠ Muhim tibbiy ogohlantirish')+'</span>';
+      const grid=q('.mobile-sheet-grid',sheet);grid.innerHTML='';
+      const card=document.createElement('div');
+      card.className='mobile-safety-card '+(warning?.level==='critical'?'critical':'warning');
+      card.innerHTML='<div class="mobile-safety-icon">!</div><div class="mobile-safety-body"><strong></strong><b></b><p></p><small></small></div>';
+      q('strong',card).textContent=warning?.title||'';
+      q('b',card).textContent=warning?.value||'';
+      q('p',card).textContent=warning?.message||'';
+      q('small',card).textContent=l(
+        'BP Diary не ставит диагноз. Это предупреждение безопасности перед сохранением записи.',
+        'BP Diary does not diagnose. This is a safety warning shown before saving the reading.',
+        'BP Diary tashxis qo‘ymaydi. Bu yozuvni saqlashdan oldingi xavfsizlik ogohlantirishidir.'
+      );
+      const actions=document.createElement('div');actions.className='mobile-safety-actions';
+      const back=document.createElement('button');back.type='button';back.className='outline';
+      back.textContent=l('Вернуться к измерению','Review reading','O‘lchovni tekshirish');
+      const save=document.createElement('button');save.type='button';save.className='mobile-safety-save';
+      save.textContent=l('Сохранить всё равно','Save anyway','Baribir saqlash');
+      actions.append(back,save);grid.append(card,actions);
+      let settled=false;
+      const finish=value=>{if(settled)return;settled=true;sheet.__onDismiss=null;closeMobileSheet(sheet);resolve(value)};
+      sheet.__onDismiss=()=>{if(!settled){settled=true;resolve(false)}};
+      back.onclick=()=>finish(false);save.onclick=()=>finish(true);
+      openMobileSheet(sheet);
+    });
+  };
+
   function polishControls(measure){
     const add=q('#addPatientBtn');if(add){add.innerHTML=svgIcon('plus')+'<span>'+(ru()?'Добавить':'Add')+'</span>';add.setAttribute('aria-label',ru()?'Добавить пациента':'Add patient')}
     const edit=q('#editPatientBtn');if(edit){edit.innerHTML=svgIcon('edit');edit.setAttribute('aria-label',ru()?'Изменить пациента':'Edit patient');edit.title=edit.getAttribute('aria-label')}
@@ -1160,10 +1190,8 @@
     g.innerHTML='<section class="mobile-about-hero"><div class="mobile-about-icon">'+brandHeartIcon()+'</div><strong>BP Diary</strong><span>'+l('Дневник артериального давления','Blood pressure diary','Qon bosimi kundaligi')+'</span><small>'+APP_VERSION+' · Android '+APP_RELEASE+'</small></section>'+
       '<section class="mobile-about-intro">'+l('Персональный дневник артериального давления с аналитикой, отчётами врачу, резервным копированием и голосовыми функциями.','A personal blood pressure diary with analytics, doctor reports, backups and voice features.','Tahlil, shifokor hisobotlari, zaxira nusxalar va ovozli funksiyalarga ega shaxsiy qon bosimi kundaligi.')+'</section>'+
       '<div class="mobile-about-list">'+
-        '<button type="button" data-about-action="settings"><span class="mobile-about-row-icon">'+svgIcon('settings')+'</span><span><b>'+l('Настройки','Settings','Sozlamalar')+'</b><small>'+l('Напоминания, тема, данные и обновления','Reminders, theme, data and updates','Eslatmalar, mavzu, ma’lumotlar va yangilanishlar')+'</small></span><span>›</span></button>'+
         '<button type="button" data-about-action="update"><span class="mobile-about-row-icon">'+svgIcon('update')+'</span><span><b>'+l('Проверить обновления','Check for updates','Yangilanishlarni tekshirish')+'</b><small>'+APP_VERSION+' · '+APP_RELEASE+'</small></span><span>›</span></button>'+
         '<button type="button" data-about-action="guide"><span class="mobile-about-row-icon">▶</span><span><b>'+l('Краткое руководство','Quick guide','Qisqa qo‘llanma')+'</b><small>'+l('Показать введение '+APP_RELEASE+' ещё раз','Show the '+APP_RELEASE+' introduction again',APP_RELEASE+' kirish qo‘llanmasini yana ko‘rsatish')+'</small></span><span>›</span></button>'+
-        '<button type="button" data-about-action="backups"><span class="mobile-about-row-icon">↻</span><span><b>'+l('Авто-бэкапы','Auto-backups','Avto-zaxiralar')+'</b><small>'+l('До пяти локальных резервных копий','Up to five local backup copies','Beshtagacha mahalliy zaxira nusxa')+'</small></span><span>›</span></button>'+
         '<button type="button" data-about-url="https://github.com/TokhirjonYuldoshev/BP-Diary-Android"><span class="mobile-about-row-icon">⌘</span><span><b>GitHub</b><small>TokhirjonYuldoshev/BP-Diary-Android</small></span><span>›</span></button>'+
         '<button type="button" data-about-url="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues"><span class="mobile-about-row-icon">?</span><span><b>'+l('Поддержка / обратная связь','Support / feedback','Yordam / fikr-mulohaza')+'</b><small>'+l('Сообщить об ошибке или предложить улучшение','Report a bug or suggest an improvement','Xato haqida xabar berish yoki taklif yuborish')+'</small></span><span>›</span></button>'+
         '<div class="mobile-about-row"><span class="mobile-about-row-icon">©</span><span><b>'+l('Разработчик','Developer','Dasturchi')+'</b><small>Tokhirjon Yuldoshev</small></span></div>'+
@@ -1173,10 +1201,8 @@
       '<button type="button" class="mobile-about-ok">'+l('Готово','Done','Tayyor')+'</button>';
     q('.mobile-about-close',sheet).onclick=()=>closeMobileSheet(sheet);
     q('.mobile-about-ok',sheet).onclick=()=>closeMobileSheet(sheet);
-    const settings=q('[data-about-action="settings"]',sheet);if(settings)settings.onclick=()=>{closeMobileSheet(sheet);setTimeout(showSettingsSheet,100)};
     const update=q('[data-about-action="update"]',sheet);if(update)update.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>checkForUpdates(),100)};
     const guide=q('[data-about-action="guide"]',sheet);if(guide)guide.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>showOnboarding(true),100)};
-    const backups=q('[data-about-action="backups"]',sheet);if(backups)backups.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>showAutoBackupSheet(),100)};
     qa('[data-about-url]',sheet).forEach(b=>b.onclick=async()=>{
       try{await nativeCall('openUrl',{url:b.dataset.aboutUrl})}
       catch(_){

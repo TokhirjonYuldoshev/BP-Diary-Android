@@ -276,6 +276,50 @@ test('V17 medical profile fields validate live and identify the exact invalid fi
   await expect(page.locator('#targetSysMinInput').locator('xpath=..').locator('.profile-validation-error')).toContainText(/миним|minimum|Minimal/i);
 });
 
+test('V17 About removes duplicate Settings and Auto-backups shortcuts',async({page})=>{
+  await page.locator('#mobileAppBar [data-top="about"]').click();
+  await expect(page.locator('#mobileAboutSheet')).toHaveClass(/open/);
+  await expect(page.locator('#mobileAboutSheet [data-about-action="settings"]')).toHaveCount(0);
+  await expect(page.locator('#mobileAboutSheet [data-about-action="backups"]')).toHaveCount(0);
+  await expect(page.locator('#mobileAboutSheet')).toContainText(/Проверить обновления|Check for updates/);
+  await expect(page.locator('#mobileAboutSheet')).toContainText(/Краткое руководство|Quick guide/);
+});
+
+test('V17 severe BP warning is red and blocks persistence until user confirms',async({page})=>{
+  await page.evaluate(()=>{
+    document.querySelector('#m1_left_sys').value='190';
+    document.querySelector('#m1_left_dia').value='125';
+    document.querySelector('#m1_left_pulse').value='80';
+  });
+  const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('bp_data_default')||'[]').length);
+  await page.locator('#saveBtn').click();
+  await expect(page.locator('#mobileSafetyAlertSheet')).toHaveClass(/open/);
+  await expect(page.locator('#mobileSafetyAlertSheet')).toContainText(/Очень высокое|Severe high|Juda yuqori/);
+  const during=await page.evaluate(()=>JSON.parse(localStorage.getItem('bp_data_default')||'[]').length);
+  expect(during).toBe(before);
+  const background=await page.locator('#mobileSafetyAlertSheet .mobile-sheet-title').evaluate(el=>getComputedStyle(el).backgroundImage);
+  expect(background).toContain('gradient');
+  await page.locator('#mobileSafetyAlertSheet .outline').click();
+  await expect(page.locator('#mobileSafetyAlertSheet')).not.toHaveClass(/open/);
+  const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('bp_data_default')||'[]').length);
+  expect(after).toBe(before);
+});
+
+test('V17 invalid profile data stays inline and focuses the first invalid field',async({page})=>{
+  await page.evaluate(()=>{
+    const el=document.querySelector('#weight');
+    el.value='0';
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+  await expect(page.locator('#weight')).toHaveClass(/profile-input-invalid/);
+  await expect(page.locator('#weight')).toHaveAttribute('aria-invalid','true');
+  await expect(page.locator('#weight').locator('xpath=..').locator('.profile-input-error')).toBeVisible();
+  await page.locator('#saveBtn').click();
+  await expect(page.locator('#profileValidationSummary')).toBeVisible();
+  await expect(page.locator('#profileValidationSummary')).toContainText(/Вес|Weight|Vazn/);
+  await expect.poll(()=>page.evaluate(()=>document.activeElement?.id)).toBe('weight');
+});
+
 test('V17 protected backup is a true modal above navigation and closes cleanly',async({page})=>{
   await page.evaluate(()=>{
     window.Capacitor={Plugins:{NativeBridge:{

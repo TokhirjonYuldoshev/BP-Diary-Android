@@ -1091,7 +1091,11 @@
     function validateProfileInputs(showAlert=true) {
         const ids=profileValidationIds(),errors=[];
         ids.forEach(id=>{const reason=profileValidationReason(id);setProfileFieldValidation(id,reason);if(reason)errors.push({id,reason});});
-        if(!errors.length)return true;
+        if(!errors.length){
+            const summary=document.getElementById('profileValidationSummary');
+            if(summary){summary.hidden=true;summary.textContent='';}
+            return true;
+        }
         if(showAlert){
             const first=errors[0],rule=PROFILE_NUMERIC_RULES[first.id],el=document.getElementById(first.id);
             const label=rule?.label?.()||el?.closest('.field')?.querySelector('label')?.textContent?.trim()||first.id;
@@ -1104,8 +1108,21 @@
                 const title=section.querySelector('.profile-section-title');
                 title?.setAttribute('aria-expanded','true');
             }
-            alert(prefix+label+'. '+first.reason);
-            try{el?.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>el?.focus(),220);}catch(_){}
+            let summary=document.getElementById('profileValidationSummary');
+            if(!summary){
+                summary=document.createElement('div');
+                summary.id='profileValidationSummary';
+                summary.className='profile-validation-summary';
+                summary.setAttribute('role','alert');
+                summary.setAttribute('aria-live','assertive');
+                (section||el?.parentElement||document.body)?.prepend(summary);
+            }
+            summary.textContent=prefix+label+'. '+first.reason;
+            summary.hidden=false;
+            try{
+                el?.scrollIntoView({behavior:'smooth',block:'center'});
+                setTimeout(()=>el?.focus({preventScroll:true}),220);
+            }catch(_){}
         }
         return false;
     }
@@ -1215,11 +1232,66 @@
         timeManuallySet=true;
     }
 
-    function saveRecord() {
+    function getPreSaveSafetyWarning(measures,{bpContext,emergencySymptoms=false,irregularPulseFlag=false}={}) {
+        const rec={measures,bpContext:bpContext==='office'?'office':'home',emergencySymptoms:!!emergencySymptoms,irregularPulseFlag:!!irregularPulseFlag};
+        const severe=getWorstSafetyReading(rec),valid=getValidReadings(rec);
+        const unusual=valid.filter(v=>v.sys<70||(v.pulse>0&&(v.pulse<50||v.pulse>120)));
+        if(severe){
+            const emergency=!!rec.emergencySymptoms;
+            const title=emergency?t('emergencyBP'):(severe.threshold.ctx==='office'&&severe.dia>=110&&severe.dia<120?t('veryHighOfficeBP'):t('severeBP'));
+            const advice=emergency
+                ?t('emergencyAdvice')
+                :tx(
+                    'Повторите измерение через ≥1 минуту. Если очень высокое давление сохраняется, требуется срочная медицинская оценка. При боли в груди, одышке, слабости или онемении, нарушении зрения или речи вызовите экстренную медицинскую помощь.',
+                    'Repeat the measurement after ≥1 minute. If very high blood pressure persists, urgent medical assessment is needed. With chest pain, shortness of breath, weakness or numbness, vision change, or difficulty speaking, call emergency medical services.',
+                    'O‘lchovni ≥1 daqiqadan keyin takrorlang. Juda yuqori qon bosimi saqlansa, tezkor tibbiy baholash zarur. Ko‘krak og‘rig‘i, nafas qisishi, holsizlik yoki uvishish, ko‘rish yoki nutq buzilishi bo‘lsa, shoshilinch tibbiy yordam chaqiring.'
+                );
+            return {level:'critical',title,value:severe.sys+'/'+severe.dia,message:advice};
+        }
+        if(unusual.length||rec.irregularPulseFlag){
+            const worst=unusual[0]||valid[0]||null,parts=[];
+            if(worst?.sys<70)parts.push(t('bpWarningSysLow'));
+            if(worst?.pulse>120)parts.push(t('bpWarningPulseHigh'));
+            if(worst?.pulse>0&&worst?.pulse<50)parts.push(t('bpWarningPulseLow'));
+            if(rec.irregularPulseFlag)parts.push(t('irregularPulseFlag'));
+            return {
+                level:'warning',
+                title:tx('Необычные показатели','Unusual readings','G‘ayrioddiy ko‘rsatkichlar'),
+                value:parts.join(' · '),
+                message:tx(
+                    'Проверьте положение манжеты и повторите измерение. Если необычные значения сохраняются или есть головокружение, обморок, боль в груди, одышка, выраженная слабость либо другие тревожные симптомы — обратитесь за срочной медицинской помощью.',
+                    'Check cuff placement and repeat the measurement. If unusual values persist, or you have dizziness, fainting, chest pain, shortness of breath, marked weakness, or other concerning symptoms, seek urgent medical care.',
+                    'Manjetani to‘g‘ri joylashtirganingizni tekshirib, o‘lchovni takrorlang. G‘ayrioddiy qiymatlar saqlansa yoki bosh aylanishi, hushdan ketish, ko‘krak og‘rig‘i, nafas qisishi, kuchli holsizlik yoki boshqa xavotirli alomatlar bo‘lsa, shoshilinch tibbiy yordamga murojaat qiling.'
+                )
+            };
+        }
+        return null;
+    }
+
+    async function confirmPreSaveSafety(measures) {
+        const warning=getPreSaveSafetyWarning(measures,{
+            bpContext:getBPContext(),
+            emergencySymptoms:!!document.getElementById('emergencySymptoms')?.checked,
+            irregularPulseFlag:!!document.getElementById('irregularPulseFlag')?.checked
+        });
+        if(!warning)return true;
+        if(typeof window.bpPreSaveSafetyAlert==='function'){
+            try{return !!(await window.bpPreSaveSafetyAlert(warning));}catch(_){}
+        }
+        return confirm(
+            (warning.title?warning.title+'\n\n':'')+
+            (warning.value?warning.value+'\n\n':'')+
+            warning.message+'\n\n'+
+            tx('Сохранить запись?','Save this reading?','Yozuv saqlansinmi?')
+        );
+    }
+
+    async function saveRecord() {
         if(!validateProfileInputs(true))return;
         const dateIso=document.getElementById('recordDate').value; if(!isValidISODate(dateIso)){alert(t('dateFormat'));return;}
         let time=normalizeTime(document.getElementById('recordTime').value||new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'})); if(!isValidTime(time)){alert(t('invalidValues'));return;} document.getElementById('recordTime').value=time;
         const measures=getFormMeasures(); let hasData=false; for(const m of measures)for(const side of ['left','right']){const v=m[side];if(v.sys>0&&v.dia>0)hasData=true;if(!validateBP(v.sys,v.dia,v.pulse)){alert(t('invalidValues'));return;}} if(!hasData){alert(t('fillOneArm'));return;}
+        if(!await confirmPreSaveSafety(measures))return;
         const idx=editId!==null?records.findIndex(r=>String(r.id)===String(editId)):-1,original=idx>=0?records[idx]:null;
         const editingExisting=idx>=0;
         const defaultBpContextBeforeEdit=patientSettings[currentPatient]?.bpContext||'home';
@@ -1229,7 +1301,7 @@
         if(idx>=0){records[idx]=record;editId=null;}else records.push(record);
         if(editingExisting && editBpContextBefore===null) editBpContextBefore=defaultBpContextBeforeEdit;
         saveData(editingExisting);
-        applyFilterAndRender();updateAllAnalytics();checkAlerts(true,record);clearFormMeasurements();
+        applyFilterAndRender();updateAllAnalytics();checkAlerts(false,record);clearFormMeasurements();
         if(editingExisting){
             if(!patientSettings[currentPatient]) patientSettings[currentPatient]={};
             patientSettings[currentPatient].bpContext=defaultBpContextBeforeEdit;
