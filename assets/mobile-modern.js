@@ -925,6 +925,16 @@
     privacyHiddenAt=Date.now();
     if(!document.documentElement.dataset.bpPrivacyBound){
       document.documentElement.dataset.bpPrivacyBound='1';
+      const bridge=nativeBridge();
+      if(bridge&&typeof bridge.addListener==='function'){
+        try{
+          Promise.resolve(bridge.addListener('screenOff',()=>{
+            if(!flagEnabled(V17_BIOMETRIC_KEY))return;
+            privacyNeedsAuth=true;
+            document.documentElement.classList.add('bp-prelocked');
+          })).catch(()=>{});
+        }catch(_){}
+      }
       document.addEventListener('visibilitychange',()=>{
         if(document.visibilityState==='hidden'){privacyHiddenAt=Date.now();return}
         if(document.visibilityState==='visible'){

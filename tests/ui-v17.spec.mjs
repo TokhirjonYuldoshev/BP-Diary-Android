@@ -315,18 +315,28 @@ test('V17 uses the system authentication prompt with a 10 second background thre
   await expect.poll(()=>page.evaluate(()=>document.documentElement.classList.contains('bp-prelocked'))).toBe(false);
 });
 
-test('V17 screen-off event requires immediate re-authentication on resume',async({page})=>{
-  await page.evaluate(()=>{
+test('V17 screen-off event hides content immediately and requires re-authentication on resume',async({page})=>{
+  await page.addInitScript(()=>{
     localStorage.setItem('bp_biometric_lock_v17','1');
     window.__screenAuthCalls=0;
+    window.__screenOffCallback=null;
     window.Capacitor={Plugins:{NativeBridge:{
       authenticateBiometric:async()=>{window.__screenAuthCalls++;return {authenticated:true}},
       consumeScreenOffEvent:async()=>({screenOff:true}),
       setPrivacyShield:async()=>({}),
-      backgroundApp:async()=>({})
+      backgroundApp:async()=>({}),
+      addListener:async(name,callback)=>{if(name==='screenOff')window.__screenOffCallback=callback;return {remove:async()=>{}}}
     }}};
   });
+  await page.reload({waitUntil:'domcontentloaded'});
+  await expect(page.locator('body')).toHaveClass(/mobile-shell-ready/);
+  await expect.poll(()=>page.evaluate(()=>typeof window.__screenOffCallback)).toBe('function');
+
+  await page.evaluate(()=>window.__screenOffCallback({screenOff:true}));
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.classList.contains('bp-prelocked'))).toBe(true);
+
+  const before=await page.evaluate(()=>window.__screenAuthCalls);
   await page.evaluate(()=>window.__bpPrivacyResumeCheck());
-  await expect.poll(()=>page.evaluate(()=>window.__screenAuthCalls)).toBeGreaterThan(0);
+  await expect.poll(()=>page.evaluate(()=>window.__screenAuthCalls)).toBeGreaterThan(before);
   await expect.poll(()=>page.evaluate(()=>document.documentElement.classList.contains('bp-prelocked'))).toBe(false);
 });

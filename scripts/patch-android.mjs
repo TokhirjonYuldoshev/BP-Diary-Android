@@ -354,6 +354,9 @@ public class NativeBridgePlugin extends Plugin {
                 public void onReceive(Context context, Intent intent) {
                     if (intent != null && Intent.ACTION_SCREEN_OFF.equals(intent.getAction())) {
                         screenOffObserved = true;
+                        JSObject event = new JSObject();
+                        event.put("screenOff", true);
+                        notifyListeners("screenOff", event);
                     }
                 }
             };
