@@ -167,7 +167,7 @@ test('V17 top language control cycles directly and UZ mobile UI has no known Eng
 
   await lang.click();
   await expect.poll(()=>page.evaluate(()=>document.documentElement.lang)).toBe('en');
-  await expect(page.locator('#mobileSettingsSheet')).not.toHaveClass(/open/);
+  await expect(page.locator('#mobileSettingsSheet')).toHaveCount(0);
   await expect(lang).toHaveText('EN');
   await expect(page.locator('#mobileAppBar')).toContainText('Blood pressure diary');
 
