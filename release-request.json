@@ -1,4 +1,4 @@
 {
-  "publish": false,
-  "notes": "V17 5.7.0 final candidate: automated QA and real-device acceptance passed on 2026-09-30. Keep publish=false until final integration into main and an intentional release commit."
+  "publish": true,
+  "notes": "Publish BP Diary V17 / 5.7.0 after final CI, UI and real-device acceptance. Reset to publish=false immediately after the official GitHub Release is verified."
 }
