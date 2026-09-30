@@ -306,6 +306,13 @@ test('V17 severe BP warning is red and blocks persistence until user confirms',a
 });
 
 test('V17 invalid profile data stays inline and focuses the first invalid field',async({page})=>{
+  const cardio=page.locator('.profile-section').filter({hasText:/Кардио-профиль|Cardiovascular profile|Kardio-profil/}).first();
+  if(await cardio.count()){
+    const title=cardio.locator('.profile-section-title');
+    if(await cardio.evaluate(el=>el.classList.contains('mobile-collapsed')))await title.click();
+    await expect(cardio).not.toHaveClass(/mobile-collapsed/);
+  }
+
   await page.evaluate(()=>{
     const el=document.querySelector('#weight');
     el.value='0';
