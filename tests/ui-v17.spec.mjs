@@ -282,7 +282,7 @@ test('V17 About removes duplicate Settings and Auto-backups shortcuts',async({pa
   await expect(page.locator('#mobileAboutSheet [data-about-action="settings"]')).toHaveCount(0);
   await expect(page.locator('#mobileAboutSheet [data-about-action="backups"]')).toHaveCount(0);
   await expect(page.locator('#mobileAboutSheet')).toContainText(/Проверить обновления|Check for updates/);
-  await expect(page.locator('#mobileAboutSheet')).toContainText(/Краткое руководство|Quick guide/);
+  await expect(page.locator('#mobileAboutSheet')).toContainText(/Руководство|User guide|Foydalanish/);
 });
 
 test('V17 severe BP warning is red and blocks persistence until user confirms',async({page})=>{
@@ -325,6 +325,76 @@ test('V17 invalid profile data stays inline and focuses the first invalid field'
   await expect(page.locator('#profileValidationSummary')).toBeVisible();
   await expect(page.locator('#profileValidationSummary')).toContainText(/Вес|Weight|Vazn/);
   await expect.poll(()=>page.evaluate(()=>document.activeElement?.id)).toBe('weight');
+});
+
+test('V17 measurement entry guardrails reject implausible new values inline',async({page})=>{
+  const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('bp_data_default')||'[]').length);
+  await page.evaluate(()=>{
+    const values={m1_left_sys:'300',m1_left_dia:'200',m1_left_pulse:'100'};
+    for(const [id,value] of Object.entries(values)){
+      const el=document.getElementById(id);el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+  });
+  await expect(page.locator('#m1_left_sys')).toHaveClass(/measurement-input-invalid/);
+  await expect(page.locator('[data-measure-error="1-left"]')).toBeVisible();
+  await expect(page.locator('[data-measure-error="1-left"]')).toContainText(/60.*260|САД|systolic|SAB/i);
+  page.once('dialog',dialog=>dialog.accept());
+  await page.locator('#saveBtn').click();
+  const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('bp_data_default')||'[]').length);
+  expect(after).toBe(before);
+
+  await page.evaluate(()=>{
+    for(const [id,value] of Object.entries({m1_left_sys:'120',m1_left_dia:'80',m1_left_pulse:'70'})){
+      const el=document.getElementById(id);el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+  });
+  await expect(page.locator('#m1_left_sys')).not.toHaveClass(/measurement-input-invalid/);
+  await expect(page.locator('[data-measure-error="1-left"]')).toBeHidden();
+});
+
+test('V17 Uzbek archive uses kun units instead of untranslated d',async({page})=>{
+  await page.locator('#mobileAppBar [data-top="lang"]').click();
+  await page.locator('#mobileAppBar [data-top="lang"]').click();
+  await expect(page.locator('#mobileAppBar [data-top="lang"]')).toHaveText('UZ');
+  await page.locator('#mobileBottomNav [data-tab="archive"]').click();
+  await expect(page.locator('[data-archive-period="7"]')).toHaveText('7 kun');
+  await expect(page.locator('[data-archive-period="30"]')).toHaveText('30 kun');
+  await expect(page.locator('[data-archive-period="90"]')).toHaveText('90 kun');
+});
+
+test('V17 reminder settings expose daily times repeats sound vibration and persist them',async({page})=>{
+  await page.evaluate(()=>{
+    window.__reminderCalls=[];
+    window.Capacitor={Plugins:{NativeBridge:{
+      getReminderStatus:async()=>({enabled:true,times:'08:00,20:00',time:'08:00',repeatCount:3,repeatInterval:10,sound:2,vibrate:true,notificationsAllowed:true}),
+      scheduleDailyReminder:async args=>{window.__reminderCalls.push({method:'schedule',args});return {enabled:true,notificationsAllowed:true}},
+      cancelDailyReminder:async()=>({enabled:false,notificationsAllowed:true}),
+      testReminderSound:async args=>{window.__reminderCalls.push({method:'test',args});return {notificationsAllowed:true}},
+      setPrivacyShield:async()=>({})
+    }}};
+  });
+  await page.locator('#mobileAppBar [data-top="reminder"]').click();
+  await expect(page.locator('#mobileReminderSheet')).toHaveClass(/open/);
+  await expect(page.locator('[data-reminder-time="0"]')).toHaveValue('08:00');
+  await expect(page.locator('[data-reminder-time="1"]')).toHaveValue('20:00');
+  await expect(page.locator('#mobileReminderRepeats')).toHaveValue('3');
+  await expect(page.locator('#mobileReminderInterval')).toHaveValue('10');
+  await expect(page.locator('#mobileReminderSound')).toHaveValue('2');
+  await expect(page.locator('#mobileReminderVibrate')).toBeChecked();
+
+  await page.locator('[data-reminder-time="2"]').fill('22:00');
+  await page.locator('#mobileReminderSheet .mobile-reminder-test').click();
+  await page.locator('#mobileReminderSheet .mobile-settings-primary').click();
+  const calls=await page.evaluate(()=>window.__reminderCalls);
+  expect(calls.some(x=>x.method==='test'&&x.args.sound==='2')).toBeTruthy();
+  const saved=calls.find(x=>x.method==='schedule');
+  expect(saved.args.times).toBe('08:00,20:00,22:00');
+  expect(saved.args.repeatCount).toBe('3');
+  expect(saved.args.repeatInterval).toBe('10');
+  expect(saved.args.sound).toBe('2');
+  expect(saved.args.vibrate).toBe(true);
+  expect(saved.args.doneLabel).toBeTruthy();
+  expect(saved.args.snoozeLabel).toBeTruthy();
 });
 
 test('V17 protected backup is a true modal above navigation and closes cleanly',async({page})=>{
@@ -381,9 +451,13 @@ test('V17 protected backup is a true modal above navigation and closes cleanly',
   await expect(page.locator('#mobileSecretSheet')).not.toHaveClass(/open/);
 });
 
-test('V17 onboarding uses three new full illustrations and stays inside the viewport',async({page})=>{
+test('V17 guide opens the onboarding tour and onboarding stays inside the viewport',async({page})=>{
   await page.locator('#mobileAppBar [data-top="about"]').click();
   await page.locator('#mobileAboutSheet [data-about-action="guide"]').click();
+  await expect(page.locator('#mobileGuideSheet')).toHaveClass(/open/);
+  await expect(page.locator('#mobileGuideSheet')).toContainText(/САД|SYS|SAB/);
+  await expect(page.locator('#mobileGuideSheet')).toContainText(/Отчёт для врача|Doctor report|Shifokor hisoboti/);
+  await page.locator('#mobileGuideSheet .mobile-guide-tour').click();
   await expect(page.locator('#mobileOnboarding')).toHaveClass(/open/);
   await expect(page.locator('.mobile-onboarding-top')).toBeVisible();
   await expect(page.locator('.mobile-onboarding-progress')).toBeVisible();
