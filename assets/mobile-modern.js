@@ -1388,6 +1388,7 @@
     let done=false;try{done=localStorage.getItem(V17_ONBOARDING_KEY)==='1'}catch(_){}
     if(done&&!force)return;
     let view=q('#mobileOnboarding');
+    if(view?.classList.contains('open')&&!force)return;
     if(!view){
       view=document.createElement('div');view.id='mobileOnboarding';view.setAttribute('role','dialog');view.setAttribute('aria-modal','true');
       view.innerHTML='<div class="mobile-onboarding-card"><div class="mobile-onboarding-top"><div class="mobile-onboarding-brand"><span>'+brandHeartIcon()+'</span><div><b>BP Diary</b><small>V17 · Privacy & Resilience</small></div></div><button type="button" class="mobile-onboarding-skip"></button></div><div class="mobile-onboarding-visual"></div><div class="mobile-onboarding-copy"><div class="mobile-onboarding-step"></div><h2></h2><p></p></div><div class="mobile-onboarding-progress"><span><i></i></span><b></b></div><div class="mobile-onboarding-actions"><button type="button" class="outline mobile-onboarding-back"></button><button type="button" class="mobile-onboarding-next"></button></div></div>';

@@ -10,6 +10,7 @@ test.beforeEach(async ({page})=>{
   await mkdir(shots,{recursive:true});
   await page.addInitScript(()=>{
     localStorage.setItem('bp_v12_onboarding_done','1');
+    localStorage.setItem('bp_v17_onboarding_done','1');
     localStorage.setItem('bp_mobile_tab','measure');
   });
   await page.goto(BASE,{waitUntil:'domcontentloaded'});
@@ -279,10 +280,10 @@ test('V17 onboarding uses three new full illustrations and stays inside the view
   expect(box.y+box.height).toBeLessThanOrEqual(844);
 
   await page.locator('.mobile-onboarding-next').click();
-  await expect(page.locator('.mobile-onboarding-step')).toContainText('2');
+  await expect(page.locator('.mobile-onboarding-step')).toContainText('Шаг 2 из 3');
   await expect(page.locator('.mobile-onboarding-scene')).toHaveAttribute('data-scene','report');
   await page.locator('.mobile-onboarding-next').click();
-  await expect(page.locator('.mobile-onboarding-step')).toContainText('3');
+  await expect(page.locator('.mobile-onboarding-step')).toContainText('Шаг 3 из 3');
   await expect(page.locator('.mobile-onboarding-scene')).toHaveAttribute('data-scene','privacy');
   await expect(page.locator('#mobileOnboarding')).toContainText('V17');
   await page.screenshot({path:shots+'/onboarding-v17-new-scenes.png',fullPage:true});
