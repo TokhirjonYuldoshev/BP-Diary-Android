@@ -1,6 +1,6 @@
 # V17 Privacy & Resilience — Candidate QA
 
-Status: **CANDIDATE — AUTOMATED QA IN PROGRESS / REAL-DEVICE ACCEPTANCE PENDING**
+Status: **CANDIDATE — AUTOMATED QA PASSED / REAL-DEVICE ACCEPTANCE PENDING**
 
 - Release: `V17`
 - Version: `5.7.0`
@@ -43,9 +43,10 @@ V17 adds or hardens:
 - [x] Advanced reminder UI has regression coverage.
 - [x] Native reminder engine supports up to three daily times, 1–3 total alerts, configurable interval, three system sounds, optional vibration, Done and Remind later actions.
 - [x] Reminder schedule restoration after reboot/time/timezone/app update remains wired.
-- [ ] Latest candidate Android debug + release build succeeds.
-- [ ] Latest candidate debug and release APK signer matches the permanent stable update signer.
-- [x] Latest app/UI behavior passed V17 Playwright regression before this documentation-only update.
+- [x] Candidate Android Build #142 (`36683215509`) succeeded from `d2027b044755503a4a257e9985887684073e3b26`.
+- [x] Build #142 verified debug and release APK signer SHA-256 `63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102`.
+- [x] V17 UI Regression #37 (`36683034605`) passed on the same app/native behavior; later commits are regression/docs-only.
+- [x] Build #142 artifact ID `11083090588`; candidate APK SHA-256 `0c1b90083461b5adcb917e3a83ca62039b767e25c9ed75f164044afe23a3b18b`.
 
 ## Device acceptance
 
