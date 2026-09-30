@@ -87,6 +87,9 @@
   .measure-card h3{margin:0 0 10px;color:var(--m-ink);font-size:1rem;letter-spacing:-.15px}
   .bp-inputs{display:grid;grid-template-columns:minmax(0,1fr) 12px minmax(0,1fr) 12px minmax(0,1fr);gap:4px;align-items:center}
   .bp-inputs input{min-width:0!important;text-align:center;padding:9px 3px!important;font-size:15px!important}.bp-inputs span{text-align:center;color:#7b91a0;font-size:.78rem}
+  .bp-inputs input.measurement-input-invalid{border-color:#d84e5a!important;box-shadow:0 0 0 2px rgba(216,78,90,.12)!important;background:rgba(216,78,90,.045)!important}
+  .measurement-validation-error{margin:6px 2px 0;color:#b93643;font-size:.62rem;font-weight:800;line-height:1.35}
+  .measurement-validation-error[hidden]{display:none!important}
   .measurement-bottom-row{display:block;margin:12px 0 15px}.measurement-flags{display:grid;gap:8px;width:100%}
   .check-field{width:100%;padding:11px 12px;border:1px solid var(--m-line);border-radius:16px;background:var(--m-surface-2);font-size:.78rem;line-height:1.28}
   .check-field input{width:21px!important;height:21px!important;min-height:0!important;padding:0!important;accent-color:var(--m-accent)}
@@ -1247,22 +1250,22 @@
 
 /* V16 — native Android integration, Settings and update UI */
 @media (max-width:720px), (max-width:1100px) and (hover:none) and (pointer:coarse){
-  #mobileReminderSheet,#mobileSettingsSheet,#mobileUpdateSheet{
+  #mobileReminderSheet,#mobileSettingsSheet,#mobileUpdateSheet,#mobileGuideSheet{
     display:flex;position:fixed;inset:0;z-index:24000;background:rgba(5,12,20,.54);
     align-items:flex-end;padding:10px 10px calc(10px + env(safe-area-inset-bottom));
     opacity:0;pointer-events:none;transition:opacity .18s ease
   }
-  #mobileReminderSheet.open,#mobileSettingsSheet.open,#mobileUpdateSheet.open{opacity:1;pointer-events:auto}
+  #mobileReminderSheet.open,#mobileSettingsSheet.open,#mobileUpdateSheet.open,#mobileGuideSheet.open{opacity:1;pointer-events:auto}
   #mobileReminderSheet .mobile-sheet-panel,#mobileUpdateSheet .mobile-sheet-panel{
     border-radius:25px 25px 19px 19px!important;box-shadow:0 -18px 52px rgba(0,0,0,.26)!important
   }
-  #mobileSettingsSheet{align-items:stretch;padding:0}
-  #mobileSettingsSheet .mobile-sheet-panel{
+  #mobileSettingsSheet,#mobileGuideSheet{align-items:stretch;padding:0}
+  #mobileSettingsSheet .mobile-sheet-panel,#mobileGuideSheet .mobile-sheet-panel{
     width:100%;max-width:760px;max-height:none;height:100%;margin:0 auto;padding:calc(8px + env(safe-area-inset-top)) 10px calc(18px + env(safe-area-inset-bottom));
     border:0!important;border-radius:0!important;overflow:auto;background:var(--m-surface-2)!important;box-shadow:none!important
   }
-  #mobileReminderSheet .mobile-sheet-grid,#mobileSettingsSheet .mobile-sheet-grid,#mobileUpdateSheet .mobile-sheet-grid{grid-template-columns:1fr!important}
-  #mobileSettingsSheet .mobile-sheet-title,#mobileReminderSheet .mobile-sheet-title,#mobileUpdateSheet .mobile-sheet-title{
+  #mobileReminderSheet .mobile-sheet-grid,#mobileSettingsSheet .mobile-sheet-grid,#mobileUpdateSheet .mobile-sheet-grid,#mobileGuideSheet .mobile-sheet-grid{grid-template-columns:1fr!important}
+  #mobileSettingsSheet .mobile-sheet-title,#mobileReminderSheet .mobile-sheet-title,#mobileUpdateSheet .mobile-sheet-title,#mobileGuideSheet .mobile-sheet-title{
     display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:48px;margin:0 0 10px;
     color:var(--m-ink);font-size:1.02rem!important;font-weight:900!important
   }
@@ -1324,6 +1327,22 @@
   .mobile-reminder-card p{margin:5px 0 0;color:var(--m-muted);font-size:.59rem;line-height:1.42}
   .mobile-reminder-actions{display:grid;grid-template-columns:.8fr 1.2fr;gap:8px}
   .mobile-reminder-actions button{min-height:47px!important;justify-content:center!important}
+  .mobile-reminder-times{display:grid;gap:8px}
+  .mobile-reminder-time-row{display:grid;grid-template-columns:82px 1fr;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--m-line);border-radius:14px;background:var(--m-surface)}
+  .mobile-reminder-time-row span{color:var(--m-muted);font-size:.62rem;font-weight:850}
+  .mobile-reminder-time-row input{min-height:44px!important}
+  .mobile-reminder-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .mobile-reminder-options label{display:grid;gap:5px;color:var(--m-muted);font-size:.6rem;font-weight:850}
+  .mobile-reminder-options select{min-height:46px!important;width:100%!important}
+  .mobile-reminder-vibrate{display:flex!important;align-items:center!important;gap:9px!important;padding:10px 12px;border:1px solid var(--m-line);border-radius:14px;background:var(--m-surface);color:var(--m-ink);font-size:.68rem;font-weight:800}
+  .mobile-reminder-vibrate input{width:21px!important;height:21px!important;min-height:0!important}
+  .mobile-reminder-test{display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;min-height:46px!important}
+  .mobile-guide-list{display:grid;gap:9px}
+  .mobile-guide-card{padding:13px 14px;border:1px solid var(--m-line);border-radius:17px;background:var(--m-surface)}
+  .mobile-guide-card h3{margin:0 0 6px;color:var(--m-ink);font-size:.78rem;line-height:1.3}
+  .mobile-guide-card p{margin:0;color:var(--m-muted);font-size:.65rem;line-height:1.5}
+  .mobile-guide-tour{display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;min-height:48px!important}
+  .mobile-guide-tour svg{width:17px!important;height:17px!important}
   .mobile-update-card{
     display:grid;grid-template-columns:54px 1fr;gap:8px 11px;padding:13px;border:1px solid var(--m-line);border-radius:18px;background:var(--m-surface)
   }
@@ -1334,7 +1353,7 @@
   .mobile-update-card strong{color:var(--m-ink);font-size:.68rem}
   .mobile-update-card p{grid-column:1/-1;margin:3px 0 0;color:var(--m-muted);font-size:.61rem;line-height:1.45}
   .mobile-update-card.available{border-color:rgba(23,128,167,.42);box-shadow:0 8px 24px rgba(23,128,167,.08)}
-  body.dark #mobileSettingsSheet .mobile-sheet-panel{background:#08111c!important}
+  body.dark #mobileSettingsSheet .mobile-sheet-panel,body.dark #mobileGuideSheet .mobile-sheet-panel{background:#08111c!important}
 }
 
 
