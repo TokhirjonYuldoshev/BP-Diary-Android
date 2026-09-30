@@ -753,42 +753,109 @@
   async function showReminderSheet(){
     if(!nativeBridge()||typeof nativeBridge().scheduleDailyReminder!=='function'){
       const legacy=q('#reminderBtn');if(legacy){legacy.click();return}
-      mobileToast(ru()?'Напоминание недоступно':'Reminder unavailable','error');return;
+      mobileToast(l('Напоминание недоступно','Reminder unavailable','Eslatma mavjud emas'),'error');return;
     }
-    const sheet=makeSheet('mobileReminderSheet',ru()?'Напоминание':'Reminder');
-    q('.mobile-sheet-title',sheet).innerHTML='<span>'+(ru()?'Ежедневное напоминание':'Daily reminder')+'</span><button type="button" class="mobile-sheet-close" aria-label="'+(ru()?'Закрыть':'Close')+'">×</button>';
-    const g=q('.mobile-sheet-grid',sheet);g.innerHTML='<div class="mobile-settings-loading">'+(ru()?'Загрузка…':'Loading…')+'</div>';
+    const sheet=makeSheet('mobileReminderSheet',l('Напоминания','Reminders','Eslatmalar'));
+    q('.mobile-sheet-title',sheet).innerHTML='<span>'+l('Напоминания об измерении','Measurement reminders','O‘lchov eslatmalari')+'</span><button type="button" class="mobile-sheet-close" aria-label="'+l('Закрыть','Close','Yopish')+'">×</button>';
+    const g=q('.mobile-sheet-grid',sheet);g.innerHTML='<div class="mobile-settings-loading">'+l('Загрузка…','Loading…','Yuklanmoqda…')+'</div>';
     openMobileSheet(sheet);q('.mobile-sheet-close',sheet).onclick=()=>closeMobileSheet(sheet);
     const status=await reminderStatus();
     g.innerHTML='';
+
     const card=document.createElement('section');card.className='mobile-reminder-card';
-    card.innerHTML='<div class="mobile-reminder-bell">'+svgIcon('bell')+'</div><div><strong>'+(ru()?'Контроль давления':'Blood pressure check')+'</strong><p>'+(ru()?'Нативное Android-уведомление работает после закрытия BP Diary и восстанавливается после перезагрузки телефона. Android может немного сдвинуть время для экономии батареи.':'Native Android notification works after BP Diary is closed and is restored after a phone reboot. Android may slightly delay delivery to save battery.')+'</p></div>';
-    const timeWrap=document.createElement('label');timeWrap.className='mobile-settings-field';
-    timeWrap.innerHTML='<span>'+(ru()?'Время':'Time')+'</span><input type="time" id="mobileReminderTime" value="'+(status.time||'09:00')+'">';
+    card.innerHTML='<div class="mobile-reminder-bell">'+svgIcon('bell')+'</div><div><strong>'+l('Контроль давления','Blood pressure check','Qon bosimini nazorat qilish')+'</strong><p>'+l(
+      'Задайте до трёх времён в день. Если первый сигнал пропущен, BP Diary может повторить его ещё 1–2 раза с выбранным интервалом.',
+      'Set up to three daily times. If the first alert is missed, BP Diary can repeat it 1–2 more times at the selected interval.',
+      'Kuniga uch vaqtgacha belgilang. Birinchi signal o‘tkazib yuborilsa, BP Diary tanlangan interval bilan yana 1–2 marta takrorlashi mumkin.'
+    )+'</p></div>';
+    g.appendChild(card);
+
+    let times=String(status.times||status.time||'09:00').split(',').map(x=>x.trim()).filter(x=>/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(x)).slice(0,3);
+    if(!times.length)times=['09:00'];
+    while(times.length<3)times.push('');
+
+    const timesWrap=document.createElement('div');timesWrap.className='mobile-reminder-times';
+    timesWrap.innerHTML=times.map((time,index)=>'<label class="mobile-reminder-time-row"><span>'+l('Время '+(index+1),'Time '+(index+1),(index+1)+'-vaqt')+'</span><input type="time" data-reminder-time="'+index+'" value="'+time+'"></label>').join('');
+    g.appendChild(timesWrap);
+
+    const options=document.createElement('div');options.className='mobile-reminder-options';
+    const repeatCount=Math.max(1,Math.min(3,Number(status.repeatCount)||1));
+    const repeatInterval=[5,10,15,30].includes(Number(status.repeatInterval))?Number(status.repeatInterval):10;
+    const sound=[1,2,3].includes(Number(status.sound))?Number(status.sound):2;
+    options.innerHTML=
+      '<label><span>'+l('Сигналов','Alerts','Signallar')+'</span><select id="mobileReminderRepeats">'+
+        [1,2,3].map(n=>'<option value="'+n+'" '+(n===repeatCount?'selected':'')+'>'+n+'</option>').join('')+
+      '</select></label>'+
+      '<label><span>'+l('Интервал','Interval','Interval')+'</span><select id="mobileReminderInterval">'+
+        [5,10,15,30].map(n=>'<option value="'+n+'" '+(n===repeatInterval?'selected':'')+'>'+n+' '+l('мин','min','daq')+'</option>').join('')+
+      '</select></label>'+
+      '<label><span>'+l('Мелодия','Sound','Ovoz')+'</span><select id="mobileReminderSound">'+
+        '<option value="1" '+(sound===1?'selected':'')+'>'+l('1 · Мягкий системный','1 · System notification','1 · Tizim bildirishnomasi')+'</option>'+
+        '<option value="2" '+(sound===2?'selected':'')+'>'+l('2 · Будильник','2 · Alarm','2 · Budilnik')+'</option>'+
+        '<option value="3" '+(sound===3?'selected':'')+'>'+l('3 · Звонок','3 · Ringtone','3 · Qo‘ng‘iroq')+'</option>'+
+      '</select></label>'+
+      '<label class="mobile-reminder-vibrate"><input type="checkbox" id="mobileReminderVibrate" '+(status.vibrate===false?'':'checked')+'><span>'+l('Вибрация','Vibration','Vibratsiya')+'</span></label>';
+    g.appendChild(options);
+
+    const test=document.createElement('button');test.type='button';test.className='outline mobile-reminder-test';
+    test.innerHTML=svgIcon('bell')+'<span>'+l('Проверить звук','Test sound','Ovozni tekshirish')+'</span>';
+    test.onclick=async()=>{
+      const sound=String(q('#mobileReminderSound',sheet)?.value||'2');
+      const vibrate=!!q('#mobileReminderVibrate',sheet)?.checked;
+      try{
+        const res=await nativeCall('testReminderSound',{sound,vibrate});
+        if(res?.notificationsAllowed===false)mobileToast(l('Сначала разрешите уведомления Android','Allow Android notifications first','Avval Android bildirishnomalariga ruxsat bering'),'info',3200);
+        else mobileToast(l('Тестовый сигнал отправлен','Test alert sent','Sinov signali yuborildi'),'success',1800);
+      }catch(err){mobileToast(l('Не удалось проверить звук','Could not test sound','Ovozni tekshirib bo‘lmadi'),'error')}
+    };
+    g.appendChild(test);
+
     const perm=document.createElement('div');perm.className='mobile-settings-status '+(status.notificationsAllowed?'ok':'warn');
-    perm.innerHTML='<span>'+(status.notificationsAllowed?'✓':'!')+'</span><div><b>'+(status.notificationsAllowed?(ru()?'Уведомления разрешены':'Notifications allowed'):(ru()?'Нужно разрешение на уведомления':'Notification permission required'))+'</b><small>'+(status.enabled?(ru()?'Напоминание включено':'Reminder enabled'):(ru()?'Напоминание выключено':'Reminder disabled'))+'</small></div>';
-    g.append(card,timeWrap,perm);
+    perm.innerHTML='<span>'+(status.notificationsAllowed?'✓':'!')+'</span><div><b>'+(status.notificationsAllowed?l('Уведомления разрешены','Notifications allowed','Bildirishnomalarga ruxsat berilgan'):l('Нужно разрешение на уведомления','Notification permission required','Bildirishnoma ruxsati kerak'))+'</b><small>'+(status.enabled?l('Напоминания включены','Reminders enabled','Eslatmalar yoqilgan'):l('Напоминания выключены','Reminders disabled','Eslatmalar o‘chirilgan'))+'</small></div>';
+    g.appendChild(perm);
+
     if(!status.notificationsAllowed){
-      const allow=document.createElement('button');allow.type='button';allow.className='outline';allow.innerHTML=svgIcon('bell')+'<span>'+(ru()?'Разрешить уведомления':'Allow notifications')+'</span>';
-      allow.onclick=async()=>{try{await nativeCall('requestNotificationPermission',{});mobileToast(ru()?'Подтвердите разрешение Android':'Confirm the Android permission','info',2500)}catch(err){mobileToast(ru()?'Не удалось запросить разрешение':'Could not request permission','error')}};
+      const allow=document.createElement('button');allow.type='button';allow.className='outline';
+      allow.innerHTML=svgIcon('bell')+'<span>'+l('Разрешить уведомления','Allow notifications','Bildirishnomalarga ruxsat berish')+'</span>';
+      allow.onclick=async()=>{try{await nativeCall('requestNotificationPermission',{});mobileToast(l('Подтвердите разрешение Android','Confirm the Android permission','Android ruxsatini tasdiqlang'),'info',2500)}catch(err){mobileToast(l('Не удалось запросить разрешение','Could not request permission','Ruxsat so‘rab bo‘lmadi'),'error')}};
       g.appendChild(allow);
     }
+
     const actions=document.createElement('div');actions.className='mobile-reminder-actions';
-    const off=document.createElement('button');off.type='button';off.className='outline';off.textContent=ru()?'Выключить':'Turn off';
-    const save=document.createElement('button');save.type='button';save.className='mobile-settings-primary';save.textContent=ru()?'Сохранить':'Save';
+    const off=document.createElement('button');off.type='button';off.className='outline';off.textContent=l('Выключить','Turn off','O‘chirish');
+    const save=document.createElement('button');save.type='button';save.className='mobile-settings-primary';save.textContent=l('Сохранить','Save','Saqlash');
     actions.append(off,save);g.appendChild(actions);
     off.disabled=!status.enabled;
-    off.onclick=async()=>{try{await nativeCall('cancelDailyReminder',{});try{localStorage.removeItem('bp_reminder_time')}catch(_){}mobileToast(ru()?'Напоминание выключено':'Reminder turned off','success');closeMobileSheet(sheet)}catch(err){mobileToast(ru()?'Не удалось выключить напоминание':'Could not disable reminder','error')}};
+
+    off.onclick=async()=>{try{
+      await nativeCall('cancelDailyReminder',{});
+      try{localStorage.removeItem('bp_reminder_time')}catch(_){}
+      mobileToast(l('Напоминания выключены','Reminders turned off','Eslatmalar o‘chirildi'),'success');closeMobileSheet(sheet)
+    }catch(err){mobileToast(l('Не удалось выключить напоминания','Could not disable reminders','Eslatmalarni o‘chirib bo‘lmadi'),'error')}};
+
     save.onclick=async()=>{
-      const time=q('#mobileReminderTime',sheet)?.value||'';
-      if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time)){mobileToast(ru()?'Проверьте время':'Check the time','error');return}
+      const values=qa('[data-reminder-time]',sheet).map(x=>x.value.trim()).filter(Boolean);
+      if(!values.length||values.some(time=>!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time))){
+        mobileToast(l('Проверьте время','Check the time','Vaqtni tekshiring'),'error');return;
+      }
+      const unique=[...new Set(values)].slice(0,3);
+      const repeatCount=String(q('#mobileReminderRepeats',sheet)?.value||'1');
+      const repeatInterval=String(q('#mobileReminderInterval',sheet)?.value||'10');
+      const sound=String(q('#mobileReminderSound',sheet)?.value||'2');
+      const vibrate=!!q('#mobileReminderVibrate',sheet)?.checked;
       try{
-        const res=await nativeCall('scheduleDailyReminder',{time,title:'BP Diary',body:ru()?'Пора измерить артериальное давление':'Time to measure your blood pressure'});
+        const res=await nativeCall('scheduleDailyReminder',{
+          times:unique.join(','),time:unique[0],repeatCount,repeatInterval,sound,vibrate,
+          title:'BP Diary',
+          body:l('Пора измерить артериальное давление','Time to measure your blood pressure','Qon bosimini o‘lchash vaqti'),
+          doneLabel:l('Измерено','Done','O‘lchandi'),
+          snoozeLabel:l('Напомнить позже','Remind later','Keyinroq eslatish')
+        });
         try{localStorage.removeItem('bp_reminder_time')}catch(_){}
-        mobileToast((ru()?'Напоминание запланировано примерно на ':'Reminder scheduled around ')+time,'success',2800);
-        if(res&&res.notificationsAllowed===false)mobileToast(ru()?'Разрешите уведомления Android, чтобы напоминание появилось':'Allow Android notifications so the reminder can appear','info',3900);
+        mobileToast(l('Расписание напоминаний сохранено','Reminder schedule saved','Eslatma jadvali saqlandi'),'success',2600);
+        if(res&&res.notificationsAllowed===false)mobileToast(l('Разрешите уведомления Android, чтобы сигналы появлялись','Allow Android notifications so alerts can appear','Signallar chiqishi uchun Android bildirishnomalariga ruxsat bering'),'info',3900);
         closeMobileSheet(sheet);
-      }catch(err){mobileToast((ru()?'Не удалось установить напоминание: ':'Could not set reminder: ')+(err?.message||err),'error',4200)}
+      }catch(err){mobileToast(l('Не удалось сохранить напоминания: ','Could not save reminders: ','Eslatmalarni saqlab bo‘lmadi: ')+(err?.message||err),'error',4200)}
     };
   }
 
