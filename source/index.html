@@ -1178,6 +1178,51 @@
         lastAutoDate = localDateISO();
     }
     function clearForm() { clearFormMeasurements(); }
+
+    // V17 input guardrails for NEW/EDITED measurements only.
+    // These are data-entry sanity bounds, not diagnostic thresholds, and do not alter medical/core classification.
+    const MEASUREMENT_ENTRY_LIMITS = Object.freeze({
+        sys:{min:60,max:260},
+        dia:{min:40,max:160},
+        pulse:{min:30,max:220}
+    });
+    function measurementEntryIssue(rawSys,rawDia,rawPulse) {
+        const values=[rawSys,rawDia,rawPulse].map(v=>String(v??'').trim());
+        if(values.every(v=>v==='')) return null;
+        if(values[0]==='') return {fields:['sys'],message:tx('Введите САД.','Enter systolic pressure.','SAB qiymatini kiriting.')};
+        if(values[1]==='') return {fields:['dia'],message:tx('Введите ДАД.','Enter diastolic pressure.','DAB qiymatini kiriting.')};
+        const s=safeParseFloat(values[0]),d=safeParseFloat(values[1]),p=values[2]===''?0:safeParseFloat(values[2]);
+        if(!Number.isFinite(s)) return {fields:['sys'],message:tx('САД должно быть числом.','Systolic pressure must be a number.','SAB son bo‘lishi kerak.')};
+        if(!Number.isFinite(d)) return {fields:['dia'],message:tx('ДАД должно быть числом.','Diastolic pressure must be a number.','DAB son bo‘lishi kerak.')};
+        if(values[2]!==''&&!Number.isFinite(p)) return {fields:['pulse'],message:tx('Пульс должен быть числом.','Pulse must be a number.','Puls son bo‘lishi kerak.')};
+        if(s<MEASUREMENT_ENTRY_LIMITS.sys.min||s>MEASUREMENT_ENTRY_LIMITS.sys.max) return {fields:['sys'],message:tx('Проверьте САД: допустимый диапазон ввода 60–260 мм рт. ст.','Check systolic pressure: entry range is 60–260 mmHg.','SAB ni tekshiring: kiritish oralig‘i 60–260 mm sim. ust.')};
+        if(d<MEASUREMENT_ENTRY_LIMITS.dia.min||d>MEASUREMENT_ENTRY_LIMITS.dia.max) return {fields:['dia'],message:tx('Проверьте ДАД: допустимый диапазон ввода 40–160 мм рт. ст.','Check diastolic pressure: entry range is 40–160 mmHg.','DAB ni tekshiring: kiritish oralig‘i 40–160 mm sim. ust.')};
+        if(s<=d) return {fields:['sys','dia'],message:tx('САД должно быть выше ДАД.','Systolic pressure must be higher than diastolic pressure.','SAB DAB dan yuqori bo‘lishi kerak.')};
+        if(values[2]!==''&&(p<MEASUREMENT_ENTRY_LIMITS.pulse.min||p>MEASUREMENT_ENTRY_LIMITS.pulse.max)) return {fields:['pulse'],message:tx('Проверьте пульс: допустимый диапазон ввода 30–220 уд/мин.','Check pulse: entry range is 30–220 bpm.','Pulsni tekshiring: kiritish oralig‘i 30–220 ur/min.')};
+        return null;
+    }
+    function validateMeasurementInputs(focusFirst=false) {
+        let firstInvalid=null,ok=true;
+        for(let i=1;i<=3;i++) {
+            for(const side of ['left','right']) {
+                const els={
+                    sys:document.getElementById(`m${i}_${side}_sys`),
+                    dia:document.getElementById(`m${i}_${side}_dia`),
+                    pulse:document.getElementById(`m${i}_${side}_pulse`)
+                };
+                if(!els.sys||!els.dia||!els.pulse) continue;
+                Object.values(els).forEach(el=>{el.classList.remove('measurement-input-invalid');el.removeAttribute('aria-invalid')});
+                const issue=measurementEntryIssue(els.sys.value,els.dia.value,els.pulse.value);
+                const error=document.querySelector(`[data-measure-error="${i}-${side}"]`);
+                if(!issue){if(error){error.hidden=true;error.textContent=''}continue}
+                ok=false;
+                issue.fields.forEach(name=>{const el=els[name];el.classList.add('measurement-input-invalid');el.setAttribute('aria-invalid','true');if(!firstInvalid)firstInvalid=el});
+                if(error){error.textContent=issue.message;error.hidden=false}
+            }
+        }
+        if(!ok&&focusFirst&&firstInvalid){try{firstInvalid.focus({preventScroll:true});firstInvalid.scrollIntoView({behavior:'smooth',block:'center'})}catch(_){firstInvalid.focus()}}
+        return ok;
+    }
     function buildForm() {
         let cont = document.getElementById("measuresContainer");
         let html = '';
@@ -1186,25 +1231,31 @@
                 <div><i class="fas fa-stethoscope"></i> ${t("measurement")}-${i}</div>
                 <div><i class="fas fa-hand-peace"></i> ${t("leftArm")}
                     <div class="bp-inputs">
-                        <input type="number" id="m${i}_left_sys" placeholder="${t("sys")}" step="1" min="1" max="300" data-i18n-placeholder="sys">
+                        <input type="number" id="m${i}_left_sys" placeholder="${t("sys")}" step="1" min="60" max="260" inputmode="numeric" data-i18n-placeholder="sys">
                         <span>/</span>
-                        <input type="number" id="m${i}_left_dia" placeholder="${t("dia")}" step="1" min="1" max="200" data-i18n-placeholder="dia">
+                        <input type="number" id="m${i}_left_dia" placeholder="${t("dia")}" step="1" min="40" max="160" inputmode="numeric" data-i18n-placeholder="dia">
                         <span>-</span>
-                        <input type="number" id="m${i}_left_pulse" placeholder="${t("pulse")}" step="1" min="0" max="250" data-i18n-placeholder="pulse">
+                        <input type="number" id="m${i}_left_pulse" placeholder="${t("pulse")}" step="1" min="30" max="220" inputmode="numeric" data-i18n-placeholder="pulse">
                     </div>
+                    <div class="measurement-validation-error" data-measure-error="${i}-left" hidden></div>
                 </div>
                 <div><i class="fas fa-hand-peace fa-flip-horizontal"></i> ${t("rightArm")}
                     <div class="bp-inputs">
-                        <input type="number" id="m${i}_right_sys" placeholder="${t("sys")}" step="1" min="1" max="300" data-i18n-placeholder="sys">
+                        <input type="number" id="m${i}_right_sys" placeholder="${t("sys")}" step="1" min="60" max="260" inputmode="numeric" data-i18n-placeholder="sys">
                         <span>/</span>
-                        <input type="number" id="m${i}_right_dia" placeholder="${t("dia")}" step="1" min="1" max="200" data-i18n-placeholder="dia">
+                        <input type="number" id="m${i}_right_dia" placeholder="${t("dia")}" step="1" min="40" max="160" inputmode="numeric" data-i18n-placeholder="dia">
                         <span>-</span>
-                        <input type="number" id="m${i}_right_pulse" placeholder="${t("pulse")}" step="1" min="0" max="250" data-i18n-placeholder="pulse">
+                        <input type="number" id="m${i}_right_pulse" placeholder="${t("pulse")}" step="1" min="30" max="220" inputmode="numeric" data-i18n-placeholder="pulse">
                     </div>
+                    <div class="measurement-validation-error" data-measure-error="${i}-right" hidden></div>
                 </div>
             </div>`;
         }
         cont.innerHTML = html;
+        cont.querySelectorAll('.bp-inputs input').forEach(el=>{
+            el.addEventListener('input',()=>validateMeasurementInputs(false));
+            el.addEventListener('change',()=>validateMeasurementInputs(false));
+        });
         updatePlaceholders();
     }
     function updatePlaceholders() {
@@ -1288,6 +1339,10 @@
 
     async function saveRecord() {
         if(!validateProfileInputs(true))return;
+        if(!validateMeasurementInputs(true)){
+            alert(tx('Проверьте значения замера в отмеченных полях.','Check the measurement values in the highlighted fields.','Belgilangan maydonlardagi o‘lchov qiymatlarini tekshiring.'));
+            return;
+        }
         const dateIso=document.getElementById('recordDate').value; if(!isValidISODate(dateIso)){alert(t('dateFormat'));return;}
         let time=normalizeTime(document.getElementById('recordTime').value||new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'})); if(!isValidTime(time)){alert(t('invalidValues'));return;} document.getElementById('recordTime').value=time;
         const measures=getFormMeasures(); let hasData=false; for(const m of measures)for(const side of ['left','right']){const v=m[side];if(v.sys>0&&v.dia>0)hasData=true;if(!validateBP(v.sys,v.dia,v.pulse)){alert(t('invalidValues'));return;}} if(!hasData){alert(t('fillOneArm'));return;}
