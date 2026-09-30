@@ -45,7 +45,7 @@ test('V17 preserves core mobile layout and exposes privacy settings',async({page
   await expect(page.locator('#mobileSettingsSheet')).toHaveClass(/open/);
   await expect(page.locator('#mobileSettingsSheet')).toContainText('5.7.0');
   await expect(page.locator('#mobileSettingsSheet')).toContainText('V17');
-  await expect(page.locator('#mobileSettingsSheet')).toContainText(/Биометрическая блокировка|Biometric lock/);
+  await expect(page.locator('#mobileSettingsSheet')).toContainText(/Блокировка приложения|App lock/);
   await expect(page.locator('#mobileSettingsSheet')).toContainText(/Защита экрана|Screen privacy/);
   await expect(page.locator('#mobileSettingsSheet')).toContainText(/Защищённый бэкап|Protected backup/);
   await page.screenshot({path:shots+'/settings-privacy-light.png',fullPage:true});
@@ -115,7 +115,7 @@ test('V17 biometric and screenshot privacy toggles use the native bridge',async(
   });
 
   await page.locator('#mobileAppBar [data-top="settings"]').click();
-  const bio=page.locator('#mobileSettingsSheet .mobile-settings-row').filter({hasText:/Биометрическая блокировка|Biometric lock/});
+  const bio=page.locator('#mobileSettingsSheet .mobile-settings-row').filter({hasText:/Блокировка приложения|App lock/});
   await bio.click();
   await expect.poll(()=>page.evaluate(()=>localStorage.getItem('bp_biometric_lock_v17'))).toBe('1');
 
@@ -160,33 +160,172 @@ test('V17 protected backup produces an encrypted envelope instead of plaintext b
   expect(saved.content).not.toContain('"patientSettings"');
 });
 
-test('V17 remains usable in dark theme and English',async({page})=>{
+test('V17 language and theme selectors support RU EN UZ without abrupt row toggles',async({page})=>{
   await page.locator('#mobileAppBar [data-top="lang"]').click();
-  await expect(page.locator('#mobileAppBar')).toContainText('Blood pressure diary');
-  await page.locator('#mobileAppBar [data-top="theme"]').click();
+  await expect(page.locator('#mobileSettingsSheet')).toHaveClass(/open/);
+
+  const language=page.locator('#mobileSettingsSheet .mobile-settings-segment').first();
+  await expect(language.locator('button')).toHaveCount(3);
+  await expect(language).toContainText('RU');
+  await expect(language).toContainText('EN');
+  await expect(language).toContainText('UZ');
+
+  await language.locator('[data-value="uz"]').click();
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.lang)).toBe('uz');
+  await expect(page.locator('#mobileAppBar')).toContainText('Qon bosimi kundaligi');
+  await expect(page.locator('#mobileSettingsSheet')).toContainText('Sozlamalar');
+  await expect(page.locator('#mobileBottomNav')).toContainText('O‘lchov');
+  await expect(page.locator('#mobileBottomNav')).toContainText('Tahlil');
+  await expect(page.locator('#mobileBottomNav')).toContainText('Arxiv');
+
+  const theme=page.locator('#mobileSettingsSheet .mobile-settings-segment').nth(1);
+  await theme.locator('[data-value="dark"]').click();
   await expect(page.locator('body')).toHaveClass(/dark/);
-  await page.locator('#mobileAppBar [data-top="settings"]').click();
-  await expect(page.locator('#mobileSettingsSheet')).toContainText('Biometric lock');
+
+  await page.locator('#mobileSettingsSheet .mobile-settings-segment').first().locator('[data-value="en"]').click();
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.lang)).toBe('en');
+  await expect(page.locator('#mobileAppBar')).toContainText('Blood pressure diary');
+  await expect(page.locator('#mobileSettingsSheet')).toContainText('App lock');
   await expect(page.locator('#mobileSettingsSheet')).toContainText('Protected backup');
-  await page.screenshot({path:shots+'/settings-privacy-dark-en.png',fullPage:true});
+  await page.screenshot({path:shots+'/settings-language-theme-dark-en.png',fullPage:true});
 });
 
+test('V17 protected backup prompt is singleton, dismissible and vertically contained',async({page})=>{
+  await page.evaluate(()=>{
+    window.Capacitor={Plugins:{NativeBridge:{
+      saveTextFile:async(args)=>({name:args.fileName,uri:'content://test/protected'}),
+      setPrivacyShield:async()=>({})
+    }}};
+  });
 
-test('V17 cold-start biometric guard covers the diary until authentication succeeds',async({page})=>{
+  const openProtected=async()=>{
+    await page.locator('#mobileAppBar [data-top="settings"]').click();
+    await page.locator('#mobileSettingsSheet .mobile-settings-row').filter({hasText:/Защищённый бэкап|Protected backup/}).click();
+    await expect(page.locator('#mobileSecretSheet')).toHaveClass(/open/);
+  };
+
+  await openProtected();
+  await expect(page.locator('#mobileSecretSheet')).toHaveCount(1);
+  const layout=await page.locator('#mobileSecretSheet').evaluate(sheet=>{
+    const grid=sheet.querySelector('.mobile-sheet-grid');
+    const actions=sheet.querySelector('.mobile-secret-actions');
+    const gs=getComputedStyle(grid),as=getComputedStyle(actions);
+    const buttons=[...actions.querySelectorAll('button')].map(b=>b.getBoundingClientRect());
+    return {
+      gridColumns:gs.gridTemplateColumns,
+      actionColumns:as.gridTemplateColumns.split(' ').length,
+      actionWidth:actions.getBoundingClientRect().width,
+      buttonWidths:buttons.map(r=>r.width),
+      buttonHeights:buttons.map(r=>r.height)
+    };
+  });
+  expect(layout.gridColumns).not.toContain('0px 0px');
+  expect(layout.actionColumns).toBe(2);
+  expect(layout.buttonHeights.every(v=>v>=44)).toBeTruthy();
+  expect(layout.buttonWidths.every(v=>v<layout.actionWidth)).toBeTruthy();
+
+  await page.evaluate(()=>{
+    const hidden=[...document.querySelectorAll('#mobileSettingsSheet .mobile-settings-row')]
+      .find(x=>/Защищённый бэкап|Protected backup/.test(x.textContent||''));
+    hidden?.click();
+  });
+  await expect(page.locator('#mobileSecretSheet')).toHaveCount(1);
+  await page.locator('#mobileSecretSheet .mobile-sheet-close').click();
+  await expect(page.locator('#mobileSecretSheet')).not.toHaveClass(/open/);
+
+  await openProtected();
+  await page.locator('#mobileSecretSheet .mobile-secret-actions .outline').click();
+  await expect(page.locator('#mobileSecretSheet')).not.toHaveClass(/open/);
+});
+
+test('V17 premium onboarding is compact, V17-aware and stays inside the viewport',async({page})=>{
+  await page.locator('#mobileAppBar [data-top="about"]').click();
+  await page.locator('#mobileAboutSheet [data-about-action="guide"]').click();
+  await expect(page.locator('#mobileOnboarding')).toHaveClass(/open/);
+  await expect(page.locator('.mobile-onboarding-top')).toBeVisible();
+  await expect(page.locator('.mobile-onboarding-progress')).toBeVisible();
+  await expect(page.locator('.mobile-onboarding-card')).toHaveClass(/is-first/);
+
+  const box=await page.locator('.mobile-onboarding-card').boundingBox();
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.x+box.width).toBeLessThanOrEqual(390);
+  expect(box.y+box.height).toBeLessThanOrEqual(844);
+
+  await page.locator('.mobile-onboarding-next').click();
+  await expect(page.locator('.mobile-onboarding-step')).toContainText('2');
+  await page.locator('.mobile-onboarding-next').click();
+  await expect(page.locator('.mobile-onboarding-step')).toContainText('3');
+  await expect(page.locator('#mobileOnboarding')).toContainText('V17');
+  await page.screenshot({path:shots+'/onboarding-v17-premium.png',fullPage:true});
+});
+
+test('V17 fixed navigation and icon-only close controls stay centered and inside safe bounds',async({page})=>{
+  const nav=await page.locator('#mobileBottomNav').evaluate(el=>{
+    const r=el.getBoundingClientRect(),body=getComputedStyle(document.body);
+    return {left:r.left,right:r.right,height:r.height,paddingBottom:parseFloat(body.paddingBottom)||0,viewport:innerWidth};
+  });
+  expect(nav.left).toBeGreaterThanOrEqual(0);
+  expect(nav.right).toBeLessThanOrEqual(nav.viewport);
+  expect(nav.paddingBottom).toBeGreaterThan(nav.height);
+
+  await page.locator('#mobileAppBar [data-top="about"]').click();
+  const close=await page.locator('#mobileAboutSheet .mobile-about-close').evaluate(el=>{
+    const s=getComputedStyle(el),r=el.getBoundingClientRect();
+    return {display:s.display,place:s.placeItems,width:r.width,height:r.height};
+  });
+  expect(close.display).toBe('grid');
+  expect(close.place).toContain('center');
+  expect(close.width).toBeGreaterThanOrEqual(44);
+  expect(close.height).toBeGreaterThanOrEqual(44);
+
+  const reportButton=await page.evaluate(()=>{
+    const b=document.createElement('button');
+    b.className='outline mobile-report-close';
+    b.innerHTML='<svg viewBox="0 0 24 24"><path d="M19 12H5"/></svg>';
+    document.body.appendChild(b);
+    const s=getComputedStyle(b),r=b.getBoundingClientRect();
+    const out={display:s.display,place:s.placeItems,width:r.width,height:r.height};
+    b.remove();return out;
+  });
+  expect(reportButton.display).toBe('grid');
+  expect(reportButton.place).toContain('center');
+  expect(reportButton.width).toBeGreaterThanOrEqual(44);
+  expect(reportButton.height).toBeGreaterThanOrEqual(44);
+});
+
+test('V17 uses the system authentication prompt with a 10 second background threshold',async({page})=>{
   await page.addInitScript(()=>{
     localStorage.setItem('bp_biometric_lock_v17','1');
     window.__bpBioResolve=null;
     window.Capacitor={Plugins:{NativeBridge:{
       authenticateBiometric:async()=>new Promise(resolve=>{window.__bpBioResolve=resolve}),
-      setPrivacyShield:async()=>({})
+      setPrivacyShield:async()=>({}),
+      consumeScreenOffEvent:async()=>({screenOff:false}),
+      backgroundApp:async()=>({})
     }}};
   });
   await page.reload({waitUntil:'domcontentloaded'});
-  await expect(page.locator('#mobilePrivacyLock')).toHaveClass(/open/);
-  await expect(page.locator('#mobilePrivacyLock')).toContainText(/Приложение защищено|App locked/);
-  const prelocked=await page.evaluate(()=>document.documentElement.classList.contains('bp-prelocked'));
-  expect(prelocked).toBe(false);
   await expect.poll(()=>page.evaluate(()=>typeof window.__bpBioResolve)).toBe('function');
+  expect(await page.evaluate(()=>window.__bpPrivacyLockMs)).toBe(10000);
+  expect(await page.locator('#mobilePrivacyLock').count()).toBe(0);
+  expect(await page.evaluate(()=>document.documentElement.classList.contains('bp-prelocked'))).toBe(true);
   await page.evaluate(()=>window.__bpBioResolve({authenticated:true}));
-  await expect(page.locator('#mobilePrivacyLock')).not.toHaveClass(/open/);
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.classList.contains('bp-prelocked'))).toBe(false);
+});
+
+test('V17 screen-off event requires immediate re-authentication on resume',async({page})=>{
+  await page.evaluate(()=>{
+    localStorage.setItem('bp_biometric_lock_v17','1');
+    window.__screenAuthCalls=0;
+    window.Capacitor={Plugins:{NativeBridge:{
+      authenticateBiometric:async()=>{window.__screenAuthCalls++;return {authenticated:true}},
+      consumeScreenOffEvent:async()=>({screenOff:true}),
+      setPrivacyShield:async()=>({}),
+      backgroundApp:async()=>({})
+    }}};
+  });
+  await page.evaluate(()=>window.__bpPrivacyResumeCheck());
+  await expect.poll(()=>page.evaluate(()=>window.__screenAuthCalls)).toBeGreaterThan(0);
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.classList.contains('bp-prelocked'))).toBe(false);
 });

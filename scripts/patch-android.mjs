@@ -279,9 +279,11 @@ const plugin=`package com.tokhirjonyuldoshev.bpdiary;
 import android.Manifest;
 import android.app.Activity;
 import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -340,6 +342,31 @@ import org.json.JSONObject;
 public class NativeBridgePlugin extends Plugin {
     private TextToSpeech tts;
     private WebView printWebView;
+    private BroadcastReceiver screenOffReceiver;
+    private volatile boolean screenOffObserved = false;
+
+    @Override
+    public void load() {
+        super.load();
+        try {
+            screenOffReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    if (intent != null && Intent.ACTION_SCREEN_OFF.equals(intent.getAction())) {
+                        screenOffObserved = true;
+                    }
+                }
+            };
+            IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                getContext().registerReceiver(screenOffReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                getContext().registerReceiver(screenOffReceiver, filter);
+            }
+        } catch (Exception ignored) {
+            screenOffReceiver = null;
+        }
+    }
 
     @PluginMethod
     public void recognizeSpeech(PluginCall call) {
@@ -793,13 +820,35 @@ public class NativeBridgePlugin extends Plugin {
     @PluginMethod
     public void getBiometricStatus(PluginCall call) {
         try {
-            int status = BiometricManager.from(getContext()).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK);
+            int authenticators = BiometricManager.Authenticators.BIOMETRIC_WEAK
+                | BiometricManager.Authenticators.DEVICE_CREDENTIAL;
+            int status = BiometricManager.from(getContext()).canAuthenticate(authenticators);
             JSObject out = new JSObject();
             out.put("available", status == BiometricManager.BIOMETRIC_SUCCESS);
             out.put("status", status);
+            out.put("deviceCredentialAllowed", true);
             call.resolve(out);
         } catch (Exception e) {
-            call.reject("Could not read biometric status", e);
+            call.reject("Could not read device authentication status", e);
+        }
+    }
+
+    @PluginMethod
+    public void consumeScreenOffEvent(PluginCall call) {
+        boolean observed = screenOffObserved;
+        screenOffObserved = false;
+        JSObject out = new JSObject();
+        out.put("screenOff", observed);
+        call.resolve(out);
+    }
+
+    @PluginMethod
+    public void backgroundApp(PluginCall call) {
+        try {
+            getActivity().moveTaskToBack(true);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Could not background app", e);
         }
     }
 
@@ -833,11 +882,11 @@ public class NativeBridgePlugin extends Plugin {
 
             String title = call.getString("title");
             String subtitle = call.getString("subtitle");
-            String cancel = call.getString("cancel");
+            int authenticators = BiometricManager.Authenticators.BIOMETRIC_WEAK
+                | BiometricManager.Authenticators.DEVICE_CREDENTIAL;
             BiometricPrompt.PromptInfo.Builder info = new BiometricPrompt.PromptInfo.Builder()
                 .setTitle(title == null || title.trim().isEmpty() ? "BP Diary" : title)
-                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK)
-                .setNegativeButtonText(cancel == null || cancel.trim().isEmpty() ? "Cancel" : cancel);
+                .setAllowedAuthenticators(authenticators);
             if (subtitle != null && !subtitle.trim().isEmpty()) info.setSubtitle(subtitle);
             prompt.authenticate(info.build());
         } catch (Exception e) {
@@ -975,6 +1024,10 @@ public class NativeBridgePlugin extends Plugin {
 
     @Override
     protected void handleOnDestroy() {
+        if (screenOffReceiver != null) {
+            try { getContext().unregisterReceiver(screenOffReceiver); } catch (Exception ignored) {}
+            screenOffReceiver = null;
+        }
         if (tts != null) {
             tts.stop();
             tts.shutdown();

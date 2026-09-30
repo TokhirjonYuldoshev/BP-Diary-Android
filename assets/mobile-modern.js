@@ -5,7 +5,42 @@
   try{currentTab=localStorage.getItem('bp_mobile_tab')||'measure';activeRound=Number(localStorage.getItem('bp_mobile_round')||0)||0}catch(_){}
   const q=(s,r=document)=>r.querySelector(s);
   const qa=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const ru=()=>document.documentElement.lang!=='en';
+  const appLang=()=>['ru','en','uz'].includes(document.documentElement.lang)?document.documentElement.lang:'ru';
+  const ru=()=>appLang()==='ru';
+  const uz=()=>appLang()==='uz';
+  const l=(ruText,enText,uzText)=>uz()?(uzText??enText):(ru()?ruText:enText);
+  const UZ_MOBILE_TEXT={
+    'Measure':'O‘lchov','Analytics':'Tahlil','Archive':'Arxiv','Measurements':'O‘lchovlar','NEW READING':'YANGI O‘LCHOV',
+    'Blood pressure check':'Qon bosimini nazorat qilish','Today':'Bugun','Main':'Asosiy','Clear':'Tozalash','More':'Yana',
+    'Actions':'Amallar','Data & actions':'Ma’lumotlar va amallar','Search archive':'Arxivdan qidirish','All':'Barchasi',
+    'Overview':'Umumiy','Charts':'Grafiklar','All metrics':'Barcha ko‘rsatkichlar','Filter':'Filtr','Reset':'Tiklash',
+    'Add reading':'O‘lchov qo‘shish','Measurement history and data':'O‘lchovlar tarixi va ma’lumotlar',
+    'Settings':'Sozlamalar','About':'Dastur haqida','Reminder':'Eslatma','Done':'Tayyor','Back':'Orqaga','Next':'Keyingi',
+    'Start':'Boshlash','Skip':'O‘tkazib yuborish','Language':'Til','Theme':'Mavzu','Privacy':'Maxfiylik',
+    'App':'Ilova','Android & data':'Android va ma’lumotlar','Protected backup':'Himoyalangan zaxira nusxa',
+    'Restore protected backup':'Himoyalangan zaxirani tiklash','Full backup':'To‘liq zaxira nusxa','Auto-backups':'Avto-zaxiralar',
+    'Check for updates':'Yangilanishlarni tekshirish','Doctor report':'Shifokor uchun hisobot','Preview & export':'Ko‘rish va eksport',
+    'Print':'Chop etish','Save PDF':'PDF saqlash','Share':'Ulashish','Cancel':'Bekor qilish','Continue':'Davom etish',
+    'Password':'Parol','Repeat password':'Parolni takrorlang','Close':'Yopish'
+  };
+  function localizeUzTree(root=document){
+    if(!uz()||!root)return;
+    const scope=root.nodeType===1||root.nodeType===9?root:document;
+    try{
+      const walker=document.createTreeWalker(scope,NodeFilter.SHOW_TEXT);
+      let node;
+      while((node=walker.nextNode())){
+        const raw=node.nodeValue||'',trimmed=raw.trim(),translated=UZ_MOBILE_TEXT[trimmed];
+        if(translated)node.nodeValue=raw.replace(trimmed,translated);
+      }
+      qa('[aria-label],[title],[placeholder]',scope).forEach(el=>{
+        ['aria-label','title','placeholder'].forEach(attr=>{
+          const value=el.getAttribute(attr),translated=value&&UZ_MOBILE_TEXT[value.trim()];
+          if(translated)el.setAttribute(attr,translated);
+        });
+      });
+    }catch(_){}
+  }
   const pages=()=>qa('#app > .card');
   const proxy=id=>q('#'+id)?.click();
   const APP_RELEASE='__BP_RELEASE__';
@@ -15,7 +50,7 @@
   function nativeBridge(){return window.Capacitor?.Plugins?.NativeBridge||null}
   async function nativeCall(method,args={}){
     const p=nativeBridge();
-    if(!p||typeof p[method]!=='function')throw new Error(ru()?'Нативная функция недоступна':'Native feature unavailable');
+    if(!p||typeof p[method]!=='function')throw new Error(l('Нативная функция недоступна','Native feature unavailable','Mahalliy Android funksiyasi mavjud emas'));
     return await p[method](args);
   }
 
@@ -425,19 +460,19 @@
       document.body.appendChild(v);
     }
     q('.mobile-report-close',v).innerHTML=svgIcon('arrowLeft');
-    q('.mobile-report-close',v).setAttribute('aria-label',ru()?'Назад':'Back');
-    q('.mobile-report-heading strong',v).textContent=ru()?'Отчёт для врача':'Doctor report';
-    q('.mobile-report-heading span',v).textContent=ru()?'Просмотр и экспорт':'Preview & export';
-    q('.mobile-report-print-now',v).innerHTML=svgIcon('print')+'<span>'+(ru()?'Печать':'Print')+'</span>';
-    q('.mobile-report-save',v).innerHTML=svgIcon('document')+'<span>'+(ru()?'Сохранить PDF':'Save PDF')+'</span>';
-    q('.mobile-report-share-now',v).innerHTML=svgIcon('share')+'<span>'+(ru()?'Поделиться':'Share')+'</span>';
+    q('.mobile-report-close',v).setAttribute('aria-label',l('Назад','Back','Orqaga'));
+    q('.mobile-report-heading strong',v).textContent=l('Отчёт для врача','Doctor report','Shifokor uchun hisobot');
+    q('.mobile-report-heading span',v).textContent=l('Просмотр и экспорт','Preview & export','Ko‘rish va eksport');
+    q('.mobile-report-print-now',v).innerHTML=svgIcon('print')+'<span>'+l('Печать','Print','Chop etish')+'</span>';
+    q('.mobile-report-save',v).innerHTML=svgIcon('document')+'<span>'+l('Сохранить PDF','Save PDF','PDF saqlash')+'</span>';
+    q('.mobile-report-share-now',v).innerHTML=svgIcon('share')+'<span>'+l('Поделиться','Share','Ulashish')+'</span>';
     const frame=q('iframe',v);frame.srcdoc=clean;v.classList.add('open');
     q('.mobile-report-close',v).onclick=()=>v.classList.remove('open');
     q('.mobile-report-print-now',v).onclick=async()=>{
       try{
         const date=new Date().toISOString().slice(0,10);
         await nativeCall('printHtml',{html:orientedReportHtml(clean,'portrait'),orientation:'portrait',jobName:'BP-Diary-Doctor-Report-'+date});
-      }catch(err){mobileToast((ru()?'Не удалось открыть печать: ':'Could not open print: ')+(err?.message||err),'error',4200)}
+      }catch(err){mobileToast(l('Не удалось открыть печать: ','Could not open print: ','Chop etishni ochib bo‘lmadi: ')+(err?.message||err),'error',4200)}
     };
     q('.mobile-report-save',v).onclick=()=>openPdfSaveSheet(clean);
     q('.mobile-report-share-now',v).onclick=()=>shareDoctorReportHtml(clean);
@@ -708,94 +743,123 @@
     }
   }
 
+  let secretPromptState=null,protectedBackupBusy=false,protectedRestoreBusy=false;
+
   function askSecret({title,message,confirm=false,minLength=1}={}){
+    if(secretPromptState){
+      openMobileSheet(secretPromptState.sheet);
+      setTimeout(()=>q('#mobileSecretOne',secretPromptState.sheet)?.focus(),30);
+      return Promise.resolve(null);
+    }
     return new Promise(resolve=>{
       const sheet=makeSheet('mobileSecretSheet',title||'');
-      q('.mobile-sheet-title',sheet).innerHTML='<span>'+(title||'')+'</span><button type="button" class="mobile-sheet-close" aria-label="'+(ru()?'Закрыть':'Close')+'">×</button>';
+      const state={sheet};secretPromptState=state;
+      q('.mobile-sheet-title',sheet).innerHTML='<span>'+(title||'')+'</span><button type="button" class="mobile-sheet-close" aria-label="'+l('Закрыть','Close','Yopish')+'">×</button>';
       const g=q('.mobile-sheet-grid',sheet);g.innerHTML='';
       const wrap=document.createElement('section');wrap.className='mobile-secret-card';
-      wrap.innerHTML='<p class="mobile-secret-message"></p><label class="mobile-settings-field"><span>'+(ru()?'Пароль':'Password')+'</span><input id="mobileSecretOne" type="password" autocomplete="new-password"></label>'+
-        (confirm?'<label class="mobile-settings-field"><span>'+(ru()?'Повторите пароль':'Repeat password')+'</span><input id="mobileSecretTwo" type="password" autocomplete="new-password"></label>':'')+
-        '<small class="mobile-secret-note">'+(confirm?(ru()?'Пароль нигде не сохраняется. Если его забыть, расшифровать файл будет невозможно.':'The password is never stored. If you forget it, the file cannot be decrypted.'):'')+'</small>';
+      wrap.innerHTML='<p class="mobile-secret-message"></p><label class="mobile-settings-field"><span>'+l('Пароль','Password','Parol')+'</span><input id="mobileSecretOne" type="password" autocomplete="new-password"></label>'+
+        (confirm?'<label class="mobile-settings-field"><span>'+l('Повторите пароль','Repeat password','Parolni takrorlang')+'</span><input id="mobileSecretTwo" type="password" autocomplete="new-password"></label>':'')+
+        '<small class="mobile-secret-note">'+(confirm?l('Пароль нигде не сохраняется. Если его забыть, расшифровать файл будет невозможно.','The password is never stored. If you forget it, the file cannot be decrypted.','Parol hech qayerda saqlanmaydi. Uni unutib qo‘ysangiz, faylni ochib bo‘lmaydi.'):'')+'</small>';
       q('.mobile-secret-message',wrap).textContent=message||'';
-      const actions=document.createElement('div');actions.className='mobile-reminder-actions';
-      const cancel=document.createElement('button');cancel.type='button';cancel.className='outline';cancel.textContent=ru()?'Отмена':'Cancel';
-      const ok=document.createElement('button');ok.type='button';ok.className='mobile-settings-primary';ok.textContent=ru()?'Продолжить':'Continue';
+      const actions=document.createElement('div');actions.className='mobile-secret-actions';
+      const cancel=document.createElement('button');cancel.type='button';cancel.className='outline';cancel.textContent=l('Отмена','Cancel','Bekor qilish');
+      const ok=document.createElement('button');ok.type='button';ok.className='mobile-settings-primary';ok.textContent=l('Продолжить','Continue','Davom etish');
       actions.append(cancel,ok);g.append(wrap,actions);
       let settled=false;
-      const finish=value=>{if(settled)return;settled=true;sheet.__onDismiss=null;closeMobileSheet(sheet);resolve(value)};
-      sheet.__onDismiss=()=>{if(!settled){settled=true;resolve(null)}};
-      q('.mobile-sheet-close',sheet).onclick=()=>finish(null);cancel.onclick=()=>finish(null);
+      const finish=value=>{
+        if(settled)return;
+        settled=true;
+        if(secretPromptState===state)secretPromptState=null;
+        sheet.__onDismiss=null;
+        closeMobileSheet(sheet);
+        resolve(value);
+      };
+      sheet.__onDismiss=()=>{
+        if(settled)return;
+        settled=true;
+        if(secretPromptState===state)secretPromptState=null;
+        resolve(null);
+      };
+      q('.mobile-sheet-close',sheet).onclick=()=>finish(null);
+      cancel.onclick=()=>finish(null);
       ok.onclick=()=>{
         const one=q('#mobileSecretOne',sheet)?.value||'',two=q('#mobileSecretTwo',sheet)?.value||'';
-        if(one.length<minLength){mobileToast((ru()?'Минимум символов: ':'Minimum characters: ')+minLength,'error');return}
-        if(confirm&&one!==two){mobileToast(ru()?'Пароли не совпадают':'Passwords do not match','error');return}
+        if(one.length<minLength){mobileToast(l('Минимум символов: ','Minimum characters: ','Minimal belgilar soni: ')+minLength,'error');return}
+        if(confirm&&one!==two){mobileToast(l('Пароли не совпадают','Passwords do not match','Parollar mos kelmadi'),'error');return}
         finish(one);
       };
-      openMobileSheet(sheet);setTimeout(()=>q('#mobileSecretOne',sheet)?.focus(),120);
+      openMobileSheet(sheet);
+      setTimeout(()=>q('#mobileSecretOne',sheet)?.focus(),120);
     });
   }
 
   async function nativeSaveProtectedBackup(){
+    if(protectedBackupBusy){
+      if(secretPromptState?.sheet)openMobileSheet(secretPromptState.sheet);
+      return;
+    }
+    protectedBackupBusy=true;
     try{
       const password=await askSecret({
-        title:ru()?'Защищённый бэкап':'Protected backup',
-        message:ru()?'Придумайте пароль. Данные будут зашифрованы AES‑GCM перед сохранением.':'Choose a password. Data will be AES-GCM encrypted before saving.',
+        title:l('Защищённый бэкап','Protected backup','Himoyalangan zaxira nusxa'),
+        message:l('Придумайте пароль. Данные будут зашифрованы AES‑GCM перед сохранением.','Choose a password. Data will be AES-GCM encrypted before saving.','Parol yarating. Saqlashdan oldin ma’lumotlar AES‑GCM bilan shifrlanadi.'),
         confirm:true,minLength:8
       });
       if(!password)return;
-      mobileToast(ru()?'Шифрую бэкап…':'Encrypting backup…','info',1400);
+      mobileToast(l('Шифрую бэкап…','Encrypting backup…','Zaxira nusxa shifrlanmoqda…'),'info',1400);
       const envelope=await encryptBackupPayload(backupSnapshot(),password);
       const fileName='BP-Diary-protected-'+new Date().toISOString().slice(0,10)+'.bpbackup.json';
       const res=await nativeCall('saveTextFile',{content:JSON.stringify(envelope),fileName,mime:'application/json'});
-      mobileToast((ru()?'Защищённый бэкап сохранён: ':'Protected backup saved: ')+(res?.name||fileName),'success',3400);
-    }catch(err){if(!/cancel/i.test(String(err?.message||'')))mobileToast((ru()?'Не удалось создать защищённый бэкап: ':'Could not create protected backup: ')+(err?.message||err),'error',4700)}
+      mobileToast(l('Защищённый бэкап сохранён: ','Protected backup saved: ','Himoyalangan zaxira nusxa saqlandi: ')+(res?.name||fileName),'success',3400);
+    }catch(err){
+      if(!/cancel/i.test(String(err?.message||'')))mobileToast(l('Не удалось создать защищённый бэкап: ','Could not create protected backup: ','Himoyalangan zaxira nusxani yaratib bo‘lmadi: ')+(err?.message||err),'error',4700)
+    }finally{protectedBackupBusy=false}
   }
 
   async function nativeRestoreProtectedBackup(){
+    if(protectedRestoreBusy){
+      if(secretPromptState?.sheet)openMobileSheet(secretPromptState.sheet);
+      return;
+    }
+    protectedRestoreBusy=true;
     try{
       const res=await nativeCall('openTextFile',{mime:'application/json',initialUri:''});
       const envelope=JSON.parse(res?.content||'');
-      if(envelope?.format!==V17_BACKUP_FORMAT)throw new Error(ru()?'Выбранный файл не является защищённым бэкапом BP Diary':'Selected file is not a protected BP Diary backup');
+      if(envelope?.format!==V17_BACKUP_FORMAT)throw new Error(l('Выбранный файл не является защищённым бэкапом BP Diary','Selected file is not a protected BP Diary backup','Tanlangan fayl BP Diary himoyalangan zaxira nusxasi emas'));
       const password=await askSecret({
-        title:ru()?'Расшифровать бэкап':'Decrypt backup',
-        message:ru()?'Введите пароль, которым защищён этот файл.':'Enter the password used to protect this file.',
+        title:l('Расшифровать бэкап','Decrypt backup','Zaxira nusxani ochish'),
+        message:l('Введите пароль, которым защищён этот файл.','Enter the password used to protect this file.','Faylni himoyalash uchun ishlatilgan parolni kiriting.'),
         confirm:false,minLength:1
       });
       if(!password)return;
-      mobileToast(ru()?'Проверяю и расшифровываю…':'Verifying and decrypting…','info',1500);
+      mobileToast(l('Проверяю и расшифровываю…','Verifying and decrypting…','Tekshirilmoqda va shifrdan chiqarilmoqda…'),'info',1500);
       const backup=await decryptBackupEnvelope(envelope,password);
       if(!await mobileConfirm({
-        title:ru()?'Восстановить защищённый бэкап?':'Restore protected backup?',
-        message:ru()?'Текущие данные приложения будут заменены расшифрованными данными из файла.':'Current app data will be replaced by decrypted data from the selected file.',
-        confirmLabel:ru()?'Восстановить':'Restore',danger:true
+        title:l('Восстановить защищённый бэкап?','Restore protected backup?','Himoyalangan zaxira tiklansinmi?'),
+        message:l('Текущие данные приложения будут заменены расшифрованными данными из файла.','Current app data will be replaced by decrypted data from the selected file.','Ilovadagi joriy ma’lumotlar fayldagi ochilgan ma’lumotlar bilan almashtiriladi.'),
+        confirmLabel:l('Восстановить','Restore','Tiklash'),danger:true
       }))return;
       await nativeAutoBackup('before-protected-restore',true);
-      if(!restoreBackupObject(backup))throw new Error(ru()?'Неверный формат данных внутри бэкапа':'Invalid data inside backup');
+      if(!restoreBackupObject(backup))throw new Error(l('Неверный формат данных внутри бэкапа','Invalid data inside backup','Zaxira nusxa ichidagi ma’lumot formati noto‘g‘ri'));
       try{localStorage.setItem('bp_v12_onboarding_done','1')}catch(_){}
-      mobileToast(ru()?'Защищённый бэкап восстановлен. Перезапускаю приложение.':'Protected backup restored. Restarting the app.','success',1900);
+      mobileToast(l('Защищённый бэкап восстановлен. Перезапускаю приложение.','Protected backup restored. Restarting the app.','Himoyalangan zaxira tiklandi. Ilova qayta ishga tushirilmoqda.'),'success',1900);
       setTimeout(()=>location.reload(),900);
-    }catch(err){if(!/cancel/i.test(String(err?.message||'')))mobileToast((ru()?'Не удалось восстановить защищённый бэкап: ':'Could not restore protected backup: ')+(err?.message||err),'error',4800)}
+    }catch(err){
+      if(!/cancel/i.test(String(err?.message||'')))mobileToast(l('Не удалось восстановить защищённый бэкап: ','Could not restore protected backup: ','Himoyalangan zaxirani tiklab bo‘lmadi: ')+(err?.message||err),'error',4800)
+    }finally{protectedRestoreBusy=false}
   }
 
-  function privacyOverlay(){
-    let overlay=q('#mobilePrivacyLock');
-    if(!overlay){
-      overlay=document.createElement('div');overlay.id='mobilePrivacyLock';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
-      overlay.innerHTML='<div class="mobile-privacy-lock-card"><div class="mobile-privacy-lock-icon">'+brandHeartIcon()+'</div><h2>BP Diary</h2><p></p><button type="button" class="mobile-settings-primary"></button></div>';
-      document.body.appendChild(overlay);
-    }
-    q('p',overlay).textContent=ru()?'Приложение защищено. Подтвердите биометрию, чтобы открыть дневник.':'App locked. Authenticate with biometrics to open your diary.';
-    q('button',overlay).innerHTML=svgIcon('lock')+'<span>'+(ru()?'Разблокировать':'Unlock')+'</span>';
-    return overlay;
-  }
+  const V17_BACKGROUND_LOCK_MS=10000;
+  let privacyNeedsAuth=false,privacyResumeTimer=null;
+
   async function biometricAuth(reason='unlock'){
     const bridge=nativeBridge();
-    if(!bridge||typeof bridge.authenticateBiometric!=='function')throw new Error(ru()?'Биометрия недоступна':'Biometrics unavailable');
+    if(!bridge||typeof bridge.authenticateBiometric!=='function')throw new Error(l('Защита устройства недоступна','Device authentication unavailable','Qurilma himoyasi mavjud emas'));
     return nativeCall('authenticateBiometric',{
       title:'BP Diary',
-      subtitle:reason==='settings'?(ru()?'Подтвердите изменение защиты':'Confirm privacy change'):(ru()?'Разблокируйте дневник':'Unlock your diary'),
-      cancel:ru()?'Отмена':'Cancel'
+      subtitle:reason==='settings'
+        ?l('Подтвердите изменение защиты','Confirm privacy change','Himoya sozlamasini tasdiqlang')
+        :l('Разблокируйте дневник','Unlock your diary','Kundalikni qulfdan chiqaring')
     });
   }
   async function applyPrivacyShield(){
@@ -803,109 +867,175 @@
     try{await nativeCall('setPrivacyShield',{enabled:flagEnabled(V17_PRIVACY_SHIELD_KEY)})}catch(_){}
   }
   async function lockApplication({automatic=true}={}){
-    if(!flagEnabled(V17_BIOMETRIC_KEY)){document.documentElement.classList.remove('bp-prelocked');return true}
+    if(!flagEnabled(V17_BIOMETRIC_KEY)){
+      privacyNeedsAuth=false;document.documentElement.classList.remove('bp-prelocked');return true;
+    }
     const bridge=nativeBridge();
-    if(!bridge||typeof bridge.authenticateBiometric!=='function'){document.documentElement.classList.remove('bp-prelocked');return true}
-    const overlay=privacyOverlay();overlay.classList.add('open');document.documentElement.classList.remove('bp-prelocked');
-    const button=q('button',overlay);
-    const attempt=async()=>{
-      if(privacyPromptActive)return;
-      privacyPromptActive=true;button.disabled=true;
-      try{await biometricAuth('unlock');overlay.classList.remove('open');return true}
-      catch(_){return false}
-      finally{privacyPromptActive=false;button.disabled=false}
-    };
-    button.onclick=attempt;
-    if(automatic)setTimeout(attempt,140);
-    return false;
+    if(!bridge||typeof bridge.authenticateBiometric!=='function'){
+      privacyNeedsAuth=false;document.documentElement.classList.remove('bp-prelocked');return true;
+    }
+    if(privacyPromptActive)return false;
+    privacyPromptActive=true;privacyNeedsAuth=true;document.documentElement.classList.add('bp-prelocked');
+    try{
+      await biometricAuth('unlock');
+      privacyNeedsAuth=false;document.documentElement.classList.remove('bp-prelocked');
+      return true;
+    }catch(_){
+      if(automatic){try{await nativeCall('backgroundApp',{})}catch(_){}}
+      return false;
+    }finally{privacyPromptActive=false}
   }
   async function toggleBiometricProtection(){
     const enabled=flagEnabled(V17_BIOMETRIC_KEY);
     try{
-      const bridge=nativeBridge();if(!bridge||typeof bridge.getBiometricStatus!=='function')throw new Error(ru()?'Биометрия недоступна':'Biometrics unavailable');
+      const bridge=nativeBridge();if(!bridge||typeof bridge.getBiometricStatus!=='function')throw new Error(l('Защита устройства недоступна','Device authentication unavailable','Qurilma himoyasi mavjud emas'));
       const status=await nativeCall('getBiometricStatus',{});
-      if(!status?.available)throw new Error(ru()?'На устройстве нет доступной настроенной биометрии':'No enrolled biometric authentication is available');
+      if(!status?.available)throw new Error(l('На устройстве не настроены биометрия или код блокировки','No biometric or device credential is configured','Qurilmada biometrika yoki ekran qulfi kodi sozlanmagan'));
       await biometricAuth('settings');
       setFlag(V17_BIOMETRIC_KEY,!enabled);
-      mobileToast(!enabled?(ru()?'Биометрическая блокировка включена':'Biometric lock enabled'):(ru()?'Биометрическая блокировка выключена':'Biometric lock disabled'),'success',2600);
+      mobileToast(!enabled
+        ?l('Блокировка приложения включена','App lock enabled','Ilova qulfi yoqildi')
+        :l('Блокировка приложения выключена','App lock disabled','Ilova qulfi o‘chirildi'),'success',2600);
       return !enabled;
-    }catch(err){mobileToast((ru()?'Не удалось изменить биометрическую защиту: ':'Could not change biometric protection: ')+(err?.message||err),'error',4500);return enabled}
+    }catch(err){
+      mobileToast(l('Не удалось изменить защиту: ','Could not change app protection: ','Himoyani o‘zgartirib bo‘lmadi: ')+(err?.message||err),'error',4500);
+      return enabled;
+    }
   }
   async function togglePrivacyShield(){
     const next=!flagEnabled(V17_PRIVACY_SHIELD_KEY);setFlag(V17_PRIVACY_SHIELD_KEY,next);await applyPrivacyShield();
-    mobileToast(next?(ru()?'Скриншоты и превью Recent Apps заблокированы':'Screenshots and Recent Apps previews are blocked'):(ru()?'Защита скриншотов выключена':'Screenshot protection disabled'),'success',3000);
+    mobileToast(next
+      ?l('Скриншоты и превью Recent Apps заблокированы','Screenshots and Recent Apps previews are blocked','Skrinshotlar va Recent Apps ko‘rinishi bloklandi')
+      :l('Защита скриншотов выключена','Screenshot protection disabled','Skrinshot himoyasi o‘chirildi'),'success',3000);
     return next;
   }
+  async function checkPrivacyOnResume(){
+    if(!flagEnabled(V17_BIOMETRIC_KEY)){privacyNeedsAuth=false;document.documentElement.classList.remove('bp-prelocked');return}
+    let screenOff=false;
+    try{screenOff=!!(await nativeCall('consumeScreenOffEvent',{}))?.screenOff}catch(_){}
+    const elapsed=privacyHiddenAt?Date.now()-privacyHiddenAt:0;
+    if(privacyNeedsAuth||screenOff||elapsed>=V17_BACKGROUND_LOCK_MS)await lockApplication({automatic:true});
+  }
+  window.__bpPrivacyResumeCheck=checkPrivacyOnResume;
+  window.__bpPrivacyLockMs=V17_BACKGROUND_LOCK_MS;
   async function initPrivacyProtection(){
     await applyPrivacyShield();
     if(flagEnabled(V17_BIOMETRIC_KEY))await lockApplication({automatic:true});
     else document.documentElement.classList.remove('bp-prelocked');
+    privacyHiddenAt=Date.now();
     if(!document.documentElement.dataset.bpPrivacyBound){
       document.documentElement.dataset.bpPrivacyBound='1';
       document.addEventListener('visibilitychange',()=>{
         if(document.visibilityState==='hidden'){privacyHiddenAt=Date.now();return}
-        if(document.visibilityState==='visible'&&flagEnabled(V17_BIOMETRIC_KEY)&&Date.now()-privacyHiddenAt>15000)lockApplication({automatic:true});
+        if(document.visibilityState==='visible'){
+          clearTimeout(privacyResumeTimer);privacyResumeTimer=setTimeout(checkPrivacyOnResume,60);
+        }
+      });
+      window.addEventListener('focus',()=>{
+        if(document.visibilityState!=='visible')return;
+        clearTimeout(privacyResumeTimer);privacyResumeTimer=setTimeout(checkPrivacyOnResume,80);
+      });
+      window.addEventListener('pageshow',()=>{
+        if(document.visibilityState!=='visible')return;
+        clearTimeout(privacyResumeTimer);privacyResumeTimer=setTimeout(checkPrivacyOnResume,80);
       });
     }
   }
 
+  function switchMobileLanguage(code){
+    if(!['ru','en','uz'].includes(code)||code===appLang())return;
+    try{window.setAppLanguage?.(code)}catch(_){proxy('langSwitchBtn')}
+    setTimeout(()=>{
+      try{window.updateAllAnalytics?.();window.updateUITexts?.()}catch(_){}
+      setup(true);refreshText();showSettingsSheet();
+    },110);
+  }
+  function switchMobileTheme(theme){
+    const dark=theme==='dark';
+    if(dark===document.body.classList.contains('dark'))return;
+    proxy(dark?'darkThemeBtn':'lightThemeBtn');
+    setTimeout(()=>{appBar();const ps=pages();if(ps[1])polishCharts(ps[1]);showSettingsSheet()},80);
+  }
+  function settingsSegment(values,current,onChange,label){
+    const group=document.createElement('div');group.className='mobile-settings-segment';group.setAttribute('role','group');group.setAttribute('aria-label',label);
+    values.forEach(([value,text])=>{
+      const b=document.createElement('button');b.type='button';b.dataset.value=value;b.textContent=text;
+      const active=value===current;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));
+      b.onclick=e=>{e.stopPropagation();onChange(value)};
+      group.appendChild(b);
+    });
+    return group;
+  }
   async function showSettingsSheet(){
-    const sheet=makeSheet('mobileSettingsSheet',ru()?'Настройки':'Settings');
-    q('.mobile-sheet-title',sheet).innerHTML='<span>'+(ru()?'Настройки':'Settings')+'</span><button type="button" class="mobile-sheet-close" aria-label="'+(ru()?'Закрыть':'Close')+'">×</button>';
+    const sheet=makeSheet('mobileSettingsSheet',l('Настройки','Settings','Sozlamalar'));
+    q('.mobile-sheet-title',sheet).innerHTML='<span>'+l('Настройки','Settings','Sozlamalar')+'</span><button type="button" class="mobile-sheet-close" aria-label="'+l('Закрыть','Close','Yopish')+'">×</button>';
     const g=q('.mobile-sheet-grid',sheet);g.innerHTML='';
     const version=document.createElement('section');version.className='mobile-settings-version';
     version.innerHTML='<div class="mobile-settings-version-icon">'+brandHeartIcon()+'</div><div><b>BP Diary '+APP_VERSION+'</b><small>'+APP_RELEASE+' · versionCode '+APP_VERSION_CODE+'</small></div>';
     g.appendChild(version);
     const section=(title)=>{const el=document.createElement('section');el.className='mobile-settings-section';el.innerHTML='<h3>'+title+'</h3><div class="mobile-settings-list"></div>';g.appendChild(el);return q('.mobile-settings-list',el)};
-    const appearance=section(ru()?'Интерфейс':'Appearance');
-    const lang=document.createElement('button');lang.type='button';lang.className='mobile-settings-row';lang.innerHTML='<span class="mobile-settings-row-icon">文</span><span><b>'+(ru()?'Язык':'Language')+'</b><small>'+(ru()?'Русский · переключить на English':'English · switch to Русский')+'</small></span><span>›</span>';
-    lang.onclick=()=>{proxy('langSwitchBtn');setTimeout(()=>{try{window.updateAllAnalytics?.();window.updateUITexts?.()}catch(_){}closeMobileSheet(sheet);setup(true);refreshText();setTimeout(showSettingsSheet,120)},100)};
-    const theme=document.createElement('button');theme.type='button';theme.className='mobile-settings-row';theme.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon(document.body.classList.contains('dark')?'sun':'moon')+'</span><span><b>'+(ru()?'Тема':'Theme')+'</b><small>'+(document.body.classList.contains('dark')?(ru()?'Тёмная — переключить на светлую':'Dark — switch to light'):(ru()?'Светлая — переключить на тёмную':'Light — switch to dark'))+'</small></span><span>›</span>';
-    theme.onclick=()=>{document.body.classList.contains('dark')?proxy('lightThemeBtn'):proxy('darkThemeBtn');setTimeout(()=>{closeMobileSheet(sheet);setup(true);refreshText();setTimeout(showSettingsSheet,120)},100)};
-    appearance.append(lang,theme);
 
-    const privacy=section(ru()?'Приватность':'Privacy');
+    const appearance=section(l('Интерфейс','Appearance','Interfeys'));
+    const languageRow=document.createElement('div');languageRow.className='mobile-settings-control-row';
+    languageRow.innerHTML='<span class="mobile-settings-row-icon">文</span><span class="mobile-settings-control-copy"><b>'+l('Язык','Language','Til')+'</b><small>'+l('Выберите язык интерфейса','Choose interface language','Interfeys tilini tanlang')+'</small></span>';
+    languageRow.appendChild(settingsSegment([['ru','RU'],['en','EN'],['uz','UZ']],appLang(),switchMobileLanguage,l('Язык интерфейса','Interface language','Interfeys tili')));
+    const themeRow=document.createElement('div');themeRow.className='mobile-settings-control-row';
+    themeRow.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon(document.body.classList.contains('dark')?'moon':'sun')+'</span><span class="mobile-settings-control-copy"><b>'+l('Тема','Theme','Mavzu')+'</b><small>'+l('Светлая или тёмная','Light or dark','Yorug‘ yoki qorong‘i')+'</small></span>';
+    themeRow.appendChild(settingsSegment([['light',l('Светлая','Light','Yorug‘')],['dark',l('Тёмная','Dark','Qorong‘i')]],document.body.classList.contains('dark')?'dark':'light',switchMobileTheme,l('Тема приложения','App theme','Ilova mavzusi')));
+    appearance.append(languageRow,themeRow);
+
+    const privacy=section(l('Приватность','Privacy','Maxfiylik'));
     const biometric=document.createElement('button');biometric.type='button';biometric.className='mobile-settings-row';
-    biometric.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('lock')+'</span><span><b>'+(ru()?'Биометрическая блокировка':'Biometric lock')+'</b><small>'+(flagEnabled(V17_BIOMETRIC_KEY)?(ru()?'Включена · блокировка после 15 секунд в фоне':'Enabled · locks after 15 seconds in background'):(ru()?'Выключена':'Disabled'))+'</small></span><span class="mobile-settings-state '+(flagEnabled(V17_BIOMETRIC_KEY)?'on':'off')+'">'+(flagEnabled(V17_BIOMETRIC_KEY)?'ON':'OFF')+'</span>';
-    biometric.onclick=async()=>{const current=flagEnabled(V17_BIOMETRIC_KEY);const next=await toggleBiometricProtection();if(next!==current){closeMobileSheet(sheet);setTimeout(showSettingsSheet,120)}};
+    biometric.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('lock')+'</span><span><b>'+l('Блокировка приложения','App lock','Ilova qulfi')+'</b><small>'+(flagEnabled(V17_BIOMETRIC_KEY)
+      ?l('Включена · 10 секунд в фоне или сразу после блокировки экрана','Enabled · 10 seconds in background or immediately after screen lock','Yoqilgan · fonda 10 soniya yoki ekran qulflanganda darhol')
+      :l('Выключена','Disabled','O‘chirilgan'))+'</small></span><span class="mobile-settings-state '+(flagEnabled(V17_BIOMETRIC_KEY)?'on':'off')+'">'+(flagEnabled(V17_BIOMETRIC_KEY)?'ON':'OFF')+'</span>';
+    biometric.onclick=async()=>{const current=flagEnabled(V17_BIOMETRIC_KEY);const next=await toggleBiometricProtection();if(next!==current)setTimeout(showSettingsSheet,80)};
     const shield=document.createElement('button');shield.type='button';shield.className='mobile-settings-row';
-    shield.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('shield')+'</span><span><b>'+(ru()?'Защита экрана':'Screen privacy')+'</b><small>'+(flagEnabled(V17_PRIVACY_SHIELD_KEY)?(ru()?'Скриншоты и превью Recent Apps заблокированы':'Screenshots and Recent Apps previews blocked'):(ru()?'Скриншоты разрешены':'Screenshots allowed'))+'</small></span><span class="mobile-settings-state '+(flagEnabled(V17_PRIVACY_SHIELD_KEY)?'on':'off')+'">'+(flagEnabled(V17_PRIVACY_SHIELD_KEY)?'ON':'OFF')+'</span>';
-    shield.onclick=async()=>{await togglePrivacyShield();closeMobileSheet(sheet);setTimeout(showSettingsSheet,120)};
+    shield.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('shield')+'</span><span><b>'+l('Защита экрана','Screen privacy','Ekran himoyasi')+'</b><small>'+(flagEnabled(V17_PRIVACY_SHIELD_KEY)
+      ?l('Скриншоты и превью Recent Apps заблокированы','Screenshots and Recent Apps previews blocked','Skrinshotlar va Recent Apps ko‘rinishi bloklangan')
+      :l('Скриншоты разрешены','Screenshots allowed','Skrinshotlarga ruxsat berilgan'))+'</small></span><span class="mobile-settings-state '+(flagEnabled(V17_PRIVACY_SHIELD_KEY)?'on':'off')+'">'+(flagEnabled(V17_PRIVACY_SHIELD_KEY)?'ON':'OFF')+'</span>';
+    shield.onclick=async()=>{await togglePrivacyShield();setTimeout(showSettingsSheet,80)};
     privacy.append(biometric,shield);
 
-    const system=section(ru()?'Android и данные':'Android & data');
-    const reminder=document.createElement('button');reminder.type='button';reminder.className='mobile-settings-row';reminder.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('bell')+'</span><span><b>'+(ru()?'Напоминание':'Reminder')+'</b><small>'+(ru()?'Нативное ежедневное уведомление':'Native daily notification')+'</small></span><span>›</span>';reminder.onclick=()=>{closeMobileSheet(sheet);setTimeout(showReminderSheet,100)};
-    const backups=document.createElement('button');backups.type='button';backups.className='mobile-settings-row';backups.innerHTML='<span class="mobile-settings-row-icon">↻</span><span><b>'+(ru()?'Авто-бэкапы':'Auto-backups')+'</b><small>'+(ru()?'До пяти локальных копий':'Up to five local copies')+'</small></span><span>›</span>';backups.onclick=()=>{closeMobileSheet(sheet);setTimeout(showAutoBackupSheet,100)};
-    const full=document.createElement('button');full.type='button';full.className='mobile-settings-row';full.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('save')+'</span><span><b>'+(ru()?'Полный бэкап':'Full backup')+'</b><small>'+(ru()?'Обычный JSON для совместимости':'Plain JSON for compatibility')+'</small></span><span>›</span>';full.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>q('#fullBackupBtn')?.click(),90)};
-    const protectedSave=document.createElement('button');protectedSave.type='button';protectedSave.className='mobile-settings-row';protectedSave.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('key')+'</span><span><b>'+(ru()?'Защищённый бэкап':'Protected backup')+'</b><small>'+(ru()?'AES‑GCM + пароль · пароль не сохраняется':'AES-GCM + password · password is never stored')+'</small></span><span>›</span>';protectedSave.onclick=()=>{closeMobileSheet(sheet);setTimeout(nativeSaveProtectedBackup,100)};
-    const protectedRestore=document.createElement('button');protectedRestore.type='button';protectedRestore.className='mobile-settings-row';protectedRestore.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('restore')+'</span><span><b>'+(ru()?'Восстановить защищённый':'Restore protected backup')+'</b><small>'+(ru()?'Выбрать зашифрованный файл':'Choose an encrypted backup file')+'</small></span><span>›</span>';protectedRestore.onclick=()=>{closeMobileSheet(sheet);setTimeout(nativeRestoreProtectedBackup,100)};
+    const system=section(l('Android и данные','Android & data','Android va ma’lumotlar'));
+    const row=(icon,title,small,action)=>{
+      const b=document.createElement('button');b.type='button';b.className='mobile-settings-row';
+      b.innerHTML='<span class="mobile-settings-row-icon">'+icon+'</span><span><b>'+title+'</b><small>'+small+'</small></span><span>›</span>';
+      b.onclick=action;return b;
+    };
+    const reminder=row(svgIcon('bell'),l('Напоминание','Reminder','Eslatma'),l('Нативное ежедневное уведомление','Native daily notification','Mahalliy kunlik bildirishnoma'),()=>{closeMobileSheet(sheet);setTimeout(showReminderSheet,100)});
+    const backups=row('↻',l('Авто-бэкапы','Auto-backups','Avto-zaxiralar'),l('До пяти локальных копий','Up to five local copies','Beshtagacha mahalliy nusxa'),()=>{closeMobileSheet(sheet);setTimeout(showAutoBackupSheet,100)});
+    const full=row(svgIcon('save'),l('Полный бэкап','Full backup','To‘liq zaxira nusxa'),l('Обычный JSON для совместимости','Plain JSON for compatibility','Moslik uchun oddiy JSON'),()=>{closeMobileSheet(sheet);setTimeout(()=>q('#fullBackupBtn')?.click(),90)});
+    const protectedSave=row(svgIcon('key'),l('Защищённый бэкап','Protected backup','Himoyalangan zaxira'),l('AES‑GCM + пароль · пароль не сохраняется','AES-GCM + password · password is never stored','AES‑GCM + parol · parol saqlanmaydi'),()=>{closeMobileSheet(sheet);setTimeout(nativeSaveProtectedBackup,100)});
+    const protectedRestore=row(svgIcon('restore'),l('Восстановить защищённый','Restore protected backup','Himoyalangan zaxirani tiklash'),l('Выбрать зашифрованный файл','Choose an encrypted backup file','Shifrlangan faylni tanlang'),()=>{closeMobileSheet(sheet);setTimeout(nativeRestoreProtectedBackup,100)});
     system.append(reminder,backups,full,protectedSave,protectedRestore);
 
-    const app=section(ru()?'Приложение':'App');
-    const update=document.createElement('button');update.type='button';update.className='mobile-settings-row';update.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('update')+'</span><span><b>'+(ru()?'Проверить обновления':'Check for updates')+'</b><small>'+(ru()?'Только официальный GitHub Release':'Official GitHub Release only')+'</small></span><span>›</span>';update.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>checkForUpdates(),100)};
-    const about=document.createElement('button');about.type='button';about.className='mobile-settings-row';about.innerHTML='<span class="mobile-settings-row-icon">'+svgIcon('info')+'</span><span><b>'+(ru()?'О продукте':'About')+'</b><small>BP Diary · '+APP_RELEASE+'</small></span><span>›</span>';about.onclick=()=>{closeMobileSheet(sheet);setTimeout(showAboutSheet,100)};
+    const app=section(l('Приложение','App','Ilova'));
+    const update=row(svgIcon('update'),l('Проверить обновления','Check for updates','Yangilanishlarni tekshirish'),l('Только официальный GitHub Release','Official GitHub Release only','Faqat rasmiy GitHub Release'),()=>{closeMobileSheet(sheet);setTimeout(()=>checkForUpdates(),100)});
+    const about=row(svgIcon('info'),l('О продукте','About','Dastur haqida'),'BP Diary · '+APP_RELEASE,()=>{closeMobileSheet(sheet);setTimeout(showAboutSheet,100)});
     app.append(update,about);
     q('.mobile-sheet-close',sheet).onclick=()=>closeMobileSheet(sheet);
-    openMobileSheet(sheet);
+    openMobileSheet(sheet);localizeUzTree(sheet);
   }
+
   function showAboutSheet(){
-    const sheet=makeSheet('mobileAboutSheet',ru()?'О продукте':'About');
-    q('.mobile-sheet-title',sheet).innerHTML='<span>'+(ru()?'О продукте':'About')+'</span><button type="button" class="mobile-about-close" aria-label="'+(ru()?'Закрыть':'Close')+'">×</button>';
+    const sheet=makeSheet('mobileAboutSheet',l('О продукте','About','Dastur haqida'));
+    q('.mobile-sheet-title',sheet).innerHTML='<span>'+l('О продукте','About','Dastur haqida')+'</span><button type="button" class="mobile-about-close" aria-label="'+l('Закрыть','Close','Yopish')+'">×</button>';
     const g=q('.mobile-sheet-grid',sheet);
-    g.innerHTML='<section class="mobile-about-hero"><div class="mobile-about-icon">'+brandHeartIcon()+'</div><strong>BP Diary</strong><span>'+(ru()?'Дневник артериального давления':'Blood pressure diary')+'</span><small>'+APP_VERSION+' · Android '+APP_RELEASE+'</small></section>'+
-      '<section class="mobile-about-intro">'+(ru()?'Персональный дневник артериального давления с аналитикой, отчётами врачу, резервным копированием и голосовыми функциями.':'A personal blood pressure diary with analytics, doctor reports, backups and voice features.')+'</section>'+
+    g.innerHTML='<section class="mobile-about-hero"><div class="mobile-about-icon">'+brandHeartIcon()+'</div><strong>BP Diary</strong><span>'+l('Дневник артериального давления','Blood pressure diary','Qon bosimi kundaligi')+'</span><small>'+APP_VERSION+' · Android '+APP_RELEASE+'</small></section>'+
+      '<section class="mobile-about-intro">'+l('Персональный дневник артериального давления с аналитикой, отчётами врачу, резервным копированием и голосовыми функциями.','A personal blood pressure diary with analytics, doctor reports, backups and voice features.','Tahlil, shifokor hisobotlari, zaxira nusxalar va ovozli funksiyalarga ega shaxsiy qon bosimi kundaligi.')+'</section>'+
       '<div class="mobile-about-list">'+
-        '<button type="button" data-about-action="settings"><span class="mobile-about-row-icon">'+svgIcon('settings')+'</span><span><b>'+(ru()?'Настройки':'Settings')+'</b><small>'+(ru()?'Напоминания, тема, данные и обновления':'Reminders, theme, data and updates')+'</small></span><span>›</span></button>'+
-        '<button type="button" data-about-action="update"><span class="mobile-about-row-icon">'+svgIcon('update')+'</span><span><b>'+(ru()?'Проверить обновления':'Check for updates')+'</b><small>'+APP_VERSION+' · '+APP_RELEASE+'</small></span><span>›</span></button>'+
-        '<button type="button" data-about-action="guide"><span class="mobile-about-row-icon">▶</span><span><b>'+(ru()?'Краткое руководство':'Quick guide')+'</b><small>'+(ru()?'Показать введение '+APP_RELEASE+' ещё раз':'Show the '+APP_RELEASE+' introduction again')+'</small></span><span>›</span></button>'+
-        '<button type="button" data-about-action="backups"><span class="mobile-about-row-icon">↻</span><span><b>'+(ru()?'Авто-бэкапы':'Auto-backups')+'</b><small>'+(ru()?'До пяти локальных резервных копий':'Up to five local backup copies')+'</small></span><span>›</span></button>'+
+        '<button type="button" data-about-action="settings"><span class="mobile-about-row-icon">'+svgIcon('settings')+'</span><span><b>'+l('Настройки','Settings','Sozlamalar')+'</b><small>'+l('Напоминания, тема, данные и обновления','Reminders, theme, data and updates','Eslatmalar, mavzu, ma’lumotlar va yangilanishlar')+'</small></span><span>›</span></button>'+
+        '<button type="button" data-about-action="update"><span class="mobile-about-row-icon">'+svgIcon('update')+'</span><span><b>'+l('Проверить обновления','Check for updates','Yangilanishlarni tekshirish')+'</b><small>'+APP_VERSION+' · '+APP_RELEASE+'</small></span><span>›</span></button>'+
+        '<button type="button" data-about-action="guide"><span class="mobile-about-row-icon">▶</span><span><b>'+l('Краткое руководство','Quick guide','Qisqa qo‘llanma')+'</b><small>'+l('Показать введение '+APP_RELEASE+' ещё раз','Show the '+APP_RELEASE+' introduction again',APP_RELEASE+' kirish qo‘llanmasini yana ko‘rsatish')+'</small></span><span>›</span></button>'+
+        '<button type="button" data-about-action="backups"><span class="mobile-about-row-icon">↻</span><span><b>'+l('Авто-бэкапы','Auto-backups','Avto-zaxiralar')+'</b><small>'+l('До пяти локальных резервных копий','Up to five local backup copies','Beshtagacha mahalliy zaxira nusxa')+'</small></span><span>›</span></button>'+
         '<button type="button" data-about-url="https://github.com/TokhirjonYuldoshev/BP-Diary-Android"><span class="mobile-about-row-icon">⌘</span><span><b>GitHub</b><small>TokhirjonYuldoshev/BP-Diary-Android</small></span><span>›</span></button>'+
-        '<button type="button" data-about-url="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues"><span class="mobile-about-row-icon">?</span><span><b>'+(ru()?'Поддержка / обратная связь':'Support / feedback')+'</b><small>'+(ru()?'Сообщить об ошибке или предложить улучшение':'Report a bug or suggest an improvement')+'</small></span><span>›</span></button>'+
-        '<div class="mobile-about-row"><span class="mobile-about-row-icon">©</span><span><b>'+(ru()?'Разработчик':'Developer')+'</b><small>Tokhirjon Yuldoshev</small></span></div>'+
-        '<div class="mobile-about-row"><span class="mobile-about-row-icon">§</span><span><b>'+(ru()?'Лицензия':'License')+'</b><small>'+(ru()?'Отдельный LICENSE-файл в репозитории не указан':'No separate LICENSE file is currently specified')+'</small></span></div>'+
+        '<button type="button" data-about-url="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues"><span class="mobile-about-row-icon">?</span><span><b>'+l('Поддержка / обратная связь','Support / feedback','Yordam / fikr-mulohaza')+'</b><small>'+l('Сообщить об ошибке или предложить улучшение','Report a bug or suggest an improvement','Xato haqida xabar berish yoki taklif yuborish')+'</small></span><span>›</span></button>'+
+        '<div class="mobile-about-row"><span class="mobile-about-row-icon">©</span><span><b>'+l('Разработчик','Developer','Dasturchi')+'</b><small>Tokhirjon Yuldoshev</small></span></div>'+
+        '<div class="mobile-about-row"><span class="mobile-about-row-icon">§</span><span><b>'+l('Лицензия','License','Litsenziya')+'</b><small>'+l('Отдельный LICENSE-файл в репозитории не указан','No separate LICENSE file is currently specified','Repozitoriyda alohida LICENSE fayli ko‘rsatilmagan')+'</small></span></div>'+
       '</div>'+
-      '<div class="mobile-about-thanks">'+(ru()?'Спасибо, что используете BP Diary.':'Thank you for using BP Diary.')+'</div>'+
-      '<button type="button" class="mobile-about-ok">'+(ru()?'Готово':'Done')+'</button>';
+      '<div class="mobile-about-thanks">'+l('Спасибо, что используете BP Diary.','Thank you for using BP Diary.','BP Diary’dan foydalanganingiz uchun rahmat.')+'</div>'+
+      '<button type="button" class="mobile-about-ok">'+l('Готово','Done','Tayyor')+'</button>';
     q('.mobile-about-close',sheet).onclick=()=>closeMobileSheet(sheet);
     q('.mobile-about-ok',sheet).onclick=()=>closeMobileSheet(sheet);
     const settings=q('[data-about-action="settings"]',sheet);if(settings)settings.onclick=()=>{closeMobileSheet(sheet);setTimeout(showSettingsSheet,100)};
@@ -915,11 +1045,11 @@
     qa('[data-about-url]',sheet).forEach(b=>b.onclick=async()=>{
       try{await nativeCall('openUrl',{url:b.dataset.aboutUrl})}
       catch(_){
-        try{await navigator.clipboard.writeText(b.dataset.aboutUrl);mobileToast(ru()?'Ссылка скопирована':'Link copied','success')}
-        catch(err){mobileToast(ru()?'Не удалось открыть ссылку':'Could not open link','error')}
+        try{await navigator.clipboard.writeText(b.dataset.aboutUrl);mobileToast(l('Ссылка скопирована','Link copied','Havola nusxalandi'),'success')}
+        catch(err){mobileToast(l('Не удалось открыть ссылку','Could not open link','Havolani ochib bo‘lmadi'),'error')}
       }
     });
-    openMobileSheet(sheet);
+    openMobileSheet(sheet);localizeUzTree(sheet);
   }
 
  
@@ -1136,29 +1266,39 @@
     let view=q('#mobileOnboarding');
     if(!view){
       view=document.createElement('div');view.id='mobileOnboarding';view.setAttribute('role','dialog');view.setAttribute('aria-modal','true');
-      view.innerHTML='<div class="mobile-onboarding-card"><button type="button" class="mobile-onboarding-skip"></button><div class="mobile-onboarding-visual"></div><div class="mobile-onboarding-copy"><div class="mobile-onboarding-step"></div><h2></h2><p></p></div><div class="mobile-onboarding-dots"></div><div class="mobile-onboarding-actions"><button type="button" class="outline mobile-onboarding-back"></button><button type="button" class="mobile-onboarding-next"></button></div></div>';
+      view.innerHTML='<div class="mobile-onboarding-card"><div class="mobile-onboarding-top"><div class="mobile-onboarding-brand"><span>'+brandHeartIcon()+'</span><b>BP Diary</b></div><button type="button" class="mobile-onboarding-skip"></button></div><div class="mobile-onboarding-visual"></div><div class="mobile-onboarding-copy"><div class="mobile-onboarding-step"></div><h2></h2><p></p></div><div class="mobile-onboarding-progress"><span><i></i></span><b></b></div><div class="mobile-onboarding-actions"><button type="button" class="outline mobile-onboarding-back"></button><button type="button" class="mobile-onboarding-next"></button></div></div>';
       document.body.appendChild(view);
     }
     const slides=ru()?[
-      {icon:'heart',title:'Добро пожаловать в BP Diary',text:'Записывайте измерения давления, отслеживайте динамику и храните данные локально на устройстве.'},
-      {icon:'document',title:'Отчёт для врача',text:'Выберите период 7, 14, 30 дней или свой диапазон, затем сохраните, распечатайте или отправьте PDF.'},
-      {icon:'save',title:'Данные под защитой',text:'V16 автоматически хранит до пяти локальных резервных копий. Полный ручной бэкап остаётся доступен в Архиве.'}
+      {icon:'heart',title:'Добро пожаловать в BP Diary',text:'Записывайте давление, следите за динамикой и храните историю измерений локально на устройстве.'},
+      {icon:'document',title:'Отчёт для врача',text:'Выберите период и за несколько касаний сохраните, распечатайте или отправьте аккуратный PDF.'},
+      {icon:'save',title:'Данные под защитой',text:'V17 хранит локальные авто-бэкапы и поддерживает защищённую AES‑GCM копию с вашим паролем.'}
+    ]:uz()?[
+      {icon:'heart',title:'BP Diary’ga xush kelibsiz',text:'Qon bosimini yozib boring, dinamikani kuzating va o‘lchovlar tarixini qurilmada saqlang.'},
+      {icon:'document',title:'Shifokor uchun hisobot',text:'Davrni tanlang va bir necha bosishda tartibli PDF’ni saqlang, chop eting yoki ulashing.'},
+      {icon:'save',title:'Ma’lumotlar himoyalangan',text:'V17 mahalliy avto-zaxiralarni saqlaydi va parolingiz bilan AES‑GCM himoyalangan nusxani qo‘llaydi.'}
     ]:[
-      {icon:'heart',title:'Welcome to BP Diary',text:'Record blood-pressure readings, follow trends and keep your data locally on the device.'},
-      {icon:'document',title:'Doctor reports',text:'Choose 7, 14, 30 days or a custom range, then save, print or share the PDF.'},
-      {icon:'save',title:'Your data is protected',text:'V16 keeps up to five local automatic backups. Full manual backup remains available in Archive.'}
+      {icon:'heart',title:'Welcome to BP Diary',text:'Record blood pressure, follow trends and keep your measurement history locally on the device.'},
+      {icon:'document',title:'Doctor reports',text:'Choose a period and save, print or share a polished PDF in just a few taps.'},
+      {icon:'save',title:'Your data is protected',text:'V17 keeps local auto-backups and supports an AES-GCM protected copy secured by your password.'}
     ];
     onboardingIndex=0;
     const render=()=>{
-      const x=slides[onboardingIndex];
-      q('.mobile-onboarding-visual',view).innerHTML='<div class="mobile-onboarding-icon">'+svgIcon(x.icon)+'</div>';
-      q('.mobile-onboarding-step',view).textContent=(onboardingIndex+1)+' / '+slides.length;
+      const x=slides[onboardingIndex],progress=((onboardingIndex+1)/slides.length)*100;
+      q('.mobile-onboarding-card',view)?.classList.toggle('is-first',onboardingIndex===0);
+      q('.mobile-onboarding-visual',view).innerHTML='<div class="mobile-onboarding-glow"><div class="mobile-onboarding-icon">'+svgIcon(x.icon)+'</div></div>';
+      q('.mobile-onboarding-step',view).textContent=ru()
+        ?'Шаг '+(onboardingIndex+1)+' из '+slides.length
+        :uz()?((onboardingIndex+1)+' / '+slides.length+' qadam')
+        :'Step '+(onboardingIndex+1)+' of '+slides.length;
       q('h2',view).textContent=x.title;q('p',view).textContent=x.text;
-      q('.mobile-onboarding-dots',view).innerHTML=slides.map((_,i)=>'<span class="'+(i===onboardingIndex?'active':'')+'"></span>').join('');
-      q('.mobile-onboarding-back',view).textContent=ru()?'Назад':'Back';
+      const bar=q('.mobile-onboarding-progress i',view);if(bar)bar.style.width=progress+'%';
+      q('.mobile-onboarding-progress b',view).textContent=(onboardingIndex+1)+' / '+slides.length;
+      q('.mobile-onboarding-back',view).textContent=l('Назад','Back','Orqaga');
       q('.mobile-onboarding-back',view).style.visibility=onboardingIndex?'visible':'hidden';
-      q('.mobile-onboarding-next',view).textContent=onboardingIndex===slides.length-1?(ru()?'Начать':'Start'):(ru()?'Далее':'Next');
-      q('.mobile-onboarding-skip',view).textContent=ru()?'Пропустить':'Skip';
+      q('.mobile-onboarding-next',view).textContent=onboardingIndex===slides.length-1?l('Начать','Start','Boshlash'):l('Далее','Next','Keyingi');
+      q('.mobile-onboarding-skip',view).textContent=l('Пропустить','Skip','O‘tkazib yuborish');
+      localizeUzTree(view);
     };
     const finish=()=>{view.classList.remove('open');try{localStorage.setItem('bp_v12_onboarding_done','1')}catch(_){}};
     q('.mobile-onboarding-back',view).onclick=()=>{if(onboardingIndex>0){onboardingIndex--;render()}};
@@ -1166,6 +1306,7 @@
     q('.mobile-onboarding-skip',view).onclick=finish;
     render();view.classList.add('open');
   }
+
 
   function installV12Hooks(){
     if(window.__bpV12Hooks)return;window.__bpV12Hooks=true;
@@ -1331,10 +1472,21 @@
 
   function appBar(){
     let bar=q('#mobileAppBar');if(!bar){bar=document.createElement('header');bar.id='mobileAppBar';document.body.prepend(bar)}
-    bar.innerHTML=`<button type="button" class="mobile-brand-mark mobile-brand-button" data-top="about" aria-label="${ru()?'О продукте':'About'}">${brandHeartIcon()}</button><div class="mobile-brand-copy"><strong>BP Diary</strong><span>${ru()?'Дневник артериального давления':'Blood pressure diary'}</span></div><div class="mobile-top-actions"><button type="button" data-top="reminder" aria-label="${ru()?'Напоминание':'Reminder'}" title="${ru()?'Напоминание':'Reminder'}">${svgIcon('bell')}</button><button type="button" data-top="settings" aria-label="${ru()?'Настройки':'Settings'}" title="${ru()?'Настройки':'Settings'}">${svgIcon('settings')}</button><button type="button" data-top="lang" aria-label="Language">${ru()?'EN':'RU'}</button><button type="button" data-top="theme" aria-label="Theme">${svgIcon(document.body.classList.contains('dark')?'sun':'moon')}</button></div>`;
-    bar.onclick=e=>{const b=e.target.closest('button[data-top]');if(!b)return;if(b.dataset.top==='about'){showAboutSheet()}else if(b.dataset.top==='reminder'){showReminderSheet()}else if(b.dataset.top==='settings'){showSettingsSheet()}else if(b.dataset.top==='lang'){proxy('langSwitchBtn');setTimeout(()=>{try{window.updateAllAnalytics?.();window.updateUITexts?.()}catch(_){}setup(true);refreshText()},90)}else{document.body.classList.contains('dark')?proxy('lightThemeBtn'):proxy('darkThemeBtn');setTimeout(()=>{appBar();const ps=pages();if(ps[1])polishCharts(ps[1])},60)}};
-    return bar;
+    const code=appLang().toUpperCase();
+    bar.innerHTML=`<button type="button" class="mobile-brand-mark mobile-brand-button" data-top="about" aria-label="${l('О продукте','About','Dastur haqida')}">${brandHeartIcon()}</button><div class="mobile-brand-copy"><strong>BP Diary</strong><span>${l('Дневник артериального давления','Blood pressure diary','Qon bosimi kundaligi')}</span></div><div class="mobile-top-actions"><button type="button" data-top="reminder" aria-label="${l('Напоминание','Reminder','Eslatma')}" title="${l('Напоминание','Reminder','Eslatma')}">${svgIcon('bell')}</button><button type="button" data-top="settings" aria-label="${l('Настройки','Settings','Sozlamalar')}" title="${l('Настройки','Settings','Sozlamalar')}">${svgIcon('settings')}</button><button type="button" data-top="lang" aria-label="${l('Язык','Language','Til')}">${code}</button><button type="button" data-top="theme" aria-label="${l('Тема','Theme','Mavzu')}">${svgIcon(document.body.classList.contains('dark')?'sun':'moon')}</button></div>`;
+    bar.onclick=e=>{
+      const b=e.target.closest('button[data-top]');if(!b)return;
+      if(b.dataset.top==='about')showAboutSheet();
+      else if(b.dataset.top==='reminder')showReminderSheet();
+      else if(b.dataset.top==='settings'||b.dataset.top==='lang')showSettingsSheet();
+      else{
+        document.body.classList.contains('dark')?proxy('lightThemeBtn'):proxy('darkThemeBtn');
+        setTimeout(()=>{appBar();const ps=pages();if(ps[1])polishCharts(ps[1])},60);
+      }
+    };
+    localizeUzTree(bar);return bar;
   }
+
 
   function hero(measure){
     let h=q('#mobileMeasureHero',measure);if(!h){h=document.createElement('section');h.id='mobileMeasureHero';h.innerHTML='<div class="mobile-hero-top"><div><div class="mobile-hero-eyebrow"></div><h2></h2></div><div class="mobile-hero-date"></div></div><div class="mobile-hero-chips"><span class="mobile-hero-chip" data-hero="patient"></span><span class="mobile-hero-chip" data-hero="context"></span><span class="mobile-hero-chip" data-hero="arm"></span></div>';const panel=q('.form-panel',measure);measure.insertBefore(h,panel||measure.firstChild)}
@@ -1342,9 +1494,9 @@
   }
   function updateHero(measure){
     const h=q('#mobileMeasureHero',measure);if(!h)return;
-    q('.mobile-hero-eyebrow',h).textContent=ru()?'НОВЫЙ ЗАМЕР':'NEW READING';q('h2',h).textContent=ru()?'Контроль давления':'Blood pressure check';
-    const d=q('#recordDate')?.value||'',tm=q('#recordTime')?.value||'';q('.mobile-hero-date',h).textContent=[d,tm.slice(0,5)].filter(Boolean).join(' · ')||(ru()?'Сегодня':'Today');
-    q('[data-hero="patient"]',h).textContent='👤 '+(q('#patientSelect')?.selectedOptions?.[0]?.textContent||(ru()?'Основной':'Main'));
+    q('.mobile-hero-eyebrow',h).textContent=l('НОВЫЙ ЗАМЕР','NEW READING','YANGI O‘LCHOV');q('h2',h).textContent=l('Контроль давления','Blood pressure check','Qon bosimini nazorat qilish');
+    const d=q('#recordDate')?.value||'',tm=q('#recordTime')?.value||'';q('.mobile-hero-date',h).textContent=[d,tm.slice(0,5)].filter(Boolean).join(' · ')||l('Сегодня','Today','Bugun');
+    q('[data-hero="patient"]',h).textContent='👤 '+(q('#patientSelect')?.selectedOptions?.[0]?.textContent||l('Основной','Main','Asosiy'));
     q('[data-hero="context"]',h).textContent='⌂ '+(q('#bpContext')?.selectedOptions?.[0]?.textContent||'');q('[data-hero="arm"]',h).textContent='↔ '+(q('#primaryArm')?.selectedOptions?.[0]?.textContent||'');
     const id=q('#editIdField');if(id)id.placeholder=ru()?'авто':'auto';
   }
@@ -1381,8 +1533,8 @@
   function measureStepper(measure){
     const grid=q('.measures-grid',measure);if(!grid)return;let st=q('#mobileMeasureStepper',measure);if(!st){st=document.createElement('div');st.id='mobileMeasureStepper';grid.before(st)}
     st.setAttribute('role','tablist');
-    st.setAttribute('aria-label',ru()?'Выбор замера':'Reading selector');
-    st.innerHTML=[0,1,2].map(i=>`<button type="button" role="tab" data-round="${i}">${ru()?'Замер':'Round'} ${i+1}</button>`).join('');
+    st.setAttribute('aria-label',l('Выбор замера','Reading selector','O‘lchovni tanlash'));
+    st.innerHTML=[0,1,2].map(i=>`<button type="button" role="tab" data-round="${i}">${l('Замер','Round','O‘lchov')} ${i+1}</button>`).join('');
     const selectRound=i=>{activeRound=Math.max(0,Math.min(2,Number(i)||0));try{localStorage.setItem('bp_mobile_round',String(activeRound))}catch(_){}updateRound(measure)};
     st.onclick=e=>{const b=e.target.closest('[data-round]');if(!b)return;selectRound(b.dataset.round)};
     st.onkeydown=e=>{
@@ -1614,9 +1766,30 @@
   }
 
   function nav(){
-    let n=q('#mobileBottomNav');if(!n){n=document.createElement('nav');n.id='mobileBottomNav';n.setAttribute('aria-label',ru()?'Основная навигация':'Main navigation');document.body.appendChild(n)}const items=ru()?[['measure','stethoscope','Замер'],['analysis','chart','Аналитика'],['archive','archive','Архив']]:[['measure','stethoscope','Measure'],['analysis','chart','Analytics'],['archive','archive','Archive']];n.innerHTML=items.map(([k,i,l])=>`<button type="button" data-tab="${k}" aria-label="${l}">${svgIcon(i)}<span>${l}</span></button>`).join('');n.onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)};return n
+    let n=q('#mobileBottomNav');
+    if(!n){n=document.createElement('nav');n.id='mobileBottomNav';document.body.appendChild(n)}
+    n.setAttribute('aria-label',l('Основная навигация','Main navigation','Asosiy navigatsiya'));
+    const items=[
+      ['measure','stethoscope',l('Замер','Measure','O‘lchov')],
+      ['analysis','chart',l('Аналитика','Analytics','Tahlil')],
+      ['archive','archive',l('Архив','Archive','Arxiv')]
+    ];
+    n.innerHTML=items.map(([k,i,label])=>`<button type="button" data-tab="${k}" aria-label="${label}">${svgIcon(i)}<span>${label}</span></button>`).join('');
+    n.onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)};
+    localizeUzTree(n);return n;
   }
-  function setTab(tab,scroll=true){if(!['measure','analysis','archive'].includes(tab))tab='measure';currentTab=tab;try{localStorage.setItem('bp_mobile_tab',tab)}catch(_){}qa('.mobile-page').forEach(p=>p.classList.toggle('mobile-hidden',p.dataset.mobilePage!==tab));qa('#mobileBottomNav [data-tab]').forEach(b=>{const active=b.dataset.tab===tab;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});document.body.dataset.mobileTab=tab;if(tab==='analysis'){const ps=pages();setTimeout(()=>{if(ps[1]){enhanceAnalysis(ps[1],ps[2]);refreshActiveChart(ps[1],true)}},80)}if(scroll)window.scrollTo({top:0,behavior:'smooth'})}
+
+  function setTab(tab,scroll=true){
+    if(!['measure','analysis','archive'].includes(tab))tab='measure';
+    const secret=q('#mobileSecretSheet.open');
+    if(secret)closeMobileSheet(secret);
+    currentTab=tab;try{localStorage.setItem('bp_mobile_tab',tab)}catch(_){}
+    qa('.mobile-page').forEach(p=>p.classList.toggle('mobile-hidden',p.dataset.mobilePage!==tab));
+    qa('#mobileBottomNav [data-tab]').forEach(b=>{const active=b.dataset.tab===tab;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+    document.body.dataset.mobileTab=tab;
+    if(tab==='analysis'){const ps=pages();setTimeout(()=>{if(ps[1]){enhanceAnalysis(ps[1],ps[2]);refreshActiveChart(ps[1],true)}},80)}
+    if(scroll)window.scrollTo({top:0,behavior:'smooth'});
+  }
 
   let lastRootBack=0,backHintTimer=null;
   function showBackHint(){
@@ -1673,9 +1846,9 @@
     const navEl=q('#mobileBottomNav');if(navEl)navEl.setAttribute('aria-label',ru()?'Основная навигация':'Main navigation');
   }
 
-  function refreshText(){if(!mq.matches)return;const ps=pages();if(ps.length<3)return;const [m,a,r]=ps;appBar();updateHero(m);mobilePlaceholders(m);customScoreApplicability();polishControls(m);disclaimer();const kick=q('.mobile-section-kicker',m);if(kick)kick.textContent=ru()?'● Измерения':'● Measurements';measureStepper(m);measureActions(m);nav();archiveSheet(r);archiveCards(r);archiveTools(r);enhanceAnalysis(a,r);applyAccessibility(m,a,r);setTab(currentTab,false)}
+  function refreshText(){if(!mq.matches)return;const ps=pages();if(ps.length<3)return;const [m,a,r]=ps;appBar();updateHero(m);mobilePlaceholders(m);customScoreApplicability();polishControls(m);disclaimer();const kick=q('.mobile-section-kicker',m);if(kick)kick.textContent=l('● Измерения','● Measurements','● O‘lchovlar');measureStepper(m);measureActions(m);nav();archiveSheet(r);archiveCards(r);archiveTools(r);enhanceAnalysis(a,r);applyAccessibility(m,a,r);setTab(currentTab,false);localizeUzTree(document)}
 
-  function setup(force=false){if(rebuilding||!mq.matches||!q('#app'))return;const ps=pages();if(ps.length<3)return;rebuilding=true;if(observer)observer.disconnect();try{const [m,a,r]=ps;[[m,'measure'],[a,'analysis'],[r,'archive']].forEach(([p,k])=>{p.classList.add('mobile-page','mobile-page-'+k);p.dataset.mobilePage=k});document.body.classList.add('mobile-shell-ready');installReportBridge();installNativeActions();appBar();hero(m);accordions(m);mobilePlaceholders(m);customScoreApplicability();polishControls(m);measureStepper(m);measureActions(m);disclaimer();nav();archiveSheet(r);archiveCards(r);archiveTools(r);enhanceAnalysis(a,r);updateHero(m);applyAccessibility(m,a,r);['recordDate','recordTime','patientSelect','bpContext','primaryArm'].forEach(id=>{const el=q('#'+id);if(el&&!el.dataset.mobileHeroBound){el.dataset.mobileHeroBound='1';el.addEventListener('change',()=>updateHero(m))}});setTab(currentTab,false);installV12Hooks()}finally{rebuilding=false;const app=q('#app');if(observer&&app)observer.observe(app,{childList:true,subtree:true,characterData:true})}}
+  function setup(force=false){if(rebuilding||!mq.matches||!q('#app'))return;const ps=pages();if(ps.length<3)return;rebuilding=true;if(observer)observer.disconnect();try{const [m,a,r]=ps;[[m,'measure'],[a,'analysis'],[r,'archive']].forEach(([p,k])=>{p.classList.add('mobile-page','mobile-page-'+k);p.dataset.mobilePage=k});document.body.classList.add('mobile-shell-ready');installReportBridge();installNativeActions();appBar();hero(m);accordions(m);mobilePlaceholders(m);customScoreApplicability();polishControls(m);measureStepper(m);measureActions(m);disclaimer();nav();archiveSheet(r);archiveCards(r);archiveTools(r);enhanceAnalysis(a,r);updateHero(m);applyAccessibility(m,a,r);['recordDate','recordTime','patientSelect','bpContext','primaryArm'].forEach(id=>{const el=q('#'+id);if(el&&!el.dataset.mobileHeroBound){el.dataset.mobileHeroBound='1';el.addEventListener('change',()=>updateHero(m))}});setTab(currentTab,false);installV12Hooks();localizeUzTree(document)}finally{rebuilding=false;const app=q('#app');if(observer&&app)observer.observe(app,{childList:true,subtree:true,characterData:true})}}
   function schedule(){clearTimeout(timer);timer=setTimeout(()=>setup(),70)}
   document.addEventListener('DOMContentLoaded',async()=>{
     await initPrivacyProtection();
