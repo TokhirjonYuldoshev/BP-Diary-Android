@@ -97,16 +97,29 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 public final class ReminderScheduler {
     public static final String ACTION_REMINDER = "com.tokhirjonyuldoshev.bpdiary.ACTION_DAILY_REMINDER";
+    public static final String ACTION_REPEAT = "com.tokhirjonyuldoshev.bpdiary.ACTION_REMINDER_REPEAT";
+    public static final String ACTION_DONE = "com.tokhirjonyuldoshev.bpdiary.ACTION_REMINDER_DONE";
+    public static final String ACTION_SNOOZE = "com.tokhirjonyuldoshev.bpdiary.ACTION_REMINDER_SNOOZE";
+    public static final String ACTION_TEST = "com.tokhirjonyuldoshev.bpdiary.ACTION_REMINDER_TEST";
+
     private static final String PREFS = "bp_diary_native_reminder";
     private static final String KEY_ENABLED = "enabled";
     private static final String KEY_TIME = "time";
+    private static final String KEY_TIMES = "times";
     private static final String KEY_TITLE = "title";
     private static final String KEY_BODY = "body";
-    private static final int REQUEST_CODE = 16001;
+    private static final String KEY_REPEAT_COUNT = "repeat_count";
+    private static final String KEY_REPEAT_INTERVAL = "repeat_interval";
+    private static final String KEY_SOUND = "sound";
+    private static final String KEY_VIBRATE = "vibrate";
+    private static final String KEY_DONE_LABEL = "done_label";
+    private static final String KEY_SNOOZE_LABEL = "snooze_label";
 
     private ReminderScheduler() {}
 
@@ -119,7 +132,18 @@ public final class ReminderScheduler {
     }
 
     public static String getTime(Context context) {
+        List<String> times = getTimes(context);
+        return times.isEmpty() ? "09:00" : times.get(0);
+    }
+
+    public static String getTimesCsv(Context context) {
+        String saved = prefs(context).getString(KEY_TIMES, "");
+        if (saved != null && !saved.trim().isEmpty()) return saved;
         return prefs(context).getString(KEY_TIME, "09:00");
+    }
+
+    public static List<String> getTimes(Context context) {
+        return normalizeTimes(getTimesCsv(context));
     }
 
     public static String getTitle(Context context) {
@@ -130,10 +154,62 @@ public final class ReminderScheduler {
         return prefs(context).getString(KEY_BODY, "Time to measure your blood pressure");
     }
 
-    public static long nextTriggerMillis(String time) {
-        if (time == null || !time.matches("^(?:[01]\\\\d|2[0-3]):[0-5]\\\\d$")) {
-            throw new IllegalArgumentException("Invalid reminder time");
+    public static int getRepeatCount(Context context) {
+        return clamp(prefs(context).getInt(KEY_REPEAT_COUNT, 1), 1, 3);
+    }
+
+    public static int getRepeatInterval(Context context) {
+        return clamp(prefs(context).getInt(KEY_REPEAT_INTERVAL, 10), 5, 30);
+    }
+
+    public static int getSound(Context context) {
+        return clamp(prefs(context).getInt(KEY_SOUND, 2), 1, 3);
+    }
+
+    public static boolean getVibrate(Context context) {
+        return prefs(context).getBoolean(KEY_VIBRATE, true);
+    }
+
+    public static String getDoneLabel(Context context) {
+        return prefs(context).getString(KEY_DONE_LABEL, "Done");
+    }
+
+    public static String getSnoozeLabel(Context context) {
+        return prefs(context).getString(KEY_SNOOZE_LABEL, "Remind later");
+    }
+
+    private static int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    public static boolean isValidTime(String time) {
+        if (time == null) return false;
+        String[] parts = time.trim().split(":");
+        if (parts.length != 2) return false;
+        try {
+            int hour = Integer.parseInt(parts[0]);
+            int minute = Integer.parseInt(parts[1]);
+            return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
+        } catch (NumberFormatException e) {
+            return false;
         }
+    }
+
+    public static List<String> normalizeTimes(String csv) {
+        List<String> out = new ArrayList<>();
+        if (csv != null) {
+            for (String raw : csv.split(",")) {
+                String time = raw == null ? "" : raw.trim();
+                if (isValidTime(time) && !out.contains(time)) out.add(time);
+                if (out.size() >= 3) break;
+            }
+        }
+        if (out.isEmpty()) out.add("09:00");
+        return out;
+    }
+
+    public static long nextTriggerMillis(String time) {
+        if (!isValidTime(time)) throw new IllegalArgumentException("Invalid reminder time");
         String[] parts = time.split(":");
         int hour = Integer.parseInt(parts[0]);
         int minute = Integer.parseInt(parts[1]);
@@ -147,29 +223,38 @@ public final class ReminderScheduler {
         return next.getTimeInMillis();
     }
 
-    private static PendingIntent alarmIntent(Context context) {
-        Intent intent = new Intent(context, ReminderReceiver.class).setAction(ACTION_REMINDER);
+    private static PendingIntent dailyIntent(Context context, int slot) {
+        Intent intent = new Intent(context, ReminderReceiver.class)
+            .setAction(ACTION_REMINDER)
+            .putExtra("slot", slot);
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) flags |= PendingIntent.FLAG_IMMUTABLE;
-        return PendingIntent.getBroadcast(context, REQUEST_CODE, intent, flags);
+        return PendingIntent.getBroadcast(context, 16010 + slot, intent, flags);
     }
 
-    public static void schedule(Context context, String time, String title, String body) {
-        prefs(context).edit()
-            .putBoolean(KEY_ENABLED, true)
-            .putString(KEY_TIME, time)
-            .putString(KEY_TITLE, title == null || title.trim().isEmpty() ? "BP Diary" : title.trim())
-            .putString(KEY_BODY, body == null || body.trim().isEmpty() ? "Time to measure your blood pressure" : body.trim())
-            .apply();
-        scheduleNext(context);
+    private static PendingIntent repeatIntent(Context context, int slot, int repeatIndex) {
+        Intent intent = new Intent(context, ReminderReceiver.class)
+            .setAction(ACTION_REPEAT)
+            .putExtra("slot", slot)
+            .putExtra("repeatIndex", repeatIndex);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) flags |= PendingIntent.FLAG_IMMUTABLE;
+        return PendingIntent.getBroadcast(context, 16100 + slot * 10 + repeatIndex, intent, flags);
     }
 
-    public static void scheduleNext(Context context) {
-        if (!isEnabled(context)) return;
+    private static PendingIntent snoozeIntent(Context context, int slot) {
+        Intent intent = new Intent(context, ReminderReceiver.class)
+            .setAction(ACTION_REPEAT)
+            .putExtra("slot", slot)
+            .putExtra("repeatIndex", 99);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) flags |= PendingIntent.FLAG_IMMUTABLE;
+        return PendingIntent.getBroadcast(context, 16200 + slot, intent, flags);
+    }
+
+    private static void scheduleAt(Context context, long when, PendingIntent pi) {
         AlarmManager alarms = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarms == null) return;
-        long when = nextTriggerMillis(getTime(context));
-        PendingIntent pi = alarmIntent(context);
         alarms.cancel(pi);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, when, pi);
@@ -178,10 +263,85 @@ public final class ReminderScheduler {
         }
     }
 
+    public static void schedule(Context context, String timesCsv, String title, String body,
+                                int repeatCount, int repeatInterval, int sound, boolean vibrate,
+                                String doneLabel, String snoozeLabel) {
+        List<String> times = normalizeTimes(timesCsv);
+        String normalized = android.text.TextUtils.join(",", times);
+        prefs(context).edit()
+            .putBoolean(KEY_ENABLED, true)
+            .putString(KEY_TIME, times.get(0))
+            .putString(KEY_TIMES, normalized)
+            .putString(KEY_TITLE, title == null || title.trim().isEmpty() ? "BP Diary" : title.trim())
+            .putString(KEY_BODY, body == null || body.trim().isEmpty() ? "Time to measure your blood pressure" : body.trim())
+            .putInt(KEY_REPEAT_COUNT, clamp(repeatCount, 1, 3))
+            .putInt(KEY_REPEAT_INTERVAL, clamp(repeatInterval, 5, 30))
+            .putInt(KEY_SOUND, clamp(sound, 1, 3))
+            .putBoolean(KEY_VIBRATE, vibrate)
+            .putString(KEY_DONE_LABEL, doneLabel == null || doneLabel.trim().isEmpty() ? "Done" : doneLabel.trim())
+            .putString(KEY_SNOOZE_LABEL, snoozeLabel == null || snoozeLabel.trim().isEmpty() ? "Remind later" : snoozeLabel.trim())
+            .apply();
+        cancelPendingRepeats(context);
+        scheduleDailyAlarms(context);
+    }
+
+    public static void scheduleDailyAlarms(Context context) {
+        AlarmManager alarms = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (alarms == null) return;
+        List<String> times = getTimes(context);
+        for (int slot = 0; slot < 3; slot++) {
+            PendingIntent pi = dailyIntent(context, slot);
+            alarms.cancel(pi);
+            if (isEnabled(context) && slot < times.size()) {
+                scheduleAt(context, nextTriggerMillis(times.get(slot)), pi);
+            }
+        }
+    }
+
+    public static void scheduleDailyAlarm(Context context, int slot) {
+        if (!isEnabled(context)) return;
+        List<String> times = getTimes(context);
+        if (slot < 0 || slot >= times.size()) return;
+        scheduleAt(context, nextTriggerMillis(times.get(slot)), dailyIntent(context, slot));
+    }
+
+    public static void scheduleNext(Context context) {
+        scheduleDailyAlarms(context);
+    }
+
+    public static void scheduleRepeats(Context context, int slot) {
+        cancelPendingRepeats(context, slot);
+        int count = getRepeatCount(context);
+        int interval = getRepeatInterval(context);
+        long now = System.currentTimeMillis();
+        for (int i = 1; i < count; i++) {
+            scheduleAt(context, now + (long) interval * i * 60_000L, repeatIntent(context, slot, i));
+        }
+    }
+
+    public static void scheduleSnooze(Context context, int slot) {
+        cancelPendingRepeats(context, slot);
+        scheduleAt(context, System.currentTimeMillis() + (long) getRepeatInterval(context) * 60_000L, snoozeIntent(context, slot));
+    }
+
+    public static void cancelPendingRepeats(Context context, int slot) {
+        AlarmManager alarms = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (alarms == null) return;
+        for (int i = 1; i <= 3; i++) alarms.cancel(repeatIntent(context, slot, i));
+        alarms.cancel(snoozeIntent(context, slot));
+    }
+
+    public static void cancelPendingRepeats(Context context) {
+        for (int slot = 0; slot < 3; slot++) cancelPendingRepeats(context, slot);
+    }
+
     public static void cancel(Context context) {
         prefs(context).edit().putBoolean(KEY_ENABLED, false).apply();
         AlarmManager alarms = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (alarms != null) alarms.cancel(alarmIntent(context));
+        if (alarms != null) {
+            for (int slot = 0; slot < 3; slot++) alarms.cancel(dailyIntent(context, slot));
+        }
+        cancelPendingRepeats(context);
     }
 }
 `;
@@ -195,59 +355,140 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioAttributes;
+import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 public class ReminderReceiver extends BroadcastReceiver {
-    private static final String CHANNEL_ID = "bp_diary_reminders";
-    private static final int NOTIFICATION_ID = 16001;
+    private static final int NOTIFICATION_ID_BASE = 16010;
+    private static final int NOTIFICATION_ID_TEST = 16999;
 
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent == null ? null : intent.getAction();
-        if (!ReminderScheduler.ACTION_REMINDER.equals(action) || !ReminderScheduler.isEnabled(context)) return;
-        showNotification(context);
-        ReminderScheduler.scheduleNext(context);
+        int slot = intent == null ? 0 : Math.max(0, Math.min(2, intent.getIntExtra("slot", 0)));
+
+        if (ReminderScheduler.ACTION_TEST.equals(action)) {
+            int sound = intent.getIntExtra("sound", ReminderScheduler.getSound(context));
+            boolean vibrate = intent.getBooleanExtra("vibrate", ReminderScheduler.getVibrate(context));
+            showNotification(context, slot, true, sound, vibrate);
+            return;
+        }
+
+        if (ReminderScheduler.ACTION_DONE.equals(action)) {
+            ReminderScheduler.cancelPendingRepeats(context, slot);
+            NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID_BASE + slot);
+            return;
+        }
+
+        if (ReminderScheduler.ACTION_SNOOZE.equals(action)) {
+            ReminderScheduler.scheduleSnooze(context, slot);
+            NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID_BASE + slot);
+            return;
+        }
+
+        if (!ReminderScheduler.isEnabled(context)) return;
+
+        if (ReminderScheduler.ACTION_REMINDER.equals(action)) {
+            showNotification(context, slot, false, ReminderScheduler.getSound(context), ReminderScheduler.getVibrate(context));
+            ReminderScheduler.scheduleRepeats(context, slot);
+            ReminderScheduler.scheduleDailyAlarm(context, slot);
+            return;
+        }
+
+        if (ReminderScheduler.ACTION_REPEAT.equals(action)) {
+            showNotification(context, slot, false, ReminderScheduler.getSound(context), ReminderScheduler.getVibrate(context));
+        }
     }
 
-    private void showNotification(Context context) {
-        createChannel(context);
+    private Uri soundUri(int sound) {
+        if (sound == 1) return Settings.System.DEFAULT_NOTIFICATION_URI;
+        if (sound == 3) return Settings.System.DEFAULT_RINGTONE_URI;
+        return Settings.System.DEFAULT_ALARM_ALERT_URI;
+    }
+
+    private String channelId(int sound, boolean vibrate) {
+        return "bp_diary_reminder_v17_s" + Math.max(1, Math.min(3, sound)) + "_v" + (vibrate ? "1" : "0");
+    }
+
+    private void showNotification(Context context, int slot, boolean test, int sound, boolean vibrate) {
+        String channelId = createChannel(context, sound, vibrate);
         Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         PendingIntent contentIntent = null;
         if (launch != null) {
             launch.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             int flags = PendingIntent.FLAG_UPDATE_CURRENT;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) flags |= PendingIntent.FLAG_IMMUTABLE;
-            contentIntent = PendingIntent.getActivity(context, 16002, launch, flags);
+            contentIntent = PendingIntent.getActivity(context, 16400 + slot, launch, flags);
         }
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.bp_diary_notification)
-            .setContentTitle(ReminderScheduler.getTitle(context))
-            .setContentText(ReminderScheduler.getBody(context))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentTitle(test ? "BP Diary · Test" : ReminderScheduler.getTitle(context))
+            .setContentText(test ? ReminderScheduler.getBody(context) : ReminderScheduler.getBody(context))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setAutoCancel(true)
+            .setOnlyAlertOnce(false)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE);
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            builder.setSound(soundUri(sound));
+            if (vibrate) builder.setVibrate(new long[]{0, 350, 180, 350});
+            else builder.setVibrate(new long[]{0});
+        }
+
         if (contentIntent != null) builder.setContentIntent(contentIntent);
+
+        if (!test) {
+            int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) flags |= PendingIntent.FLAG_IMMUTABLE;
+
+            Intent doneIntent = new Intent(context, ReminderReceiver.class)
+                .setAction(ReminderScheduler.ACTION_DONE)
+                .putExtra("slot", slot);
+            PendingIntent done = PendingIntent.getBroadcast(context, 16500 + slot, doneIntent, flags);
+
+            Intent snoozeIntent = new Intent(context, ReminderReceiver.class)
+                .setAction(ReminderScheduler.ACTION_SNOOZE)
+                .putExtra("slot", slot);
+            PendingIntent snooze = PendingIntent.getBroadcast(context, 16600 + slot, snoozeIntent, flags);
+
+            builder.addAction(0, ReminderScheduler.getDoneLabel(context), done);
+            builder.addAction(0, ReminderScheduler.getSnoozeLabel(context), snooze);
+        }
+
         try {
-            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, builder.build());
+            NotificationManagerCompat.from(context).notify(test ? NOTIFICATION_ID_TEST : NOTIFICATION_ID_BASE + slot, builder.build());
         } catch (SecurityException ignored) {
         }
     }
 
-    private void createChannel(Context context) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+    private String createChannel(Context context, int sound, boolean vibrate) {
+        String id = channelId(sound, vibrate);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return id;
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (manager == null) return;
+        if (manager == null) return id;
+
         NotificationChannel channel = new NotificationChannel(
-            CHANNEL_ID,
-            "BP Diary reminders",
-            NotificationManager.IMPORTANCE_DEFAULT
+            id,
+            "BP Diary reminders · sound " + Math.max(1, Math.min(3, sound)),
+            NotificationManager.IMPORTANCE_HIGH
         );
-        channel.setDescription("Daily blood pressure measurement reminders");
+        channel.setDescription("Blood pressure measurement reminders");
+        AudioAttributes attrs = new AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build();
+        channel.setSound(soundUri(sound), attrs);
+        channel.enableVibration(vibrate);
+        if (vibrate) channel.setVibrationPattern(new long[]{0, 350, 180, 350});
         manager.createNotificationChannel(channel);
+        return id;
     }
 }
 `;
@@ -744,20 +985,39 @@ public class NativeBridgePlugin extends Plugin {
 
     @PluginMethod
     public void scheduleDailyReminder(PluginCall call) {
+        String times = call.getString("times");
         String time = call.getString("time");
-        String title = call.getString("title");
-        String body = call.getString("body");
-        if (time == null || !time.matches("^(?:[01]\\\\d|2[0-3]):[0-5]\\\\d$")) {
+        if (times == null || times.trim().isEmpty()) times = time;
+        if (times == null || ReminderScheduler.normalizeTimes(times).isEmpty()) {
             call.reject("Invalid reminder time");
             return;
         }
+
+        int repeatCount = 1;
+        int repeatInterval = 10;
+        int sound = 2;
+        try { repeatCount = Integer.parseInt(String.valueOf(call.getString("repeatCount"))); } catch (Exception ignored) {}
+        try { repeatInterval = Integer.parseInt(String.valueOf(call.getString("repeatInterval"))); } catch (Exception ignored) {}
+        try { sound = Integer.parseInt(String.valueOf(call.getString("sound"))); } catch (Exception ignored) {}
+        boolean vibrate = !Boolean.FALSE.equals(call.getBoolean("vibrate"));
+
+        String title = call.getString("title");
+        String body = call.getString("body");
+        String doneLabel = call.getString("doneLabel");
+        String snoozeLabel = call.getString("snoozeLabel");
+
         try {
-            ReminderScheduler.schedule(getContext(), time, title, body);
+            ReminderScheduler.schedule(getContext(), times, title, body, repeatCount, repeatInterval, sound, vibrate, doneLabel, snoozeLabel);
             JSObject out = new JSObject();
             out.put("enabled", true);
-            out.put("time", time);
+            out.put("time", ReminderScheduler.getTime(getContext()));
+            out.put("times", ReminderScheduler.getTimesCsv(getContext()));
+            out.put("repeatCount", ReminderScheduler.getRepeatCount(getContext()));
+            out.put("repeatInterval", ReminderScheduler.getRepeatInterval(getContext()));
+            out.put("sound", ReminderScheduler.getSound(getContext()));
+            out.put("vibrate", ReminderScheduler.getVibrate(getContext()));
             out.put("notificationsAllowed", notificationsAllowed());
-            out.put("nextTrigger", ReminderScheduler.nextTriggerMillis(time));
+            out.put("nextTrigger", ReminderScheduler.nextTriggerMillis(ReminderScheduler.getTime(getContext())));
             call.resolve(out);
         } catch (Exception e) {
             call.reject("Could not schedule reminder", e);
@@ -782,6 +1042,11 @@ public class NativeBridgePlugin extends Plugin {
         JSObject out = new JSObject();
         out.put("enabled", ReminderScheduler.isEnabled(getContext()));
         out.put("time", ReminderScheduler.getTime(getContext()));
+        out.put("times", ReminderScheduler.getTimesCsv(getContext()));
+        out.put("repeatCount", ReminderScheduler.getRepeatCount(getContext()));
+        out.put("repeatInterval", ReminderScheduler.getRepeatInterval(getContext()));
+        out.put("sound", ReminderScheduler.getSound(getContext()));
+        out.put("vibrate", ReminderScheduler.getVibrate(getContext()));
         out.put("notificationsAllowed", notificationsAllowed());
         call.resolve(out);
     }
@@ -805,6 +1070,25 @@ public class NativeBridgePlugin extends Plugin {
             call.resolve(out);
         } catch (Exception e) {
             call.reject("Could not request notification permission", e);
+        }
+    }
+
+    @PluginMethod
+    public void testReminderSound(PluginCall call) {
+        try {
+            int sound = ReminderScheduler.getSound(getContext());
+            try { sound = Integer.parseInt(String.valueOf(call.getString("sound"))); } catch (Exception ignored) {}
+            boolean vibrate = !Boolean.FALSE.equals(call.getBoolean("vibrate"));
+            Intent test = new Intent(getContext(), ReminderReceiver.class)
+                .setAction(ReminderScheduler.ACTION_TEST)
+                .putExtra("sound", Math.max(1, Math.min(3, sound)))
+                .putExtra("vibrate", vibrate);
+            getContext().sendBroadcast(test);
+            JSObject out = new JSObject();
+            out.put("notificationsAllowed", notificationsAllowed());
+            call.resolve(out);
+        } catch (Exception e) {
+            call.reject("Could not test reminder sound", e);
         }
     }
 
