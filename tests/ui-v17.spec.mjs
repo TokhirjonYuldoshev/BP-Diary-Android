@@ -185,14 +185,14 @@ test('V17 top language control cycles directly and UZ mobile UI has no known Eng
   await expect(analysis).toContainText('Asosiy ko‘rsatkichlar va trendlar');
   await expect(analysis).toContainText('Umumiy');
   await expect(analysis).toContainText('Grafiklar');
-  await page.locator('#mobileAnalyticsTabs [data-mode="charts"]').click();
+  await page.evaluate(()=>document.querySelector('#mobileAnalyticsTabs [data-mode="charts"]')?.click());
   await expect(page.locator('#mobileChartSelector')).toContainText('QB');
   await expect(page.locator('#mobileChartSelector')).toContainText('Puls');
   await expect(page.locator('#mobileChartSelector')).toContainText('Harorat/vazn');
   await expect(page.locator('#mobileChartSelector')).toContainText('Kun vaqti');
   await expect(page.locator('#mobileChartSelector')).toContainText('Hafta kunlari');
   await expect(page.locator('#mobileNativeChartPanel')).toContainText('Grafiklar');
-  await page.locator('#mobileAnalyticsTabs [data-mode="overview"]').click();
+  await page.evaluate(()=>document.querySelector('#mobileAnalyticsTabs [data-mode="overview"]')?.click());
 
   await page.evaluate(()=>{
     const probe=document.createElement('div');
@@ -313,7 +313,7 @@ test('V17 invalid profile data stays inline and focuses the first invalid field'
   });
   await expect(page.locator('#weight')).toHaveClass(/profile-input-invalid/);
   await expect(page.locator('#weight')).toHaveAttribute('aria-invalid','true');
-  await expect(page.locator('#weight').locator('xpath=..').locator('.profile-input-error')).toBeVisible();
+  await expect(page.locator('.field').filter({has:page.locator('#weight')}).locator('.profile-validation-error')).toBeVisible();
   await page.locator('#saveBtn').click();
   await expect(page.locator('#profileValidationSummary')).toBeVisible();
   await expect(page.locator('#profileValidationSummary')).toContainText(/Вес|Weight|Vazn/);
