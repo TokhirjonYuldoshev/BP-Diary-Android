@@ -118,9 +118,10 @@ test('V17 biometric and screenshot privacy toggles use the native bridge',async(
   const bio=page.locator('#mobileSettingsSheet .mobile-settings-row').filter({hasText:/Блокировка приложения|App lock/});
   await bio.click();
   await expect.poll(()=>page.evaluate(()=>localStorage.getItem('bp_biometric_lock_v17'))).toBe('1');
+  await expect(page.locator('#mobileSettingsSheet')).toHaveClass(/open/);
 
-  await page.locator('#mobileAppBar [data-top="settings"]').click();
   const shield=page.locator('#mobileSettingsSheet .mobile-settings-row').filter({hasText:/Защита экрана|Screen privacy/});
+  await expect(shield).toBeVisible();
   await shield.click();
   await expect.poll(()=>page.evaluate(()=>localStorage.getItem('bp_privacy_shield_v17'))).toBe('1');
 
