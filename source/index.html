@@ -1037,10 +1037,20 @@
         let note=field?.querySelector('.profile-validation-error[data-for="'+id+'"]');
         if(reason){
             el.classList.add('profile-input-invalid'); el.setAttribute('aria-invalid','true');
-            if(!note&&field){note=document.createElement('small');note.className='profile-validation-error';note.dataset.for=id;field.appendChild(note);}
-            if(note)note.textContent=reason;
+            if(!note&&field){
+                note=document.createElement('small');
+                note.className='profile-validation-error';
+                note.dataset.for=id;
+                note.id='profile-validation-'+id;
+                field.appendChild(note);
+            }
+            if(note){
+                note.textContent=reason;
+                if(!note.id)note.id='profile-validation-'+id;
+                el.setAttribute('aria-describedby',note.id);
+            }
         }else{
-            el.classList.remove('profile-input-invalid');el.removeAttribute('aria-invalid');
+            el.classList.remove('profile-input-invalid');el.removeAttribute('aria-invalid');el.removeAttribute('aria-describedby');
             note?.remove();
         }
     }
@@ -1088,6 +1098,12 @@
             const prefix=errors.length>1
                 ?tx('Исправьте выделенные поля. Первое: ','Fix the highlighted fields. First: ','Ajratilgan maydonlarni tuzating. Birinchisi: ')
                 :tx('Исправьте поле: ','Fix this field: ','Maydonni tuzating: ');
+            const section=el?.closest('.profile-section');
+            if(section?.classList.contains('mobile-collapsed')){
+                section.classList.remove('mobile-collapsed');
+                const title=section.querySelector('.profile-section-title');
+                title?.setAttribute('aria-expanded','true');
+            }
             alert(prefix+label+'. '+first.reason);
             try{el?.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>el?.focus(),220);}catch(_){}
         }

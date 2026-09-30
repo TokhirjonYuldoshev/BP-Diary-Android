@@ -226,6 +226,13 @@ test('V17 top language control cycles directly and UZ mobile UI has no known Eng
 });
 
 test('V17 medical profile fields validate live and identify the exact invalid field',async({page})=>{
+  const cardio=page.locator('.profile-section').filter({hasText:/Кардио-профиль|Cardiovascular profile|Kardio-profil/}).first();
+  if(await cardio.count()){
+    const title=cardio.locator('.profile-section-title');
+    if(await cardio.evaluate(el=>el.classList.contains('mobile-collapsed')))await title.click();
+    await expect(cardio).not.toHaveClass(/mobile-collapsed/);
+  }
+
   const invalidCases=[
     ['temperature','-2'],
     ['weight','0'],
@@ -242,6 +249,7 @@ test('V17 medical profile fields validate live and identify the exact invalid fi
       el.dispatchEvent(new Event('input',{bubbles:true}));
     },{id,value});
     await expect(page.locator('#'+id)).toHaveAttribute('aria-invalid','true');
+    await expect(page.locator('#'+id)).toHaveAttribute('aria-describedby','profile-validation-'+id);
     await expect(page.locator('#'+id).locator('xpath=..').locator('.profile-validation-error')).toBeVisible();
   }
 
