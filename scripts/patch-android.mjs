@@ -7,35 +7,11 @@ const app=join(android,'app');
 const pkgDir=join(app,'src','main','java','com','tokhirjonyuldoshev','bpdiary');
 await mkdir(pkgDir,{recursive:true});
 
-// Permanent signing key: decode once from the tracked base64 source and wire Gradle explicitly.
-// Previous builds relied on the runner's default debug signing behavior, which produced incompatible APKs.
-const keyB64=(await readFile(join(root,'ci','debug.keystore.b64'),'utf8')).trim();
-await writeFile(join(app,'bp-diary-signing.p12'),Buffer.from(keyB64,'base64'));
-
+// V18 signing boundary:
+// - no private key material or production credentials live in this patch;
+// - ordinary CI uses the standard Android/Gradle debug signer;
+// - production signing is injected only by the protected release workflow from GitHub Secrets.
 let gradle=await readFile(join(app,'build.gradle'),'utf8');
-if(!gradle.includes('bpDiaryStable')){
-  gradle=gradle.replace(/android\s*\{/,m=>m+`
-    signingConfigs {
-        bpDiaryStable {
-            storeFile file("bp-diary-signing.p12")
-            storePassword "android"
-            keyAlias "androiddebugkey"
-            keyPassword "android"
-            storeType "PKCS12"
-        }
-    }
-`);
-  gradle=gradle.replace(/buildTypes\s*\{/,m=>m+`
-        debug {
-            signingConfig signingConfigs.bpDiaryStable
-        }
-`);
-}
-if(!/release\s*\{[\s\S]*?signingConfig\s+signingConfigs\.bpDiaryStable/.test(gradle)){
-  gradle=gradle.replace(/release\s*\{/,m=>m+`
-            signingConfig signingConfigs.bpDiaryStable
-`);
-}
 if(!gradle.includes('androidx.biometric:biometric')){
   gradle=gradle.replace(/dependencies\s*\{/,m=>m+`
     implementation "androidx.biometric:biometric:1.1.0"
