@@ -58,7 +58,7 @@ jobs:
 
       - name: Upload visual snapshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: V18-Mobile-UI-Snapshots
           path: artifacts/ui-v18

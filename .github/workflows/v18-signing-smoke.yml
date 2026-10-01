@@ -145,7 +145,7 @@ jobs:
           sha256sum "${ARTIFACT_BASE}-Signed-Candidate.apk" > "${ARTIFACT_BASE}-Signed-Candidate.apk.sha256"
 
       - name: Upload signed candidate only
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.ARTIFACT_BASE }}-Signed-Candidate
           path: |
