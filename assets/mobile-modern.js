@@ -1548,21 +1548,21 @@
     if(view?.classList.contains('open')&&!force)return;
     if(!view){
       view=document.createElement('div');view.id='mobileOnboarding';view.setAttribute('role','dialog');view.setAttribute('aria-modal','true');
-      view.innerHTML='<div class="mobile-onboarding-card"><div class="mobile-onboarding-top"><div class="mobile-onboarding-brand"><span>'+brandHeartIcon()+'</span><div><b>BP Diary</b><small>V17 · Privacy & Resilience</small></div></div><button type="button" class="mobile-onboarding-skip"></button></div><div class="mobile-onboarding-visual"></div><div class="mobile-onboarding-copy"><div class="mobile-onboarding-step"></div><h2></h2><p></p></div><div class="mobile-onboarding-progress"><span><i></i></span><b></b></div><div class="mobile-onboarding-actions"><button type="button" class="outline mobile-onboarding-back"></button><button type="button" class="mobile-onboarding-next"></button></div></div>';
+      view.innerHTML='<div class="mobile-onboarding-card"><div class="mobile-onboarding-top"><div class="mobile-onboarding-brand"><span>'+brandHeartIcon()+'</span><div><b>BP Diary</b><small>V18 · Security & Trust</small></div></div><button type="button" class="mobile-onboarding-skip"></button></div><div class="mobile-onboarding-visual"></div><div class="mobile-onboarding-copy"><div class="mobile-onboarding-step"></div><h2></h2><p></p></div><div class="mobile-onboarding-progress"><span><i></i></span><b></b></div><div class="mobile-onboarding-actions"><button type="button" class="outline mobile-onboarding-back"></button><button type="button" class="mobile-onboarding-next"></button></div></div>';
       document.body.appendChild(view);
     }
     const slides=ru()?[
       {scene:'measure',title:'Измерения без лишних шагов',text:'Быстро записывайте давление и пульс, а история, аналитика и цели остаются рядом и работают офлайн.'},
       {scene:'report',title:'Готовый отчёт для врача',text:'Выберите период и сохраните, распечатайте или отправьте аккуратный PDF прямо с телефона.'},
-      {scene:'privacy',title:'Приватность V17',text:'Системная блокировка приложения, защита экрана и AES‑GCM бэкап помогают держать личные данные под вашим контролем.'}
+      {scene:'privacy',title:'Приватность и защита V18',text:'Системная блокировка приложения, защита экрана и AES‑GCM бэкап помогают держать личные данные под вашим контролем.'}
     ]:uz()?[
       {scene:'measure',title:'O‘lchovlar ortiqcha bosqichlarsiz',text:'Qon bosimi va pulsni tez kiriting. Tarix, tahlil va maqsadlar yoningizda va oflayn ishlaydi.'},
       {scene:'report',title:'Shifokor uchun tayyor hisobot',text:'Davrni tanlang va tartibli PDF’ni telefondan saqlang, chop eting yoki ulashing.'},
-      {scene:'privacy',title:'V17 maxfiyligi',text:'Tizim blokirovkasi, ekran himoyasi va AES‑GCM zaxira nusxasi shaxsiy ma’lumotlarni nazoratda saqlashga yordam beradi.'}
+      {scene:'privacy',title:'V18 maxfiylik va himoya',text:'Tizim blokirovkasi, ekran himoyasi va AES‑GCM zaxira nusxasi shaxsiy ma’lumotlarni nazoratda saqlashga yordam beradi.'}
     ]:[
       {scene:'measure',title:'Measurements without extra steps',text:'Record blood pressure and pulse quickly while history, analytics and goals stay close and work offline.'},
       {scene:'report',title:'A doctor-ready report',text:'Choose a period and save, print or share a polished PDF directly from your phone.'},
-      {scene:'privacy',title:'V17 privacy',text:'System app lock, screen privacy and AES-GCM protected backups keep personal data under your control.'}
+      {scene:'privacy',title:'V18 privacy & security',text:'System app lock, screen privacy and AES-GCM protected backups keep personal data under your control.'}
     ];
     onboardingIndex=0;
     const render=()=>{
