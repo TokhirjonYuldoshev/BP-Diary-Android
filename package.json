@@ -6,7 +6,8 @@
   "scripts": {
     "prepare:web": "node scripts/prepare-web.mjs",
     "qa": "node scripts/regression.mjs",
-    "cap:sync": "npx cap sync android"
+    "cap:sync": "npx cap sync android",
+    "security:check": "node scripts/security-check.mjs"
   },
   "dependencies": {
     "@capacitor/android": "8.5.2",
