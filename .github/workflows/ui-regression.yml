@@ -54,13 +54,13 @@ jobs:
           exit 1
 
       - name: Run mobile UI regression
-        run: npx playwright test tests/ui-v17.spec.mjs --reporter=line
+        run: npx playwright test tests/ui-v18.spec.mjs --reporter=line
 
       - name: Upload visual snapshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: V17-Mobile-UI-Snapshots
-          path: artifacts/ui-v17
+          name: V18-Mobile-UI-Snapshots
+          path: artifacts/ui-v18
           if-no-files-found: warn
           retention-days: 30
