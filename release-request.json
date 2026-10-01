@@ -1,4 +1,4 @@
 {
   "publish": false,
-  "notes": "BP Diary V17 / 5.7.0 released and verified on 2026-09-30. Publication gate closed after successful Release workflow #5."
+  "notes": "BP Diary V18 / 5.8.0 development candidate. Production publication is disabled until secure signing migration, CI hardening, dependency review, and real-device acceptance are complete."
 }
