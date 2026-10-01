@@ -17,7 +17,7 @@ jobs:
       publish: ${{ steps.release_gate.outputs.publish }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Read publication gate
         id: release_gate
@@ -44,7 +44,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Load and validate release metadata
         shell: bash
