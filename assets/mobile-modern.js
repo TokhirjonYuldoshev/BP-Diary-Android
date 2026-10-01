@@ -1308,7 +1308,7 @@
         '<button type="button" data-about-url="https://github.com/TokhirjonYuldoshev/BP-Diary-Android"><span class="mobile-about-row-icon">⌘</span><span><b>GitHub</b><small>TokhirjonYuldoshev/BP-Diary-Android</small></span><span>›</span></button>'+
         '<button type="button" data-about-url="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues"><span class="mobile-about-row-icon">?</span><span><b>'+l('Поддержка / обратная связь','Support / feedback','Yordam / fikr-mulohaza')+'</b><small>'+l('Сообщить об ошибке или предложить улучшение','Report a bug or suggest an improvement','Xato haqida xabar berish yoki taklif yuborish')+'</small></span><span>›</span></button>'+
         '<div class="mobile-about-row"><span class="mobile-about-row-icon">©</span><span><b>'+l('Разработчик','Developer','Dasturchi')+'</b><small>Tokhirjon Yuldoshev</small></span></div>'+
-        '<div class="mobile-about-row"><span class="mobile-about-row-icon">§</span><span><b>'+l('Лицензия','License','Litsenziya')+'</b><small>'+l('Отдельный LICENSE-файл в репозитории не указан','No separate LICENSE file is currently specified','Repozitoriyda alohida LICENSE fayli ko‘rsatilmagan')+'</small></span></div>'+
+        '<div class="mobile-about-row"><span class="mobile-about-row-icon">§</span><span><b>'+l('Лицензия','License','Litsenziya')+'</b><small>'+l('Apache License 2.0','Apache License 2.0','Apache License 2.0')+'</small></span></div>'+
       '</div>'+
       '<div class="mobile-about-thanks">'+l('Спасибо, что используете BP Diary.','Thank you for using BP Diary.','BP Diary’dan foydalanganingiz uchun rahmat.')+'</div>'+
       '<button type="button" class="mobile-about-ok">'+l('Готово','Done','Tayyor')+'</button>';
