@@ -2067,8 +2067,6 @@
 
   function setTab(tab,scroll=true){
     if(!['measure','analysis','archive'].includes(tab))tab='measure';
-    const secret=q('#mobileSecretSheet.open');
-    if(secret)closeMobileSheet(secret);
     currentTab=tab;try{localStorage.setItem('bp_mobile_tab',tab)}catch(_){}
     qa('.mobile-page').forEach(p=>p.classList.toggle('mobile-hidden',p.dataset.mobilePage!==tab));
     qa('#mobileBottomNav [data-tab]').forEach(b=>{const active=b.dataset.tab===tab;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
