@@ -8,14 +8,14 @@
 
 Локальное хранение данных, повторные замеры, аналитика, гибкие напоминания, защищённые резервные копии и отчёты для врача.
 
-[![Release](https://img.shields.io/badge/Stable-V17%20%2F%205.7.0-2f6feb?style=flat-square)](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0)
+[![Release](https://img.shields.io/badge/Stable-V18%20%2F%205.8.0-2f6feb?style=flat-square)](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.0)
 [![Android](https://img.shields.io/badge/Android-Build%20passing-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/actions/workflows/build-android.yml)
 [![UI Regression](https://img.shields.io/badge/UI%20Regression-passing-2ea44f?style=flat-square&logo=githubactions&logoColor=white)](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/actions/workflows/ui-regression.yml)
 [![License](https://img.shields.io/badge/License-Apache--2.0-d22128?style=flat-square&logo=apache&logoColor=white)](LICENSE)
 
 **Русский** · [English](docs/README.en.md) · [O‘zbekcha (Lotin)](docs/README.uz-Latn.md)
 
-[Скачать стабильную версию](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0) ·
+[Скачать стабильную версию](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.0) ·
 [Что нового](RELEASE_NOTES.md) ·
 [Безопасность](SECURITY.md) ·
 [Участие в разработке](CONTRIBUTING.md)
@@ -26,7 +26,7 @@
 
 ## О приложении
 
-**BP Diary V17 / 5.7.0** помогает вести структурированный дневник артериального давления на Android и готовить данные для обсуждения с врачом.
+**BP Diary V18 / 5.8.0** помогает вести структурированный дневник артериального давления на Android и готовить данные для обсуждения с врачом.
 
 Приложение работает по принципу **local-first**: записи дневника и профиль остаются на устройстве, пока пользователь сам не экспортирует, не создаёт отчёт или не делится данными.
 
@@ -45,30 +45,30 @@
 
 Текущий официальный релиз:
 
-**BP Diary V17 / 5.7.0**  
-`versionCode 170`
+**BP Diary V18 / 5.8.0**  
+`versionCode 181`
 
-[Открыть официальный GitHub Release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0)
+[Открыть официальный GitHub Release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.0)
 
 Официальный APK:
 
 ```text
-BP-Diary-5.7-V17.apk
+BP-Diary-5.8-V18.apk
 ```
 
 SHA-256:
 
 ```text
-5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9
+802b608d2828c4513be644cdbb4287bf922dadec4fe3a6469378ee5c50c3d15c
 ```
 
 Проверка на Linux/macOS:
 
 ```bash
-sha256sum BP-Diary-5.7-V17.apk
+sha256sum BP-Diary-5.8-V18.apk
 ```
 
-V17 сохраняет Package ID и текущую signing lineage, поэтому официальный APK совместим с поддерживаемым обновлением поверх предыдущей официальной установки без удаления приложения.
+V18 сохраняет Package ID, но использует новую приватную подпись. Для перехода с V17: создайте и проверьте Full Backup, удалите V17, установите V18 и восстановите данные. Уже установленный V18 с новой подписью обновляется без удаления приложения.
 
 Перед uninstall или переносом на другое устройство рекомендуется создать Full Backup.
 
@@ -139,7 +139,7 @@ assets/mobile-modern.css
 scripts/prepare-web.mjs
 scripts/patch-android.mjs
 scripts/regression.mjs
-tests/ui-v17.spec.mjs
+tests/ui-v18.spec.mjs
 version.json
 release-request.json
 ```
@@ -152,7 +152,7 @@ release-request.json
 | `scripts/prepare-web.mjs` | Подготовка offline web bundle |
 | `scripts/patch-android.mjs` | Android-native bridge |
 | `scripts/regression.mjs` | Статический regression |
-| `tests/ui-v17.spec.mjs` | Playwright mobile regression |
+| `tests/ui-v18.spec.mjs` | Playwright mobile regression |
 | `version.json` | Источник версии |
 | `release-request.json` | Publication gate |
 
@@ -210,7 +210,7 @@ protected main
 | Архитектура | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | История изменений | [CHANGELOG.md](CHANGELOG.md) |
 | Release notes | [RELEASE_NOTES.md](RELEASE_NOTES.md) |
-| QA V17 | [QA_V17.md](QA_V17.md) |
+| QA V18 | [QA_V18.md](QA_V18.md) |
 | Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Security | [SECURITY.md](SECURITY.md) |
 | License | [Apache-2.0](LICENSE) |
@@ -240,9 +240,9 @@ Copyright © 2026 **Tokhirjon Yuldoshev**.
 
 <div align="center">
 
-**BP Diary V17 / 5.7.0**
+**BP Diary V18 / 5.8.0**
 
-[Release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0) ·
+[Release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.0) ·
 [Issues](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues) ·
 [Contributing](CONTRIBUTING.md) ·
 [Security](SECURITY.md) ·

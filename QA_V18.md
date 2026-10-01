@@ -1,13 +1,13 @@
 # V18 — Secure Signing & Supply-Chain QA
 
-Status: **DEVICE ACCEPTED / PUBLICATION AUTHORIZED / NOT RELEASED**
+Status: **FINAL / STABLE / RELEASED**
 
 ## Version
 
 - Release: `V18`
 - Version: `5.8.0`
 - versionCode: `181`
-- Planned tag: `v5.8.0`
+- Official tag: `v5.8.0`
 - Branch: `v18-secure-signing-migration`
 - Publication gate: `publish=false`
 
@@ -99,3 +99,13 @@ The owner confirmed all real-device checks passed on signed V18 / 5.8.0 / versio
 - [x] Input validation, restart and data preservation
 
 Build-time findings through @capacitor/assets remain documented and visible in the non-blocking full audit. Runtime high/critical findings remain blocking.
+
+## Official release verification
+
+- Official tag: `v5.8.0`, target `521f613d72401912f26b96843197f0327d26a6a2`.
+- Publish workflow `36855648198`: SUCCESS.
+- APK: `BP-Diary-5.8-V18.apk`.
+- Official APK SHA-256: `802b608d2828c4513be644cdbb4287bf922dadec4fe3a6469378ee5c50c3d15c`.
+- Production signer verified by release workflow: `a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`.
+- production-signing restricted to main, verified from owner screenshot on 2026-10-01.
+- Publication gate returned to false.

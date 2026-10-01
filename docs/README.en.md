@@ -4,7 +4,7 @@
 
 ## About
 
-**BP Diary V17 / 5.7.0** is an Android application for blood-pressure journaling, repeated readings, trend review, reminders, backups and doctor-ready reporting.
+**BP Diary V18 / 5.8.0** is an Android application for blood-pressure journaling, repeated readings, trend review, reminders, backups and doctor-ready reporting.
 
 The application is local-first: diary records and profile data stay on the device unless the user explicitly exports or shares them.
 
@@ -64,7 +64,7 @@ The mobile export layer does not change the medical/core calculations used by th
 
 ### 🔐 Privacy
 
-V17 includes:
+V18 includes:
 
 - system Android App Lock;
 - biometric/device credential authentication;
@@ -106,29 +106,29 @@ Language can be changed from the application interface and Settings.
 
 Official stable release:
 
-**V17 / 5.7.0**
+**V18 / 5.8.0**
 
-[Open the official GitHub Release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0)
+[Open the official GitHub Release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.0)
 
 File:
 
 ```text
-BP-Diary-5.7-V17.apk
+BP-Diary-5.8-V18.apk
 ```
 
 SHA-256:
 
 ```text
-5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9
+802b608d2828c4513be644cdbb4287bf922dadec4fe3a6469378ee5c50c3d15c
 ```
 
 Verification on Linux/macOS:
 
 ```bash
-sha256sum BP-Diary-5.7-V17.apk
+sha256sum BP-Diary-5.8-V18.apk
 ```
 
-V17 preserves the package ID and current direct-distribution signing lineage, so the official APK can be installed over a compatible previous installation without uninstalling the app.
+V18 preserves the package ID but uses a new private signer. To migrate from V17: create and verify a Full Backup, uninstall V17, install V18 and restore your data. Existing new-signer V18 installations can update in place.
 
 Create a Full Backup before uninstalling or moving to another device.
 
@@ -143,7 +143,7 @@ assets/mobile-modern.css
 scripts/prepare-web.mjs
 scripts/patch-android.mjs
 scripts/regression.mjs
-tests/ui-v17.spec.mjs
+tests/ui-v18.spec.mjs
 version.json
 release-request.json
 ```
@@ -155,7 +155,7 @@ Responsibilities:
 - `scripts/prepare-web.mjs` — offline web bundle preparation;
 - `scripts/patch-android.mjs` — Android-native bridge;
 - `scripts/regression.mjs` — static regression;
-- `tests/ui-v17.spec.mjs` — Playwright UI regression.
+- `tests/ui-v18.spec.mjs` — Playwright UI regression.
 
 See [ARCHITECTURE.md](../ARCHITECTURE.md).
 

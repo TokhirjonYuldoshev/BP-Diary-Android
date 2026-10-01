@@ -4,7 +4,7 @@
 
 ## Loyiha haqida
 
-**BP Diary V17 / 5.7.0** — qon bosimi kundaligini yuritish, takroriy o‘lchovlarni saqlash, dinamikani tahlil qilish, eslatmalarni sozlash, zaxira nusxalar yaratish va shifokor uchun hisobot tayyorlashga mo‘ljallangan Android ilova.
+**BP Diary V18 / 5.8.0** — qon bosimi kundaligini yuritish, takroriy o‘lchovlarni saqlash, dinamikani tahlil qilish, eslatmalarni sozlash, zaxira nusxalar yaratish va shifokor uchun hisobot tayyorlashga mo‘ljallangan Android ilova.
 
 Ilova local-first tamoyiliga asoslangan: kundalik yozuvlari va profil ma’lumotlari foydalanuvchi ularni o‘zi eksport qilmaguncha yoki ulashmaguncha qurilmada qoladi.
 
@@ -64,7 +64,7 @@ Mobil eksport hisobotdagi medical/core hisob-kitoblarni o‘zgartirmaydi.
 
 ### 🔐 Maxfiylik
 
-V17 quyidagilarni o‘z ichiga oladi:
+V18 quyidagilarni o‘z ichiga oladi:
 
 - Android tizim App Lock;
 - biometric/device credential orqali autentifikatsiya;
@@ -106,29 +106,29 @@ Tilni ilova interfeysi yoki Sozlamalar orqali almashtirish mumkin.
 
 Rasmiy stable release:
 
-**V17 / 5.7.0**
+**V18 / 5.8.0**
 
-[Rasmiy GitHub Release sahifasini ochish](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0)
+[Rasmiy GitHub Release sahifasini ochish](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.0)
 
 Fayl:
 
 ```text
-BP-Diary-5.7-V17.apk
+BP-Diary-5.8-V18.apk
 ```
 
 SHA-256:
 
 ```text
-5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9
+802b608d2828c4513be644cdbb4287bf922dadec4fe3a6469378ee5c50c3d15c
 ```
 
 Linux/macOS da tekshirish:
 
 ```bash
-sha256sum BP-Diary-5.7-V17.apk
+sha256sum BP-Diary-5.8-V18.apk
 ```
 
-V17 Package ID va amaldagi direct-distribution signing lineage’ni saqlaydi. Shu sababli rasmiy APK mos keladigan oldingi o‘rnatish ustiga ilovani o‘chirmasdan o‘rnatilishi mumkin.
+V18 Package ID’ni saqlaydi, ammo yangi private signing key’dan foydalanadi. V17’dan o‘tish: Full Backup yarating va tekshiring, V17’ni o‘chiring, V18’ni o‘rnating va ma’lumotlarni tiklang. Yangi imzoli V18 ustiga ilovani o‘chirmasdan yangilash mumkin.
 
 Ilovani o‘chirish yoki boshqa qurilmaga ko‘chirishdan oldin Full Backup yaratish tavsiya etiladi.
 
@@ -143,7 +143,7 @@ assets/mobile-modern.css
 scripts/prepare-web.mjs
 scripts/patch-android.mjs
 scripts/regression.mjs
-tests/ui-v17.spec.mjs
+tests/ui-v18.spec.mjs
 version.json
 release-request.json
 ```
@@ -155,7 +155,7 @@ Vazifalar taqsimoti:
 - `scripts/prepare-web.mjs` — offline web bundle tayyorlash;
 - `scripts/patch-android.mjs` — Android-native bridge;
 - `scripts/regression.mjs` — statik regression;
-- `tests/ui-v17.spec.mjs` — Playwright UI regression.
+- `tests/ui-v18.spec.mjs` — Playwright UI regression.
 
 Batafsil: [ARCHITECTURE.md](../ARCHITECTURE.md).
 

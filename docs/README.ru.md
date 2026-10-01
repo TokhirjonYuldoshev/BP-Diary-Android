@@ -4,7 +4,7 @@
 
 ## О проекте
 
-**BP Diary V17 / 5.7.0** — Android-приложение для ведения дневника артериального давления, повторных замеров, анализа динамики, напоминаний, резервного копирования и формирования отчётов для врача.
+**BP Diary V18 / 5.8.0** — Android-приложение для ведения дневника артериального давления, повторных замеров, анализа динамики, напоминаний, резервного копирования и формирования отчётов для врача.
 
 Приложение построено как local-first: записи дневника и профиль остаются на устройстве, пока пользователь сам не экспортирует или не отправит данные.
 
@@ -64,7 +64,7 @@ Medical/core-расчёты отчёта не меняются мобильны�
 
 ### 🔐 Приватность
 
-V17 включает:
+V18 включает:
 
 - системный Android App Lock;
 - biometric/device credential authentication;
@@ -106,29 +106,29 @@ V17 включает:
 
 Официальный stable release:
 
-**V17 / 5.7.0**
+**V18 / 5.8.0**
 
-[Открыть официальный GitHub Release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0)
+[Открыть официальный GitHub Release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.0)
 
 Файл:
 
 ```text
-BP-Diary-5.7-V17.apk
+BP-Diary-5.8-V18.apk
 ```
 
 SHA-256:
 
 ```text
-5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9
+802b608d2828c4513be644cdbb4287bf922dadec4fe3a6469378ee5c50c3d15c
 ```
 
 Проверка в Linux/macOS:
 
 ```bash
-sha256sum BP-Diary-5.7-V17.apk
+sha256sum BP-Diary-5.8-V18.apk
 ```
 
-V17 сохраняет Package ID и текущую direct-distribution signing lineage, поэтому официальный APK можно устанавливать поверх совместимой предыдущей установки без удаления приложения.
+V18 сохраняет Package ID, но использует новую приватную подпись. Для перехода с V17: создайте и проверьте Full Backup, удалите V17, установите V18 и восстановите данные. Уже установленный V18 с новой подписью обновляется без удаления приложения.
 
 Перед uninstall или переносом на другое устройство рекомендуется сделать Full Backup.
 
@@ -143,7 +143,7 @@ assets/mobile-modern.css
 scripts/prepare-web.mjs
 scripts/patch-android.mjs
 scripts/regression.mjs
-tests/ui-v17.spec.mjs
+tests/ui-v18.spec.mjs
 version.json
 release-request.json
 ```
@@ -155,7 +155,7 @@ release-request.json
 - `scripts/prepare-web.mjs` — подготовка offline web bundle;
 - `scripts/patch-android.mjs` — Android-native bridge;
 - `scripts/regression.mjs` — статический regression;
-- `tests/ui-v17.spec.mjs` — Playwright UI regression.
+- `tests/ui-v18.spec.mjs` — Playwright UI regression.
 
 Подробнее: [ARCHITECTURE.md](../ARCHITECTURE.md).
 

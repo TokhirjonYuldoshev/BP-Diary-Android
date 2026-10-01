@@ -12,7 +12,9 @@
 - V17 migration requires backup, uninstall, new-signer V18 installation and restore; existing new-signer V18 can update in place.
 - Medical/core logic, report formulas, data schema and package ID preserved.
 - Upstream @capacitor/assets build-toolchain findings remain documented; runtime high/critical audit remains blocking.
-- Publication pending final CI and production-signing branch restriction verification.
+- Official stable release `v5.8.0` published by successful workflow `36855648198`.
+- Official APK SHA-256: `802b608d2828c4513be644cdbb4287bf922dadec4fe3a6469378ee5c50c3d15c`.
+- production-signing restricted to main; publication gate returned to false.
 
 ## V17 — Reminders, Reports, Privacy & Localization — 5.7.0
 

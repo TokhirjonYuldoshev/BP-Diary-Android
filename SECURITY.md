@@ -2,7 +2,7 @@
 
 [🇷🇺 Русский](#-русский) · [🇬🇧 English](#-english) · [🇺🇿 O‘zbekcha](#-ozbekcha-lotin)
 
-Supported stable line: **BP Diary 5.7.x / V17**
+Supported stable line: **BP Diary 5.8.x / V18**
 
 ---
 
@@ -82,27 +82,21 @@ Screen Privacy использует Android `FLAG_SECURE`.
 Текущий stable asset:
 
 ```text
-BP-Diary-5.7-V17.apk
+BP-Diary-5.8-V18.apk
 SHA-256:
-5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9
+802b608d2828c4513be644cdbb4287bf922dadec4fe3a6469378ee5c50c3d15c
 ```
 
 Официальный Release:
-https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0
+https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.0
 
 ### Signing
 
-Текущая direct-distribution signing lineage сохраняет совместимость существующих установок.
+V18 использует новый приватный production-сертификат:
 
-Certificate SHA-256:
+`a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`
 
-```text
-63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102
-```
-
-Этот ключ присутствовал в публичной истории проекта, поэтому **не должен использоваться как новый безопасный production signing key для Google Play**.
-
-Для будущего production channel рекомендуется отдельный приватный ключ, secure CI secret storage и Google Play App Signing.
+Signing secrets доступны только release workflow через `production-signing`, разрешённую ветку `main`. Старый V17 signer скомпрометирован публичной историей и больше не используется. Переход с V17: backup → uninstall → install V18 → restore. Уже установленный V18 с новой подписью обновляется поверх.
 
 ### Медицинские данные
 
@@ -192,27 +186,21 @@ Install APKs from the official GitHub Release.
 Current stable asset:
 
 ```text
-BP-Diary-5.7-V17.apk
+BP-Diary-5.8-V18.apk
 SHA-256:
-5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9
+802b608d2828c4513be644cdbb4287bf922dadec4fe3a6469378ee5c50c3d15c
 ```
 
 Official Release:
-https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0
+https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.0
 
 ### Signing
 
-The current direct-distribution signing lineage preserves compatibility with existing installations.
+V18 uses a new private production certificate:
 
-Certificate SHA-256:
+`a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`
 
-```text
-63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102
-```
-
-This key has appeared in the public project history and therefore **must not be used as a new secure production signing key for Google Play**.
-
-A future production channel should use a separate private key, secure CI secret storage and Google Play App Signing.
+Signing secrets are isolated in `production-signing`, restricted to `main`. The exposed legacy V17 signer is compromised and is no longer used. V17 migration: backup → uninstall → install V18 → restore. Existing new-signer V18 installations update in place.
 
 ### Medical data
 
@@ -302,27 +290,21 @@ APK’ni rasmiy GitHub Release’dan o‘rnating.
 Joriy stable asset:
 
 ```text
-BP-Diary-5.7-V17.apk
+BP-Diary-5.8-V18.apk
 SHA-256:
-5c328d79badfcb84f3160089aaa2dc7d2dd48f3a5aa2d91e5bdd0cec7d3c31f9
+802b608d2828c4513be644cdbb4287bf922dadec4fe3a6469378ee5c50c3d15c
 ```
 
 Rasmiy Release:
-https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.7.0
+https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.0
 
 ### Signing
 
-Joriy direct-distribution signing lineage mavjud o‘rnatishlar bilan moslikni saqlaydi.
+V18 yangi private production certificate’dan foydalanadi:
 
-Certificate SHA-256:
+`a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`
 
-```text
-63e7e2c0739cc1e6640ac53c39b7908d70b92606df0a3cbd973a516bf9e3c102
-```
-
-Bu key loyiha tarixida public ko‘rinishda bo‘lgan. Shu sababli u Google Play uchun yangi xavfsiz production signing key sifatida ishlatilmasligi kerak.
-
-Kelajakdagi production channel uchun alohida private key, secure CI secret storage va Google Play App Signing tavsiya etiladi.
+Signing secrets `production-signing` ichida, faqat `main` uchun saqlanadi. Eski V17 signer public tarixda oshkor bo‘lgan va endi ishlatilmaydi. V17’dan o‘tish: backup → uninstall → install V18 → restore. Yangi imzoli V18 ustiga yangilash mumkin.
 
 ### Tibbiy ma’lumotlar
 
