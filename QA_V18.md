@@ -31,8 +31,10 @@ V18 starts with security and release-engineering hardening. Medical/core calcula
 - [x] Dependabot configuration added
 - [x] Dependency vulnerability workflow added
 - [x] CodeQL workflow added
-- [ ] SheetJS CDN SHA-256 pinned and enforced
-- [ ] jsPDF upgraded from 2.5.1 and PDF regression completed
+- [x] SheetJS CDN SHA-256 pinned and enforced
+- [x] jsPDF upgraded from 2.5.1 to 4.2.1
+- [ ] jsPDF 4.2.1 real-device PDF Save / Print / Share regression completed
+- [ ] Build-tooling vulnerabilities from @capacitor/assets reviewed/replaced when an upstream-safe path is available
 - [ ] New private V18 production signing key created outside Git
 - [ ] GitHub `production-signing` environment configured
 - [ ] Production signing secrets configured
