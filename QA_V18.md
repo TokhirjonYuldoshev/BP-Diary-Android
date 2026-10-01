@@ -6,10 +6,14 @@ Status: **DEVELOPMENT / NOT RELEASED**
 
 - Release: `V18`
 - Version: `5.8.0`
-- versionCode: `180`
+- versionCode: `181`
 - Planned tag: `v5.8.0`
 - Branch: `v18-secure-signing-migration`
 - Publication gate: `publish=false`
+
+## Device retest marker
+
+- Candidate after protected-backup lifecycle fixes uses `versionCode 181` so Android must install the new APK over the earlier V18 candidate.
 
 ## Scope
 
