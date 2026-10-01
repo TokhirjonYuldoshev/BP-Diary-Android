@@ -189,10 +189,10 @@ jobs:
             echo
             echo "---"
             echo
-            echo "Package: `com.tokhirjonyuldoshev.bpdiary`"
-            echo "Version: `${VERSION_NAME}` (versionCode `${VERSION_CODE}`)"
-            echo "SHA-256: `$(awk '{print $1}' "${ARTIFACT_BASE}.apk.sha256")`"
-            echo "Signing certificate SHA-256: `${BP_DIARY_RELEASE_CERT_SHA256}`"
+            printf 'Package: `%s`\n' 'com.tokhirjonyuldoshev.bpdiary'
+            printf 'Version: `%s` (versionCode `%s`)\n' "$VERSION_NAME" "$VERSION_CODE"
+            printf 'SHA-256: `%s`\n' "$(awk '{print $1}' "${ARTIFACT_BASE}.apk.sha256")"
+            printf 'Signing certificate SHA-256: `%s`\n' "$BP_DIARY_RELEASE_CERT_SHA256"
           } >> /tmp/release-notes.md
 
       - name: Create immutable GitHub Release
