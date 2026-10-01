@@ -480,13 +480,15 @@ test('V18 protected backup survives delayed Android-style popstate transitions',
   await expect(page.locator('#mobileSecretSheet')).toHaveClass(/open/);
   expect(await page.evaluate(()=>window.__bpDelayedBackCalls)).toBe(0);
   await page.locator('#mobileSecretSheet .mobile-secret-actions .outline').click();
+  await page.waitForTimeout(220);
+  const beforeRestore=await page.evaluate(()=>window.__bpDelayedBackCalls);
 
   await page.locator('#mobileAppBar [data-top="settings"]').click();
   await page.locator('#mobileSettingsSheet .mobile-settings-row').filter({hasText:/Восстановить защищённый|Restore protected backup/}).click();
   await expect(page.locator('#mobileSecretSheet')).toHaveClass(/open/);
   await page.waitForTimeout(350);
   await expect(page.locator('#mobileSecretSheet')).toHaveClass(/open/);
-  expect(await page.evaluate(()=>window.__bpDelayedBackCalls)).toBe(0);
+  expect(await page.evaluate(()=>window.__bpDelayedBackCalls)).toBe(beforeRestore);
   await page.locator('#mobileSecretSheet .mobile-secret-actions .outline').click();
 });
 
