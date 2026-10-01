@@ -162,13 +162,14 @@
     const anyOpen=qa('[role="dialog"].open').some(el=>el.id!=='mobileOnboarding');
     document.body?.classList.toggle('mobile-sheet-open',anyOpen);
   }
-  function openMobileSheet(sheet){
+  function openMobileSheet(sheet,{historyEntry=true}={}){
     if(!sheet)return;
     localizeUzTree(sheet);
     if(!sheet.classList.contains('open')){
+      sheet.dataset.bpHistoryEntry=historyEntry?'1':'0';
       sheet.classList.add('open');
       syncMobileSheetState();
-      try{history.pushState({bpMobileSheet:sheet.id},'')}catch(_){}
+      if(historyEntry){try{history.pushState({bpMobileSheet:sheet.id},'')}catch(_){}}
     }
   }
   function closeMobileSheet(sheet,fromHistory=false){
@@ -180,10 +181,13 @@
       const fn=sheet.__onDismiss;sheet.__onDismiss=null;
       try{fn()}catch(_){}
     }
-    if(wasOpen&&!fromHistory&&history.state?.bpMobileSheet===sheet.id){try{history.back()}catch(_){}}
+    const ownsHistory=sheet.dataset.bpHistoryEntry==='1';
+    delete sheet.dataset.bpHistoryEntry;
+    if(wasOpen&&!fromHistory&&ownsHistory&&history.state?.bpMobileSheet===sheet.id){try{history.back()}catch(_){}}
   }
   window.addEventListener('popstate',()=>{
-    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open,#mobileReminderSheet.open,#mobileSettingsSheet.open,#mobileUpdateSheet.open,#mobileSecretSheet.open,#mobileGuideSheet.open').at(-1);
+    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open,#mobileReminderSheet.open,#mobileSettingsSheet.open,#mobileUpdateSheet.open,#mobileSecretSheet.open,#mobileGuideSheet.open')
+      .filter(el=>el.dataset.bpHistoryEntry!=='0').at(-1);
     if(open)closeMobileSheet(open,true);
   });
 
@@ -928,7 +932,7 @@
 
   function askSecret({title,message,confirm=false,minLength=1}={}){
     if(secretPromptState){
-      openMobileSheet(secretPromptState.sheet);
+      openMobileSheet(secretPromptState.sheet,{historyEntry:false});
       setTimeout(()=>q('#mobileSecretOne',secretPromptState.sheet)?.focus(),30);
       return Promise.resolve(null);
     }
@@ -969,7 +973,7 @@
         if(confirm&&one!==two){mobileToast(l('Пароли не совпадают','Passwords do not match','Parollar mos kelmadi'),'error');return}
         finish(one);
       };
-      openMobileSheet(sheet);
+      openMobileSheet(sheet,{historyEntry:false});
       setTimeout(()=>q('#mobileSecretOne',sheet)?.focus(),120);
     });
   }
