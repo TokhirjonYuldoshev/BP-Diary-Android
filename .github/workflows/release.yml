@@ -41,7 +41,6 @@ jobs:
       BP_DIARY_RELEASE_STORE_PASSWORD: ${{ secrets.BP_DIARY_RELEASE_STORE_PASSWORD }}
       BP_DIARY_RELEASE_KEY_ALIAS: ${{ secrets.BP_DIARY_RELEASE_KEY_ALIAS }}
       BP_DIARY_RELEASE_KEY_PASSWORD: ${{ secrets.BP_DIARY_RELEASE_KEY_PASSWORD }}
-      BP_DIARY_RELEASE_CERT_SHA256: ${{ vars.BP_DIARY_RELEASE_CERT_SHA256 }}
 
     steps:
       - name: Checkout
@@ -50,6 +49,10 @@ jobs:
       - name: Load and validate release metadata
         shell: bash
         run: |
+          test -s ci/release-cert-v18.sha256
+          CERT_FP="$(tr '[:upper:]' '[:lower:]' < ci/release-cert-v18.sha256 | tr -d ':[:space:]')"
+          test "$(printf '%s' "$CERT_FP" | wc -c)" -eq 64
+          echo "BP_DIARY_RELEASE_CERT_SHA256=$CERT_FP" >> "$GITHUB_ENV"
           node <<'NODE' >> "$GITHUB_ENV"
           const v=require('./version.json');
           const r=require('./release-request.json');
@@ -88,7 +91,7 @@ jobs:
           test -n "${BP_DIARY_RELEASE_STORE_PASSWORD}" || { echo "Missing BP_DIARY_RELEASE_STORE_PASSWORD"; exit 1; }
           test -n "${BP_DIARY_RELEASE_KEY_ALIAS}" || { echo "Missing BP_DIARY_RELEASE_KEY_ALIAS"; exit 1; }
           test -n "${BP_DIARY_RELEASE_KEY_PASSWORD}" || { echo "Missing BP_DIARY_RELEASE_KEY_PASSWORD"; exit 1; }
-          test -n "${BP_DIARY_RELEASE_CERT_SHA256}" || { echo "Missing environment variable BP_DIARY_RELEASE_CERT_SHA256"; exit 1; }
+          test -n "${BP_DIARY_RELEASE_CERT_SHA256}" || { echo "Missing pinned release certificate fingerprint"; exit 1; }
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
