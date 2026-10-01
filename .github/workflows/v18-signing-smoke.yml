@@ -2,6 +2,10 @@ name: V18 Production Signing Smoke
 
 on:
   workflow_dispatch:
+  push:
+    branches: [v18-secure-signing-migration]
+    paths:
+      - '.github/workflows/v18-signing-smoke.yml'
 
 permissions:
   contents: read
