@@ -41,7 +41,7 @@ jobs:
         run: |
           node <<'NODE' >> "$GITHUB_ENV"
           const v=require('./version.json');
-          if(v.release!=='V18'||v.versionName!=='5.8.0'||v.versionCode!==180) throw new Error('Unexpected V18 metadata');
+          if(v.release!=='V18'||v.versionName!=='5.8.0'||v.versionCode!==181) throw new Error('Unexpected V18 metadata');
           for(const [k,val] of Object.entries({
             APP_RELEASE:v.release,
             VERSION_NAME:v.versionName,
