@@ -1,4 +1,4 @@
 {
-  "publish": false,
-  "notes": "BP Diary V18 / 5.8.0 development candidate. Production publication is disabled until secure signing migration, CI hardening, dependency review, and real-device acceptance are complete."
+  "publish": true,
+  "notes": "V18 / 5.8.0 / versionCode 181: owner accepted all real-device tests and explicitly authorized publication on 2026-10-01. production-signing restricted to main, verified by owner screenshot. Open gate for the authorized release; close after verification."
 }
