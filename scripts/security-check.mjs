@@ -25,7 +25,7 @@ const pemMarkers=[
   '-----BEGIN OPENSSH PRIVATE KEY-----'
 ];
 
-const textCandidates=tracked.filter(p=>!/(?:package-lock\.json|LICENSE)$/i.test(p));
+const textCandidates=tracked.filter(p=>p!=='scripts/security-check.mjs'&&!/(?:package-lock\.json|LICENSE)$/i.test(p));
 for(const path of textCandidates){
   let text;
   try{text=await readFile(path,'utf8')}catch{continue}
