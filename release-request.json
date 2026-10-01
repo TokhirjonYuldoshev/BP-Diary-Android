@@ -1,4 +1,4 @@
 {
-  "publish": true,
-  "notes": "V18 / 5.8.0 / versionCode 181: owner accepted all real-device tests and explicitly authorized publication on 2026-10-01. production-signing restricted to main, verified by owner screenshot. Open gate for the authorized release; close after verification."
+  "publish": false,
+  "notes": "V18 / 5.8.0 / versionCode 181 publication gate closed after the owner-authorized release request. Future releases require separate owner acceptance and authorization."
 }
