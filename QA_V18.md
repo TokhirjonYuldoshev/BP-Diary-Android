@@ -36,11 +36,19 @@ V18 starts with security and release-engineering hardening. Medical/core calcula
 - [ ] jsPDF 4.2.1 real-device PDF Save / Print / Share regression completed
 - [ ] Build-tooling vulnerabilities from @capacitor/assets reviewed/replaced when an upstream-safe path is available
 - [x] New private V18 production signing key created outside Git
-- [ ] GitHub `production-signing` environment configured
-- [ ] Production signing secrets configured
+- [x] GitHub `production-signing` environment configured
+- [x] Production signing secrets configured
 - [x] New certificate SHA-256 recorded: `a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`
 - [ ] V17 backup → clean V18 install → restore migration tested
 - [ ] Full real-device acceptance completed
+
+## Production signing verification
+
+- [x] Production signing smoke test passed
+- [x] Signed V18 candidate certificate matched pinned SHA-256
+- [x] Signed candidate artifact created: `BP-Diary-5.8-V18-Signed-Candidate`
+- [x] Signing smoke artifact SHA-256: `aee253c73108156680528a4aef6527c2178e12fdfc08a374c75137228c099b27`
+- [x] No GitHub Release was published during smoke testing
 
 ## Automated checks
 
