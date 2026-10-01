@@ -94,7 +94,7 @@ jobs:
           test -n "${BP_DIARY_RELEASE_CERT_SHA256}" || { echo "Missing pinned release certificate fingerprint"; exit 1; }
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
 
