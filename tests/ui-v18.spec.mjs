@@ -452,6 +452,44 @@ test('V18 protected backup is a true modal above navigation and closes cleanly',
   await expect(page.locator('#mobileSecretSheet')).not.toHaveClass(/open/);
 });
 
+test('V18 protected backup survives delayed Android-style popstate transitions',async({page})=>{
+  await page.evaluate(()=>{
+    window.__bpDelayedBackCalls=0;
+    Object.defineProperty(window.history,'back',{
+      configurable:true,
+      value:()=>{
+        window.__bpDelayedBackCalls++;
+        setTimeout(()=>window.dispatchEvent(new PopStateEvent('popstate',{state:null})),180);
+      }
+    });
+    window.Capacitor={Plugins:{NativeBridge:{
+      saveTextFile:async(args)=>({name:args.fileName,uri:'content://test/protected'}),
+      openTextFile:async()=>({
+        name:'BP-Diary-protected-test.bpbackup.json',
+        uri:'content://test/protected',
+        content:JSON.stringify({format:'bp-diary-encrypted-backup',version:1})
+      }),
+      setPrivacyShield:async()=>({})
+    }}};
+  });
+
+  await page.locator('#mobileAppBar [data-top="settings"]').click();
+  await page.locator('#mobileSettingsSheet .mobile-settings-row').filter({hasText:/Защищённый бэкап|Protected backup/}).click();
+  await expect(page.locator('#mobileSecretSheet')).toHaveClass(/open/);
+  await page.waitForTimeout(350);
+  await expect(page.locator('#mobileSecretSheet')).toHaveClass(/open/);
+  expect(await page.evaluate(()=>window.__bpDelayedBackCalls)).toBe(0);
+  await page.locator('#mobileSecretSheet .mobile-secret-actions .outline').click();
+
+  await page.locator('#mobileAppBar [data-top="settings"]').click();
+  await page.locator('#mobileSettingsSheet .mobile-settings-row').filter({hasText:/Восстановить защищённый|Restore protected backup/}).click();
+  await expect(page.locator('#mobileSecretSheet')).toHaveClass(/open/);
+  await page.waitForTimeout(350);
+  await expect(page.locator('#mobileSecretSheet')).toHaveClass(/open/);
+  expect(await page.evaluate(()=>window.__bpDelayedBackCalls)).toBe(0);
+  await page.locator('#mobileSecretSheet .mobile-secret-actions .outline').click();
+});
+
 test('V18 guide opens the onboarding tour and onboarding stays inside the viewport',async({page})=>{
   await page.locator('#mobileAppBar [data-top="about"]').click();
   await page.locator('#mobileAboutSheet [data-about-action="guide"]').click();
