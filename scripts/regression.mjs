@@ -51,6 +51,7 @@ const checks=[
   ['V18 protected backup transition avoids history race',js.includes("closeMobileSheet(sheet,true);setTimeout(nativeSaveProtectedBackup,100)")&&js.includes("closeMobileSheet(sheet,true);setTimeout(nativeRestoreProtectedBackup,100)")],
   ['V18 tab refresh does not dismiss protected backup modal',!js.includes("const secret=q('#mobileSecretSheet.open');")],
   ['V18 protected secret modal is history-independent',js.includes("openMobileSheet(sheet,{historyEntry:false})")&&js.includes("el.dataset.bpHistoryEntry!=='0'")],
+  ['V18 protected action-sheet transitions avoid history race',js.includes("protectedSave.onclick=()=>{closeMobileSheet(sheet,true);setTimeout(nativeSaveProtectedBackup,90)}")&&js.includes("protectedRestore.onclick=()=>{closeMobileSheet(sheet,true);setTimeout(nativeRestoreProtectedBackup,90)}")],
   ['V17 About removes duplicate shortcuts',!js.includes('data-about-action="settings"')&&!js.includes('data-about-action="backups"')],
   ['V17 pre-save safety warning',html.includes('confirmPreSaveSafety')&&html.includes('getPreSaveSafetyWarning')&&js.includes('bpPreSaveSafetyAlert')&&css.includes('#mobileSafetyAlertSheet')],
   ['V17 inline profile validation',html.includes('profileValidationSummary')&&css.includes('.profile-validation-summary')],
