@@ -1,6 +1,6 @@
 # V18 — Secure Signing & Supply-Chain QA
 
-Status: **DEVELOPMENT / NOT RELEASED**
+Status: **DEVICE ACCEPTED / PUBLICATION AUTHORIZED / NOT RELEASED**
 
 ## Version
 
@@ -37,21 +37,21 @@ V18 starts with security and release-engineering hardening. Medical/core calcula
 - [x] CodeQL workflow added
 - [x] SheetJS CDN SHA-256 pinned and enforced
 - [x] jsPDF upgraded from 2.5.1 to 4.2.1
-- [ ] jsPDF 4.2.1 real-device PDF Save / Print / Share regression completed
+- [x] jsPDF 4.2.1 real-device PDF Save / Print / Share regression completed
 - [ ] Build-tooling vulnerabilities from @capacitor/assets reviewed/replaced when an upstream-safe path is available
 - [x] New private V18 production signing key created outside Git
 - [x] GitHub `production-signing` environment configured
 - [x] Production signing secrets configured
 - [x] New certificate SHA-256 recorded: `a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`
-- [ ] V17 backup → clean V18 install → restore migration tested
-- [ ] Full real-device acceptance completed
+- [x] V17 backup → clean V18 install → restore migration tested
+- [x] Full real-device acceptance completed
 
 ## Production signing verification
 
 - [x] Production signing smoke test passed
 - [x] Signed V18 candidate certificate matched pinned SHA-256
 - [x] Signed candidate artifact created: `BP-Diary-5.8-V18-Signed-Candidate`
-- [x] Signing smoke artifact SHA-256: `aee253c73108156680528a4aef6527c2178e12fdfc08a374c75137228c099b27`
+- [x] Signing smoke artifact SHA-256: `070f5e5e2c0d35db34406a21d2658624a0bd09808e044202357542f1d26aa839`
 - [x] No GitHub Release was published during smoke testing
 
 ## Automated checks
@@ -81,3 +81,21 @@ V18 must not be published until:
 The V17 direct-distribution signer was exposed in public project history and is treated as compromised. It must not be reused as the V18 trusted production signing identity.
 
 The V18 production keystore must never be committed to Git or sent through public project files.
+
+## Owner acceptance — 2026-10-01
+
+The owner confirmed all real-device checks passed on signed V18 / 5.8.0 / versionCode 181 and explicitly authorized integration into main and publication.
+
+- Signing Smoke #4: run `36847051484`, artifact `11154510310`.
+- Tested APK SHA-256: `d009ceb6fd9a39e6b74eb47a1d09a06faae8a687623377a258203cded54ed0f1`.
+- [x] In-place update over the existing new-signer V18 and version marker verified
+- [x] Protected backup saves; password dialog remains open
+- [x] Protected restore succeeds
+- [x] Wrong password rejected without modifying current data
+- [x] PDF Save / Print / Share
+- [x] App Lock, screen-off and background re-lock; screen privacy
+- [x] Reminders and restoration after reboot/time/timezone changes
+- [x] Plain backup/restore, Analytics, Archive, RU / EN / UZ
+- [x] Input validation, restart and data preservation
+
+Build-time findings through @capacitor/assets remain documented and visible in the non-blocking full audit. Runtime high/critical findings remain blocking.
