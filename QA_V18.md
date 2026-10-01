@@ -35,10 +35,10 @@ V18 starts with security and release-engineering hardening. Medical/core calcula
 - [x] jsPDF upgraded from 2.5.1 to 4.2.1
 - [ ] jsPDF 4.2.1 real-device PDF Save / Print / Share regression completed
 - [ ] Build-tooling vulnerabilities from @capacitor/assets reviewed/replaced when an upstream-safe path is available
-- [ ] New private V18 production signing key created outside Git
+- [x] New private V18 production signing key created outside Git
 - [ ] GitHub `production-signing` environment configured
 - [ ] Production signing secrets configured
-- [ ] New certificate SHA-256 recorded and verified
+- [x] New certificate SHA-256 recorded: `a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`
 - [ ] V17 backup → clean V18 install → restore migration tested
 - [ ] Full real-device acceptance completed
 
