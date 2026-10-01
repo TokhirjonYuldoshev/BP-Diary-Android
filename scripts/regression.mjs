@@ -75,8 +75,8 @@ const checks=[
   ['high contrast',css.includes('prefers-contrast:more')],
   ['keyboard focus',css.includes(':focus-visible')],
   ['offline PDF libraries',html.includes('vendor/pdf/html2canvas.min.js')&&html.includes('vendor/pdf/jspdf.umd.min.js')],
-  ['release signing configured',patch.includes('release')&&patch.includes('signingConfig signingConfigs.bpDiaryStable')],
-  ['stable signer source',patch.includes('bp-diary-signing.p12')]
+  ['V18 no embedded release signing',!patch.includes('signingConfig signingConfigs.bpDiaryStable')&&!patch.includes('storePassword "android"')],
+  ['V18 no tracked legacy signer reference',!patch.includes('ci/debug.keystore.b64')&&!patch.includes('bp-diary-signing.p12')]
 ];
 
 let failed=0;
