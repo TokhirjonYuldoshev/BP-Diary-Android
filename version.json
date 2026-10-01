@@ -1,7 +1,7 @@
 {
-  "release": "V17",
-  "versionName": "5.7.0",
-  "versionCode": 170,
-  "tag": "v5.7.0",
-  "artifactBase": "BP-Diary-5.7-V17"
+  "release": "V18",
+  "versionName": "5.8.0",
+  "versionCode": 180,
+  "tag": "v5.8.0",
+  "artifactBase": "BP-Diary-5.8-V18"
 }
