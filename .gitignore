@@ -7,7 +7,24 @@ www/
 *.log
 .DS_Store
 
+# Local configuration
 .idea/
 .vscode/
 local.properties
 .gradle/
+.env
+.env.*
+!.env.example
+
+# Never commit signing or private-key material
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+*.der
+*.pk8
+*.mobileprovision
+*signing*.properties
+keystore.properties
