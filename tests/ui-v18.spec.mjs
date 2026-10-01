@@ -462,6 +462,9 @@ test('V18 protected backup modal survives current-tab refresh',async({page})=>{
   await page.locator('#mobileAppBar [data-top="settings"]').click();
   await page.locator('#mobileSettingsSheet .mobile-settings-row').filter({hasText:/Защищённый бэкап|Protected backup/}).click();
   await expect(page.locator('#mobileSecretSheet')).toHaveClass(/open/);
+  await page.evaluate(()=>window.dispatchEvent(new PopStateEvent('popstate',{state:null})));
+  await page.waitForTimeout(100);
+  await expect(page.locator('#mobileSecretSheet')).toHaveClass(/open/);
   await page.locator('#mobileBottomNav [data-tab="measure"]').click({force:true});
   await page.waitForTimeout(150);
   await expect(page.locator('#mobileSecretSheet')).toHaveClass(/open/);
