@@ -49,6 +49,7 @@ const checks=[
   ['V17 protected backup crypto',js.includes('encryptBackupPayload')&&js.includes('decryptBackupEnvelope')&&js.includes('AES-GCM')&&js.includes('PBKDF2')],
   ['V17 protected backup UI',js.includes('nativeSaveProtectedBackup')&&js.includes('nativeRestoreProtectedBackup')&&css.includes('#mobileSecretSheet')],
   ['V18 protected backup transition avoids history race',js.includes("closeMobileSheet(sheet,true);setTimeout(nativeSaveProtectedBackup,100)")&&js.includes("closeMobileSheet(sheet,true);setTimeout(nativeRestoreProtectedBackup,100)")],
+  ['V18 tab refresh does not dismiss protected backup modal',!js.includes("const secret=q('#mobileSecretSheet.open');")],
   ['V17 About removes duplicate shortcuts',!js.includes('data-about-action="settings"')&&!js.includes('data-about-action="backups"')],
   ['V17 pre-save safety warning',html.includes('confirmPreSaveSafety')&&html.includes('getPreSaveSafetyWarning')&&js.includes('bpPreSaveSafetyAlert')&&css.includes('#mobileSafetyAlertSheet')],
   ['V17 inline profile validation',html.includes('profileValidationSummary')&&css.includes('.profile-validation-summary')],
