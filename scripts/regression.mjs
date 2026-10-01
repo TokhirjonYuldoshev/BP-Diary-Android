@@ -48,6 +48,10 @@ const checks=[
   ['V16 update checker UI',js.includes('checkForUpdates')&&js.includes('mobileUpdateSheet')],
   ['V17 protected backup crypto',js.includes('encryptBackupPayload')&&js.includes('decryptBackupEnvelope')&&js.includes('AES-GCM')&&js.includes('PBKDF2')],
   ['V17 protected backup UI',js.includes('nativeSaveProtectedBackup')&&js.includes('nativeRestoreProtectedBackup')&&css.includes('#mobileSecretSheet')],
+  ['V18 protected backup transition avoids history race',js.includes("closeMobileSheet(sheet,true);setTimeout(nativeSaveProtectedBackup,100)")&&js.includes("closeMobileSheet(sheet,true);setTimeout(nativeRestoreProtectedBackup,100)")],
+  ['V18 tab refresh does not dismiss protected backup modal',!js.includes("const secret=q('#mobileSecretSheet.open');")],
+  ['V18 protected secret modal is history-independent',js.includes("openMobileSheet(sheet,{historyEntry:false})")&&js.includes("el.dataset.bpHistoryEntry!=='0'")],
+  ['V18 protected action-sheet transitions avoid history race',js.includes("protectedSave.onclick=()=>{closeMobileSheet(sheet,true);setTimeout(nativeSaveProtectedBackup,90)}")&&js.includes("protectedRestore.onclick=()=>{closeMobileSheet(sheet,true);setTimeout(nativeRestoreProtectedBackup,90)}")],
   ['V17 About removes duplicate shortcuts',!js.includes('data-about-action="settings"')&&!js.includes('data-about-action="backups"')],
   ['V17 pre-save safety warning',html.includes('confirmPreSaveSafety')&&html.includes('getPreSaveSafetyWarning')&&js.includes('bpPreSaveSafetyAlert')&&css.includes('#mobileSafetyAlertSheet')],
   ['V17 inline profile validation',html.includes('profileValidationSummary')&&css.includes('.profile-validation-summary')],
@@ -75,8 +79,8 @@ const checks=[
   ['high contrast',css.includes('prefers-contrast:more')],
   ['keyboard focus',css.includes(':focus-visible')],
   ['offline PDF libraries',html.includes('vendor/pdf/html2canvas.min.js')&&html.includes('vendor/pdf/jspdf.umd.min.js')],
-  ['release signing configured',patch.includes('release')&&patch.includes('signingConfig signingConfigs.bpDiaryStable')],
-  ['stable signer source',patch.includes('bp-diary-signing.p12')]
+  ['V18 no embedded release signing',!patch.includes('signingConfig signingConfigs.bpDiaryStable')&&!patch.includes('storePassword "android"')],
+  ['V18 no tracked legacy signer reference',!patch.includes('ci/debug.keystore.b64')&&!patch.includes('bp-diary-signing.p12')]
 ];
 
 let failed=0;

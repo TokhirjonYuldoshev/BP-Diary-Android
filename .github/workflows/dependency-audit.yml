@@ -1,0 +1,47 @@
+name: Dependency Security Audit
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: dependency-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Reject tracked signing secrets
+        run: npm run security:check
+
+      - name: Install locked dependencies
+        run: npm ci --no-fund
+
+      - name: Runtime high and critical vulnerability gate
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Full toolchain audit
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+      - name: Explain current build-tooling scope
+        run: |
+          echo "Runtime high/critical findings are release blockers."
+          echo "The full audit remains visible because @capacitor/assets 3.0.5 currently carries upstream build-time findings through sharp/tar/uuid."

@@ -1,4 +1,5 @@
 import { cp, mkdir, writeFile, readFile, stat } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 
 const root = process.cwd();
@@ -13,7 +14,7 @@ async function fetchTo(url, destination) {
   if (!response.ok) throw new Error(`Failed to fetch ${url}: ${response.status}`);
   const bytes = new Uint8Array(await response.arrayBuffer());
   await writeFile(destination, bytes);
-  return bytes.length;
+  return { bytes, length: bytes.length };
 }
 
 function injectBeforeRealHeadClose(html, snippet) {
@@ -54,7 +55,12 @@ await cp(join(root, 'node_modules', '@fortawesome', 'fontawesome-free', 'css', '
 await cp(join(root, 'node_modules', '@fortawesome', 'fontawesome-free', 'webfonts'), join(www, 'vendor', 'fontawesome', 'webfonts'), { recursive: true });
 
 const xlsxUrl = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
-const xlsxBytes = await fetchTo(xlsxUrl, join(www, 'vendor', 'xlsx', 'xlsx.full.min.js'));
+const xlsxExpectedSha256 = '0dcbc967984de297bd4233cbb77febad8a396c72d8ac0cfab09094d6d7f6e805';
+const xlsxFetch = await fetchTo(xlsxUrl, join(www, 'vendor', 'xlsx', 'xlsx.full.min.js'));
+const xlsxSha256 = createHash('sha256').update(xlsxFetch.bytes).digest('hex');
+if (xlsxSha256 !== xlsxExpectedSha256) {
+  throw new Error(`SheetJS integrity mismatch: expected ${xlsxExpectedSha256}, got ${xlsxSha256}`);
+}
 
 const replacements = [
   ['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css', 'vendor/fontawesome/css/all.min.css'],
@@ -129,4 +135,4 @@ const mobileJsPos = html.indexOf('<script src="mobile-modern.js"></script>');
 if (!(mobileCssPos > 0 && mobileCssPos < realHeadClose)) throw new Error('Mobile CSS was injected outside the real <head>');
 if (!(mobileJsPos > bodyOpen && mobileJsPos < realBodyClose)) throw new Error('Mobile JS was injected outside the real <body>');
 
-console.log(`Prepared offline web app ${version.release} ${version.versionName} (${version.versionCode}). HTML bytes: ${Buffer.byteLength(html)}; SheetJS bytes: ${xlsxBytes}`);
+console.log(`Prepared offline web app ${version.release} ${version.versionName} (${version.versionCode}). HTML bytes: ${Buffer.byteLength(html)}; SheetJS bytes: ${xlsxFetch.length}; SheetJS SHA-256: ${xlsxSha256}`);

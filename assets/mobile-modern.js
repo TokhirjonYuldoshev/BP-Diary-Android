@@ -162,13 +162,14 @@
     const anyOpen=qa('[role="dialog"].open').some(el=>el.id!=='mobileOnboarding');
     document.body?.classList.toggle('mobile-sheet-open',anyOpen);
   }
-  function openMobileSheet(sheet){
+  function openMobileSheet(sheet,{historyEntry=true}={}){
     if(!sheet)return;
     localizeUzTree(sheet);
     if(!sheet.classList.contains('open')){
+      sheet.dataset.bpHistoryEntry=historyEntry?'1':'0';
       sheet.classList.add('open');
       syncMobileSheetState();
-      try{history.pushState({bpMobileSheet:sheet.id},'')}catch(_){}
+      if(historyEntry){try{history.pushState({bpMobileSheet:sheet.id},'')}catch(_){}}
     }
   }
   function closeMobileSheet(sheet,fromHistory=false){
@@ -180,10 +181,13 @@
       const fn=sheet.__onDismiss;sheet.__onDismiss=null;
       try{fn()}catch(_){}
     }
-    if(wasOpen&&!fromHistory&&history.state?.bpMobileSheet===sheet.id){try{history.back()}catch(_){}}
+    const ownsHistory=sheet.dataset.bpHistoryEntry==='1';
+    delete sheet.dataset.bpHistoryEntry;
+    if(wasOpen&&!fromHistory&&ownsHistory&&history.state?.bpMobileSheet===sheet.id){try{history.back()}catch(_){}}
   }
   window.addEventListener('popstate',()=>{
-    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open,#mobileReminderSheet.open,#mobileSettingsSheet.open,#mobileUpdateSheet.open,#mobileSecretSheet.open,#mobileGuideSheet.open').at(-1);
+    const open=qa('#mobileAnalyticsSheet.open,#mobileActionSheet.open,#mobileMeasureActionSheet.open,#mobileChoiceSheet.open,#mobilePdfSheet.open,#mobileAboutSheet.open,#mobileConfirmSheet.open,#mobileReportPeriodSheet.open,#mobileCustomPeriodSheet.open,#mobileAutoBackupSheet.open,#mobileReminderSheet.open,#mobileSettingsSheet.open,#mobileUpdateSheet.open,#mobileSecretSheet.open,#mobileGuideSheet.open')
+      .filter(el=>el.dataset.bpHistoryEntry!=='0').at(-1);
     if(open)closeMobileSheet(open,true);
   });
 
@@ -928,7 +932,7 @@
 
   function askSecret({title,message,confirm=false,minLength=1}={}){
     if(secretPromptState){
-      openMobileSheet(secretPromptState.sheet);
+      openMobileSheet(secretPromptState.sheet,{historyEntry:false});
       setTimeout(()=>q('#mobileSecretOne',secretPromptState.sheet)?.focus(),30);
       return Promise.resolve(null);
     }
@@ -969,7 +973,7 @@
         if(confirm&&one!==two){mobileToast(l('Пароли не совпадают','Passwords do not match','Parollar mos kelmadi'),'error');return}
         finish(one);
       };
-      openMobileSheet(sheet);
+      openMobileSheet(sheet,{historyEntry:false});
       setTimeout(()=>q('#mobileSecretOne',sheet)?.focus(),120);
     });
   }
@@ -1222,8 +1226,8 @@
     const data=section(l('Данные','Data','Ma’lumotlar'));
     const backups=row('↻',l('Авто-бэкапы','Auto-backups','Avto-zaxiralar'),l('До пяти локальных копий','Up to five local copies','Beshtagacha mahalliy nusxa'),()=>{closeMobileSheet(sheet);setTimeout(showAutoBackupSheet,100)});
     const full=row(svgIcon('save'),l('Полный бэкап','Full backup','To‘liq zaxira nusxa'),l('Обычный JSON для совместимости','Plain JSON for compatibility','Moslik uchun oddiy JSON'),()=>{closeMobileSheet(sheet);setTimeout(()=>q('#fullBackupBtn')?.click(),90)});
-    const protectedSave=row(svgIcon('key'),l('Защищённый бэкап','Protected backup','Himoyalangan zaxira'),l('AES‑GCM + пароль · пароль не сохраняется','AES-GCM + password · password is never stored','AES‑GCM + parol · parol saqlanmaydi'),()=>{closeMobileSheet(sheet);setTimeout(nativeSaveProtectedBackup,100)});
-    const protectedRestore=row(svgIcon('restore'),l('Восстановить защищённый','Restore protected backup','Himoyalangan zaxirani tiklash'),l('Выбрать зашифрованный файл','Choose an encrypted backup file','Shifrlangan faylni tanlang'),()=>{closeMobileSheet(sheet);setTimeout(nativeRestoreProtectedBackup,100)});
+    const protectedSave=row(svgIcon('key'),l('Защищённый бэкап','Protected backup','Himoyalangan zaxira'),l('AES‑GCM + пароль · пароль не сохраняется','AES-GCM + password · password is never stored','AES‑GCM + parol · parol saqlanmaydi'),()=>{closeMobileSheet(sheet,true);setTimeout(nativeSaveProtectedBackup,100)});
+    const protectedRestore=row(svgIcon('restore'),l('Восстановить защищённый','Restore protected backup','Himoyalangan zaxirani tiklash'),l('Выбрать зашифрованный файл','Choose an encrypted backup file','Shifrlangan faylni tanlang'),()=>{closeMobileSheet(sheet,true);setTimeout(nativeRestoreProtectedBackup,100)});
     data.append(backups,full,protectedSave,protectedRestore);
 
     const privacy=section(l('Дополнительно · приватность','Advanced · privacy','Qo‘shimcha · maxfiylik'));
@@ -1308,7 +1312,7 @@
         '<button type="button" data-about-url="https://github.com/TokhirjonYuldoshev/BP-Diary-Android"><span class="mobile-about-row-icon">⌘</span><span><b>GitHub</b><small>TokhirjonYuldoshev/BP-Diary-Android</small></span><span>›</span></button>'+
         '<button type="button" data-about-url="https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues"><span class="mobile-about-row-icon">?</span><span><b>'+l('Поддержка / обратная связь','Support / feedback','Yordam / fikr-mulohaza')+'</b><small>'+l('Сообщить об ошибке или предложить улучшение','Report a bug or suggest an improvement','Xato haqida xabar berish yoki taklif yuborish')+'</small></span><span>›</span></button>'+
         '<div class="mobile-about-row"><span class="mobile-about-row-icon">©</span><span><b>'+l('Разработчик','Developer','Dasturchi')+'</b><small>Tokhirjon Yuldoshev</small></span></div>'+
-        '<div class="mobile-about-row"><span class="mobile-about-row-icon">§</span><span><b>'+l('Лицензия','License','Litsenziya')+'</b><small>'+l('Отдельный LICENSE-файл в репозитории не указан','No separate LICENSE file is currently specified','Repozitoriyda alohida LICENSE fayli ko‘rsatilmagan')+'</small></span></div>'+
+        '<div class="mobile-about-row"><span class="mobile-about-row-icon">§</span><span><b>'+l('Лицензия','License','Litsenziya')+'</b><small>'+l('Apache License 2.0','Apache License 2.0','Apache License 2.0')+'</small></span></div>'+
       '</div>'+
       '<div class="mobile-about-thanks">'+l('Спасибо, что используете BP Diary.','Thank you for using BP Diary.','BP Diary’dan foydalanganingiz uchun rahmat.')+'</div>'+
       '<button type="button" class="mobile-about-ok">'+l('Готово','Done','Tayyor')+'</button>';
@@ -1548,21 +1552,21 @@
     if(view?.classList.contains('open')&&!force)return;
     if(!view){
       view=document.createElement('div');view.id='mobileOnboarding';view.setAttribute('role','dialog');view.setAttribute('aria-modal','true');
-      view.innerHTML='<div class="mobile-onboarding-card"><div class="mobile-onboarding-top"><div class="mobile-onboarding-brand"><span>'+brandHeartIcon()+'</span><div><b>BP Diary</b><small>V17 · Privacy & Resilience</small></div></div><button type="button" class="mobile-onboarding-skip"></button></div><div class="mobile-onboarding-visual"></div><div class="mobile-onboarding-copy"><div class="mobile-onboarding-step"></div><h2></h2><p></p></div><div class="mobile-onboarding-progress"><span><i></i></span><b></b></div><div class="mobile-onboarding-actions"><button type="button" class="outline mobile-onboarding-back"></button><button type="button" class="mobile-onboarding-next"></button></div></div>';
+      view.innerHTML='<div class="mobile-onboarding-card"><div class="mobile-onboarding-top"><div class="mobile-onboarding-brand"><span>'+brandHeartIcon()+'</span><div><b>BP Diary</b><small>V18 · Security & Trust</small></div></div><button type="button" class="mobile-onboarding-skip"></button></div><div class="mobile-onboarding-visual"></div><div class="mobile-onboarding-copy"><div class="mobile-onboarding-step"></div><h2></h2><p></p></div><div class="mobile-onboarding-progress"><span><i></i></span><b></b></div><div class="mobile-onboarding-actions"><button type="button" class="outline mobile-onboarding-back"></button><button type="button" class="mobile-onboarding-next"></button></div></div>';
       document.body.appendChild(view);
     }
     const slides=ru()?[
       {scene:'measure',title:'Измерения без лишних шагов',text:'Быстро записывайте давление и пульс, а история, аналитика и цели остаются рядом и работают офлайн.'},
       {scene:'report',title:'Готовый отчёт для врача',text:'Выберите период и сохраните, распечатайте или отправьте аккуратный PDF прямо с телефона.'},
-      {scene:'privacy',title:'Приватность V17',text:'Системная блокировка приложения, защита экрана и AES‑GCM бэкап помогают держать личные данные под вашим контролем.'}
+      {scene:'privacy',title:'Приватность и защита V18',text:'Системная блокировка приложения, защита экрана и AES‑GCM бэкап помогают держать личные данные под вашим контролем.'}
     ]:uz()?[
       {scene:'measure',title:'O‘lchovlar ortiqcha bosqichlarsiz',text:'Qon bosimi va pulsni tez kiriting. Tarix, tahlil va maqsadlar yoningizda va oflayn ishlaydi.'},
       {scene:'report',title:'Shifokor uchun tayyor hisobot',text:'Davrni tanlang va tartibli PDF’ni telefondan saqlang, chop eting yoki ulashing.'},
-      {scene:'privacy',title:'V17 maxfiyligi',text:'Tizim blokirovkasi, ekran himoyasi va AES‑GCM zaxira nusxasi shaxsiy ma’lumotlarni nazoratda saqlashga yordam beradi.'}
+      {scene:'privacy',title:'V18 maxfiylik va himoya',text:'Tizim blokirovkasi, ekran himoyasi va AES‑GCM zaxira nusxasi shaxsiy ma’lumotlarni nazoratda saqlashga yordam beradi.'}
     ]:[
       {scene:'measure',title:'Measurements without extra steps',text:'Record blood pressure and pulse quickly while history, analytics and goals stay close and work offline.'},
       {scene:'report',title:'A doctor-ready report',text:'Choose a period and save, print or share a polished PDF directly from your phone.'},
-      {scene:'privacy',title:'V17 privacy',text:'System app lock, screen privacy and AES-GCM protected backups keep personal data under your control.'}
+      {scene:'privacy',title:'V18 privacy & security',text:'System app lock, screen privacy and AES-GCM protected backups keep personal data under your control.'}
     ];
     onboardingIndex=0;
     const render=()=>{
@@ -2008,8 +2012,8 @@
     share.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>requestShareDoctorReport(),100)};g.appendChild(share);
 
     const auto=document.createElement('button');auto.type='button';auto.className='mobile-action-blue';auto.innerHTML=svgIcon('save')+'<span>'+(ru()?'Авто-бэкапы':'Auto-backups')+'</span>';auto.onclick=()=>{closeMobileSheet(sheet);setTimeout(()=>showAutoBackupSheet(),90)};g.appendChild(auto);
-    const protectedSave=document.createElement('button');protectedSave.type='button';protectedSave.className='mobile-action-blue';protectedSave.innerHTML=svgIcon('key')+'<span>'+(ru()?'Защищённый бэкап':'Protected backup')+'</span>';protectedSave.onclick=()=>{closeMobileSheet(sheet);setTimeout(nativeSaveProtectedBackup,90)};g.appendChild(protectedSave);
-    const protectedRestore=document.createElement('button');protectedRestore.type='button';protectedRestore.className='mobile-action-blue';protectedRestore.innerHTML=svgIcon('restore')+'<span>'+(ru()?'Восстановить защищённый':'Restore protected')+'</span>';protectedRestore.onclick=()=>{closeMobileSheet(sheet);setTimeout(nativeRestoreProtectedBackup,90)};g.appendChild(protectedRestore);
+    const protectedSave=document.createElement('button');protectedSave.type='button';protectedSave.className='mobile-action-blue';protectedSave.innerHTML=svgIcon('key')+'<span>'+(ru()?'Защищённый бэкап':'Protected backup')+'</span>';protectedSave.onclick=()=>{closeMobileSheet(sheet,true);setTimeout(nativeSaveProtectedBackup,90)};g.appendChild(protectedSave);
+    const protectedRestore=document.createElement('button');protectedRestore.type='button';protectedRestore.className='mobile-action-blue';protectedRestore.innerHTML=svgIcon('restore')+'<span>'+(ru()?'Восстановить защищённый':'Restore protected')+'</span>';protectedRestore.onclick=()=>{closeMobileSheet(sheet,true);setTimeout(nativeRestoreProtectedBackup,90)};g.appendChild(protectedRestore);
     const allowed=['reportDoctorBtn','fullBackupBtn','restoreBackupBtn','clearAllBtn'];
     allowed.forEach(id=>{
       const src=q('#'+id,archive);if(!src)return;
@@ -2067,8 +2071,6 @@
 
   function setTab(tab,scroll=true){
     if(!['measure','analysis','archive'].includes(tab))tab='measure';
-    const secret=q('#mobileSecretSheet.open');
-    if(secret)closeMobileSheet(secret);
     currentTab=tab;try{localStorage.setItem('bp_mobile_tab',tab)}catch(_){}
     qa('.mobile-page').forEach(p=>p.classList.toggle('mobile-hidden',p.dataset.mobilePage!==tab));
     qa('#mobileBottomNav [data-tab]').forEach(b=>{const active=b.dataset.tab===tab;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});

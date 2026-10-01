@@ -8,7 +8,7 @@ on:
       - 'release-request.json'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   gate:
@@ -33,26 +33,65 @@ jobs:
     if: needs.gate.outputs.publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    environment: production-signing
+    permissions:
+      contents: write
+
+    env:
+      BP_DIARY_RELEASE_STORE_PASSWORD: ${{ secrets.BP_DIARY_RELEASE_STORE_PASSWORD }}
+      BP_DIARY_RELEASE_KEY_ALIAS: ${{ secrets.BP_DIARY_RELEASE_KEY_ALIAS }}
+      BP_DIARY_RELEASE_KEY_PASSWORD: ${{ secrets.BP_DIARY_RELEASE_KEY_PASSWORD }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Load release metadata
+      - name: Load and validate release metadata
         shell: bash
         run: |
+          test -s ci/release-cert-v18.sha256
+          CERT_FP="$(tr '[:upper:]' '[:lower:]' < ci/release-cert-v18.sha256 | tr -d ':[:space:]')"
+          test "$(printf '%s' "$CERT_FP" | wc -c)" -eq 64
+          echo "BP_DIARY_RELEASE_CERT_SHA256=$CERT_FP" >> "$GITHUB_ENV"
           node <<'NODE' >> "$GITHUB_ENV"
           const v=require('./version.json');
           const r=require('./release-request.json');
+          if(r.publish !== true) throw new Error('Publication gate is not open');
+          if(!/^V\d+$/.test(String(v.release||''))) throw new Error('Invalid release label');
+          if(!/^\d+\.\d+\.\d+$/.test(String(v.versionName||''))) throw new Error('Invalid versionName');
+          if(!Number.isInteger(v.versionCode)||v.versionCode<1) throw new Error('Invalid versionCode');
+          if(v.tag !== 'v'+v.versionName) throw new Error('Tag/versionName mismatch');
           for (const [k,val] of Object.entries({
             APP_RELEASE:v.release,
             VERSION_NAME:v.versionName,
             VERSION_CODE:v.versionCode,
             RELEASE_TAG:v.tag,
-            ARTIFACT_BASE:v.artifactBase,
-            RELEASE_REQUESTED:r.publish === true ? 'true' : 'false'
+            ARTIFACT_BASE:v.artifactBase
           })) console.log(k+'='+val);
           NODE
+
+      - name: Refuse an existing release or tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "Refusing to overwrite existing tag ${RELEASE_TAG}"
+            exit 1
+          fi
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "Refusing to overwrite existing release ${RELEASE_TAG}"
+            exit 1
+          fi
+
+      - name: Validate protected signing inputs
+        env:
+          BP_DIARY_RELEASE_KEYSTORE_B64: ${{ secrets.BP_DIARY_RELEASE_KEYSTORE_B64 }}
+        run: |
+          test -n "${BP_DIARY_RELEASE_KEYSTORE_B64}" || { echo "Missing BP_DIARY_RELEASE_KEYSTORE_B64"; exit 1; }
+          test -n "${BP_DIARY_RELEASE_STORE_PASSWORD}" || { echo "Missing BP_DIARY_RELEASE_STORE_PASSWORD"; exit 1; }
+          test -n "${BP_DIARY_RELEASE_KEY_ALIAS}" || { echo "Missing BP_DIARY_RELEASE_KEY_ALIAS"; exit 1; }
+          test -n "${BP_DIARY_RELEASE_KEY_PASSWORD}" || { echo "Missing BP_DIARY_RELEASE_KEY_PASSWORD"; exit 1; }
+          test -n "${BP_DIARY_RELEASE_CERT_SHA256}" || { echo "Missing pinned release certificate fingerprint"; exit 1; }
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -64,6 +103,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+
+      - name: Reject tracked signing secrets
+        run: npm run security:check
 
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
@@ -81,12 +123,43 @@ jobs:
           npx cap sync android
           npx capacitor-assets generate --android --iconBackgroundColor '#126f96' --iconBackgroundColorDark '#08131f' --splashBackgroundColor '#eef6fa' --splashBackgroundColorDark '#08131f'
 
-      - name: Configure release version
+      - name: Materialize production keystore
+        env:
+          BP_DIARY_RELEASE_KEYSTORE_B64: ${{ secrets.BP_DIARY_RELEASE_KEYSTORE_B64 }}
         run: |
+          KEYSTORE="${RUNNER_TEMP}/bp-diary-release-v2.p12"
+          printf '%s' "${BP_DIARY_RELEASE_KEYSTORE_B64}" | base64 --decode > "${KEYSTORE}"
+          test -s "${KEYSTORE}"
+          chmod 600 "${KEYSTORE}"
+          echo "BP_DIARY_RELEASE_KEYSTORE_PATH=${KEYSTORE}" >> "$GITHUB_ENV"
+
+      - name: Configure production signing and version
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const path='android/app/build.gradle';
+          let g=fs.readFileSync(path,'utf8');
+          if(g.includes('bpDiaryProduction')) throw new Error('Production signing already configured');
+          g=g.replace(/android\s*\{/,m=>m+`
+              signingConfigs {
+                  bpDiaryProduction {
+                      storeFile file(System.getenv("BP_DIARY_RELEASE_KEYSTORE_PATH"))
+                      storePassword System.getenv("BP_DIARY_RELEASE_STORE_PASSWORD")
+                      keyAlias System.getenv("BP_DIARY_RELEASE_KEY_ALIAS")
+                      keyPassword System.getenv("BP_DIARY_RELEASE_KEY_PASSWORD")
+                      storeType "PKCS12"
+                  }
+              }
+          `);
+          g=g.replace(/release\s*\{/,m=>m+`
+                      signingConfig signingConfigs.bpDiaryProduction
+          `);
+          fs.writeFileSync(path,g);
+          NODE
           sed -i "s/versionCode 1/versionCode ${VERSION_CODE}/" android/app/build.gradle
           sed -i "s/versionName \"1.0\"/versionName \"${VERSION_NAME}\"/" android/app/build.gradle
+          grep -q 'signingConfig signingConfigs.bpDiaryProduction' android/app/build.gradle
           grep -E 'versionCode|versionName' android/app/build.gradle
-          grep -q 'signingConfig signingConfigs.bpDiaryStable' android/app/build.gradle
 
       - name: Build signed release APK
         working-directory: android
@@ -94,18 +167,19 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
 
-      - name: Verify release signer
+      - name: Verify production signer
         run: |
           APK="android/app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
           "$APKSIGNER" verify --verbose --print-certs "$APK" | tee /tmp/release-signature.txt
-          KEY_FP="$(keytool -exportcert -keystore android/app/bp-diary-signing.p12 -storetype PKCS12 -storepass android -alias androiddebugkey | sha256sum | awk '{print $1}')"
           APK_FP="$(grep -m1 'certificate SHA-256 digest' /tmp/release-signature.txt | sed 's/.*digest: //' | tr '[:upper:]' '[:lower:]' | tr -d ':[:space:]')"
-          test "$KEY_FP" = "$APK_FP"
-          echo "Verified release signer: $KEY_FP"
+          EXPECTED_FP="$(printf '%s' "${BP_DIARY_RELEASE_CERT_SHA256}" | tr '[:upper:]' '[:lower:]' | tr -d ':[:space:]')"
+          test -n "$APK_FP"
+          test "$APK_FP" = "$EXPECTED_FP"
+          echo "Verified V18 production signer: $APK_FP"
 
-      - name: Prepare release assets and notes
+      - name: Prepare immutable release assets and notes
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk "${ARTIFACT_BASE}.apk"
           sha256sum "${ARTIFACT_BASE}.apk" | tee "${ARTIFACT_BASE}.apk.sha256"
@@ -115,29 +189,17 @@ jobs:
             echo
             echo "---"
             echo
-            echo "Package: `com.tokhirjonyuldoshev.bpdiary`"
-            echo "Version: `${VERSION_NAME}` (versionCode `${VERSION_CODE}`)"
-            echo "SHA-256: `$(awk '{print $1}' "${ARTIFACT_BASE}.apk.sha256")`"
-            echo
-            echo "The direct-distribution APK keeps the existing stable update signer for upgrade compatibility. The public-history key is not a secure Google Play production key."
+            printf 'Package: `%s`\n' 'com.tokhirjonyuldoshev.bpdiary'
+            printf 'Version: `%s` (versionCode `%s`)\n' "$VERSION_NAME" "$VERSION_CODE"
+            printf 'SHA-256: `%s`\n' "$(awk '{print $1}' "${ARTIFACT_BASE}.apk.sha256")"
+            printf 'Signing certificate SHA-256: `%s`\n' "$BP_DIARY_RELEASE_CERT_SHA256"
           } >> /tmp/release-notes.md
 
-      - name: Create or update GitHub Release
+      - name: Create immutable GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release edit "$RELEASE_TAG" --title "BP Diary ${VERSION_NAME} ${APP_RELEASE}" --notes-file /tmp/release-notes.md --latest
-            gh release upload "$RELEASE_TAG" "${ARTIFACT_BASE}.apk" "${ARTIFACT_BASE}.apk.sha256" --clobber
-          else
-            gh release create "$RELEASE_TAG" \
-              "${ARTIFACT_BASE}.apk" \
-              "${ARTIFACT_BASE}.apk.sha256" \
-              --target "$GITHUB_SHA" \
-              --title "BP Diary ${VERSION_NAME} ${APP_RELEASE}" \
-              --notes-file /tmp/release-notes.md \
-              --latest
-          fi
+          gh release create "${RELEASE_TAG}"             "${ARTIFACT_BASE}.apk"             "${ARTIFACT_BASE}.apk.sha256"             --target "$GITHUB_SHA"             --title "BP Diary ${VERSION_NAME} ${APP_RELEASE}"             --notes-file /tmp/release-notes.md             --latest
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4

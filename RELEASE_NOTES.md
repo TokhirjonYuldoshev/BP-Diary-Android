@@ -1,95 +1,35 @@
-# BP Diary 5.7.0 — V17 Reminders, Reports, Privacy & Localization
+# BP Diary 5.8.0 — V18 Secure Signing & Supply Chain
 
-## 🇷🇺 Что нового
+## Русский
 
-V17 заметно расширяет Android-версию BP Diary, не меняя medical/core-расчёты дневника, SCORE2, формулы отчёта или существующую схему данных.
+- Новая приватная production-подпись Android; ключ отделён от обычного CI и хранится в защищённом GitHub Environment.
+- Проверка сертификата APK, защита от перезаписи существующего релиза, проверки зависимостей, CodeQL и контроль целостности SheetJS.
+- jsPDF обновлён до 4.2.1; сохранение, печать и отправка PDF проверены на устройстве.
+- Исправлено исчезновение окна пароля защищённого бэкапа и восстановления в Android WebView.
+- Все проверки versionCode 181 на реальном устройстве подтверждены владельцем 01.10.2026.
 
-### Напоминания
-- до **3 времён измерения в день**;
-- **1 / 2 / 3 сигнала** на одно напоминание;
-- интервалы повтора **5 / 10 / 15 / 30 минут**;
-- **3 системные мелодии Android**;
-- включаемая/выключаемая вибрация;
-- кнопка проверки звука;
-- действия уведомления **«Измерено»** и **«Напомнить позже»**;
-- восстановление расписания после перезагрузки, изменения времени/часового пояса и обновления приложения.
+### Переход с V17
 
-### Замеры и локализация
-- добавлен **узбекский язык (Latin)** вместе с RU/EN;
-- исправлены мобильные UZ-строки, включая `Barchasi / 7 kun / 30 kun / 90 kun`;
-- для новых/редактируемых замеров добавлена проверка ввода: SYS 60–260, DIA 40–160, пульс 30–220 при заполнении и SYS > DIA;
-- существующие исторические записи эта новая проверка не переписывает;
-- предупреждение перед сохранением экстремального, но допустимого замера сохранено.
+Подпись V18 отличается от V17: старый ключ был доступен в публичной истории проекта и больше не используется для production. Перед удалением V17 создайте Full Backup и проверьте сохранённый файл. Затем удалите V17, установите V18 и восстановите данные. Для защищённого бэкапа потребуется ваш пароль.
 
-### Отчёт врачу
-- мобильный **Save PDF / Print / Share** теперь использует **A4 Landscape**, как ПК-версия;
-- в отчёте сохраняются сводные показатели, профиль/контекст и полная таблица измерений;
-- расчёты отчёта не изменены.
+Если уже установлен V18 с новой подписью, обновление устанавливается поверх него без удаления приложения.
 
-### Руководство
-- полноценное руководство **RU / EN / UZ** внутри приложения;
-- объясняются САД/SYS, ДАД/DIA, пульс, Замер 1–3, Архив, Аналитика, отчёты, напоминания и резервные копии.
+Медицинские/core-расчёты, SCORE2, формулы отчёта, схема данных и package ID `com.tokhirjonyuldoshev.bpdiary` сохранены. RU / EN / UZ, напоминания, App Lock и обычные резервные копии поддерживаются.
 
-### Приватность и резервные копии
-- системная блокировка приложения через Android biometric/device credential;
-- повторная блокировка после **10 секунд** в фоне и сразу после блокировки экрана;
-- опциональный Android `FLAG_SECURE` для защиты скриншотов и Recent Apps;
-- защищённый Full Backup с PBKDF2-SHA-256 (310 000 итераций) и AES-GCM-256;
-- пароль защищённого бэкапа BP Diary не сохраняет;
-- неверный пароль/повреждённый ciphertext отклоняется до изменения текущих данных;
-- обычный JSON Full Backup остаётся доступным.
+## English
 
-### Совместимость
-- Package ID: `com.tokhirjonyuldoshev.bpdiary`;
-- сохранён существующий direct-distribution update signer;
-- V17 устанавливается поверх официального V16 без удаления приложения при сохранении той же signing lineage;
-- blood-pressure calculations, session averages, SCORE2, target range, report formulas and patient/data schema intentionally remain unchanged.
+- New private Android production signer, isolated from ordinary CI in a protected GitHub Environment.
+- APK certificate verification, release overwrite prevention, dependency audits, CodeQL and pinned SheetJS integrity.
+- jsPDF updated to 4.2.1; PDF Save / Print / Share accepted on a real device.
+- Fixed disappearing protected-backup and restore password dialogs in Android WebView.
+- The owner accepted all versionCode 181 real-device checks on 2026-10-01.
 
-> Если пароль от защищённого бэкапа потерян, BP Diary не может восстановить или обойти его.
+### Migration from V17
 
-## 🇬🇧 What’s new
+V18 uses a new signing certificate because the old V17 key was exposed in public repository history. Create and verify a Full Backup before uninstalling V17. Then uninstall V17, install V18 and restore the backup. Encrypted backups require their original password. Existing V18 installations using the new signer can update in place.
 
-V17 substantially expands BP Diary on Android without changing the diary’s medical/core calculations, SCORE2 logic, report formulas or existing data schema.
+Medical/core calculations, SCORE2, report formulas, data schema and package ID remain unchanged. RU / EN / UZ and existing reminders, privacy and backup features are preserved.
 
-### Reminders
-- up to **3 measurement times per day**;
-- **1 / 2 / 3 alerts** per reminder;
-- repeat intervals of **5 / 10 / 15 / 30 minutes**;
-- **3 Android system sound choices**;
-- optional vibration;
-- test-sound control;
-- notification actions for **Done** and **Remind later**;
-- schedule restoration after reboot, time/timezone changes and application updates.
+## Known build-tooling findings
 
-### Measurements and localization
-- **Uzbek (Latin)** joins Russian and English;
-- mobile UZ strings were completed, including `Barchasi / 7 kun / 30 kun / 90 kun`;
-- new/edited reading input now uses guardrails: SYS 60–260, DIA 40–160, optional pulse 30–220, and SYS > DIA;
-- existing historical records are not rewritten by these entry checks;
-- the pre-save safety warning remains for accepted extreme readings.
-
-### Doctor report
-- mobile **Save PDF / Print / Share** now uses **A4 landscape**, matching the desktop-style report;
-- summary metrics, patient/context information and the full measurement table are preserved;
-- report calculations are unchanged.
-
-### User guide
-- full in-app **RU / EN / UZ user guide**;
-- explains SYS/DIA/pulse, readings 1–3, Archive, Analytics, reports, reminders and backups.
-
-### Privacy and backups
-- system Android App Lock using biometric and/or device credential;
-- automatic re-lock after **10 seconds** in background and immediately after physical screen lock;
-- optional Android `FLAG_SECURE` for screenshots and Recent Apps previews;
-- password-protected Full Backup using PBKDF2-SHA-256 (310,000 iterations) and AES-GCM-256;
-- BP Diary never stores the protected-backup password;
-- wrong password/corrupted ciphertext is rejected before current data change;
-- plain JSON Full Backup remains available.
-
-### Compatibility
-- Package ID: `com.tokhirjonyuldoshev.bpdiary`;
-- existing direct-distribution update signer is preserved;
-- V17 can install over official V16 without uninstalling when the signing lineage matches;
-- blood-pressure calculations, session averages, SCORE2, target range, report formulas and patient/data schema intentionally remain unchanged.
-
-> If the protected-backup password is lost, BP Diary cannot recover or bypass it.
+The full toolchain audit continues to report upstream build-time findings through `@capacitor/assets 3.0.5`; they remain tracked. Runtime high/critical vulnerabilities are blocking checks.

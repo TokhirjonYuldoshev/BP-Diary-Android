@@ -1,5 +1,19 @@
 # Changelog
 
+## V18 — Secure Signing & Supply Chain — 5.8.0
+
+- New private RSA-4096 production signer replaces the exposed legacy signing identity.
+- Production signing isolated in GitHub Environment; ordinary CI uses debug signing and compiles unsigned release APKs.
+- Pinned certificate verification, immutable release checks and tracked-private-key guards.
+- Dependency audit, CodeQL, Dependabot and SheetJS SHA-256 verification.
+- jsPDF upgraded to 4.2.1.
+- Protected backup/restore password modal isolated from WebView history and tab refresh.
+- VersionCode 181 signed candidate accepted on a real Android device; owner authorized publication on 2026-10-01.
+- V17 migration requires backup, uninstall, new-signer V18 installation and restore; existing new-signer V18 can update in place.
+- Medical/core logic, report formulas, data schema and package ID preserved.
+- Upstream @capacitor/assets build-toolchain findings remain documented; runtime high/critical audit remains blocking.
+- Publication pending final CI and production-signing branch restriction verification.
+
 ## V17 — Reminders, Reports, Privacy & Localization — 5.7.0
 
 ### Added and improved

@@ -1,20 +1,22 @@
-# CI signing material
+# CI signing policy
 
-`debug.keystore.b64` contains the legacy stable direct-distribution key used to preserve the V8–V15 APK update path.
+BP Diary V18 separates ordinary CI signing from production release signing.
 
-## Important
+## Ordinary branch CI
 
-This key has been stored in the public repository history. It must therefore be treated as **public/test signing material**, not as a secure production credential.
+The `build-apk` workflow must not use a production or legacy private signing key.
 
-It exists only so users of the current direct-distribution test lineage can install newer compatible APKs over older versions without uninstalling.
+- branch candidates use the standard Android/Gradle debug signer;
+- the release build is compiled as an unsigned release artifact to catch build failures;
+- no private keystore is stored in Git;
+- `scripts/security-check.mjs` rejects tracked private-key material.
 
-For any real production channel, especially Google Play:
+## Production release
 
-- create a new private signing key;
-- never commit it to Git;
-- store it in GitHub Actions Secrets or another secure secret store;
-- prefer Google Play App Signing;
-- use AAB when appropriate;
-- plan the signing-lineage migration explicitly.
+Production signing is performed only by the protected release workflow after the explicit publication gate is opened.
 
-Do not add any new private signing keys, passwords, API tokens or user data to this directory.
+The release workflow expects a private keystore and credentials through GitHub Secrets in the `production-signing` environment. The production keystore must never be committed to this repository.
+
+## Legacy V17 signer
+
+The V17 direct-distribution signer was exposed in public Git history and must be treated as compromised. It remains documented only for historical verification and migration planning; V18 production must not reuse it.
