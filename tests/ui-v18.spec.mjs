@@ -452,6 +452,29 @@ test('V18 protected backup is a true modal above navigation and closes cleanly',
   await expect(page.locator('#mobileSecretSheet')).not.toHaveClass(/open/);
 });
 
+test('V18 protected backup from data actions keeps password dialog open',async({page})=>{
+  await page.evaluate(()=>{
+    window.Capacitor={Plugins:{NativeBridge:{
+      saveTextFile:async(args)=>({name:args.fileName,uri:'content://test/protected'}),
+      setPrivacyShield:async()=>({})
+    }}};
+  });
+
+  await page.locator('#mobileBottomNav [data-tab="archive"]').click();
+  const more=page.locator('#mobileArchiveActions button').filter({hasText:/Действия|Actions/}).first();
+  if(await more.count()) await more.click();
+  else {
+    const fallback=page.locator('button').filter({hasText:/Действия|Actions/}).first();
+    await fallback.click();
+  }
+  await expect(page.locator('#mobileActionSheet')).toHaveClass(/open/);
+  await page.locator('#mobileActionSheet button').filter({hasText:/Защищённый бэкап|Protected backup/}).click();
+  await expect(page.locator('#mobileSecretSheet')).toHaveClass(/open/);
+  await page.waitForTimeout(350);
+  await expect(page.locator('#mobileSecretSheet')).toHaveClass(/open/);
+  await page.locator('#mobileSecretSheet .mobile-secret-actions .outline').click();
+});
+
 test('V18 protected backup modal survives current-tab refresh',async({page})=>{
   await page.evaluate(()=>{
     window.Capacitor={Plugins:{NativeBridge:{
@@ -464,9 +487,6 @@ test('V18 protected backup modal survives current-tab refresh',async({page})=>{
   await expect(page.locator('#mobileSecretSheet')).toHaveClass(/open/);
   await page.evaluate(()=>window.dispatchEvent(new PopStateEvent('popstate',{state:null})));
   await page.waitForTimeout(100);
-  await expect(page.locator('#mobileSecretSheet')).toHaveClass(/open/);
-  await page.locator('#mobileBottomNav [data-tab="measure"]').click({force:true});
-  await page.waitForTimeout(150);
   await expect(page.locator('#mobileSecretSheet')).toHaveClass(/open/);
   await page.locator('#mobileSecretSheet .mobile-secret-actions .outline').click();
 });
