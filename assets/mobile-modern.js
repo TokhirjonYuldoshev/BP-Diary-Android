@@ -237,14 +237,30 @@
     if(!mq.matches){mobileNativeAlert(String(message||''));return}
     let host=q('#mobileToastHost');
     if(!host){host=document.createElement('div');host.id='mobileToastHost';host.setAttribute('aria-live','polite');document.body.appendChild(host)}
-    const item=document.createElement('div');item.className='mobile-toast '+type;
+    const display=uz()?translateUzText(String(message||'')):String(message||'');
+    const key=type+'|'+display;
+    let item=qa('.mobile-toast',host).find(el=>el.dataset.bpToastKey===key);
+    const armRemoval=el=>{
+      clearTimeout(el.__bpToastHideTimer);clearTimeout(el.__bpToastRemoveTimer);
+      el.__bpToastHideTimer=setTimeout(()=>{
+        el.classList.remove('show');
+        el.__bpToastRemoveTimer=setTimeout(()=>{if(el.isConnected)el.remove()},220);
+      },duration);
+    };
+    if(item){
+      item.classList.add('show');
+      armRemoval(item);
+      return item;
+    }
+    while(host.children.length>=3)host.firstElementChild?.remove();
+    item=document.createElement('div');item.className='mobile-toast '+type;item.dataset.bpToastKey=key;
     const icon=type==='success'?'✓':type==='error'?'!':'i';
     item.innerHTML='<span class="mobile-toast-icon">'+icon+'</span><span class="mobile-toast-text"></span>';
-    q('.mobile-toast-text',item).textContent=uz()?translateUzText(String(message||'')):String(message||'');
+    q('.mobile-toast-text',item).textContent=display;
     host.appendChild(item);
     requestAnimationFrame(()=>item.classList.add('show'));
-    const remove=()=>{item.classList.remove('show');setTimeout(()=>item.remove(),220)};
-    setTimeout(remove,duration);
+    armRemoval(item);
+    return item;
   }
 
   function mobileConfirm({title,message,confirmLabel,cancelLabel,danger=true}){
@@ -804,13 +820,18 @@
     const test=document.createElement('button');test.type='button';test.className='outline mobile-reminder-test';
     test.innerHTML=svgIcon('bell')+'<span>'+l('Проверить звук','Test sound','Ovozni tekshirish')+'</span>';
     test.onclick=async()=>{
+      if(test.dataset.bpBusy==='1')return;
       const sound=String(q('#mobileReminderSound',sheet)?.value||'2');
       const vibrate=!!q('#mobileReminderVibrate',sheet)?.checked;
+      test.dataset.bpBusy='1';test.disabled=true;test.setAttribute('aria-busy','true');
       try{
         const res=await nativeCall('testReminderSound',{sound,vibrate});
         if(res?.notificationsAllowed===false)mobileToast(l('Сначала разрешите уведомления Android','Allow Android notifications first','Avval Android bildirishnomalariga ruxsat bering'),'info',3200);
         else mobileToast(l('Тестовый сигнал отправлен','Test alert sent','Sinov signali yuborildi'),'success',1800);
       }catch(err){mobileToast(l('Не удалось проверить звук','Could not test sound','Ovozni tekshirib bo‘lmadi'),'error')}
+      finally{
+        setTimeout(()=>{test.disabled=false;delete test.dataset.bpBusy;test.removeAttribute('aria-busy')},900);
+      }
     };
     g.appendChild(test);
 
@@ -1455,7 +1476,9 @@
   }
   async function showAutoBackupSheet(){
     const sheet=makeSheet('mobileAutoBackupSheet',ru()?'Авто-бэкапы':'Auto-backups');
-    q('.mobile-sheet-title',sheet).textContent=ru()?'Автоматические копии':'Automatic backups';
+    const title=q('.mobile-sheet-title',sheet);
+    title.innerHTML='<span>'+l('Автоматические копии','Automatic backups','Avtomatik nusxalar')+'</span><button type="button" class="mobile-sheet-close" aria-label="'+l('Закрыть','Close','Yopish')+'">×</button>';
+    q('.mobile-sheet-close',sheet).onclick=()=>closeMobileSheet(sheet);
     const g=q('.mobile-sheet-grid',sheet);g.innerHTML='<div class="mobile-backup-loading">'+(ru()?'Загрузка…':'Loading…')+'</div>';
     openMobileSheet(sheet);
     try{
