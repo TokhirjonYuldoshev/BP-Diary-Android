@@ -20,6 +20,10 @@ BP Diary 5.8.1 — maintenance-обновление линии V18. Оно не 
 - Runtime high/critical dependency audit: 0 findings.
 - Известные build-time findings через `@capacitor/assets 3.0.5` остаются отслеживаемыми отдельно.
 
+### Известная проблема установки
+
+После публикации владелец сообщил, что официальный 5.8.1 не установился поверх уже установленной V18 без uninstall. При этом официальные APK 5.8.0 и 5.8.1 имеют одинаковый package ID и один и тот же production certificate, а versionCode повышен 181 → 182. Причина пока не установлена и отслеживается в Issue #18. Перед uninstall/reinstall необходимо создать и проверить Full Backup.
+
 Кандидат V18 / 5.8.1 / versionCode 182 принят владельцем на реальном устройстве 2026-10-02 и разрешён к публикации.
 
 ## English
@@ -41,5 +45,9 @@ BP Diary 5.8.1 is a maintenance update for the V18 line. It does not change medi
 - Font Awesome Free 7.3.1: automated checks SUCCESS; real-device icon/light-dark/RU-EN-UZ check PASSED.
 - Runtime high/critical dependency audit: 0 findings.
 - Known build-time findings through `@capacitor/assets 3.0.5` remain tracked separately.
+
+### Known installation issue
+
+After publication, the owner reported that the official 5.8.1 APK did not install over an existing V18 installation without uninstalling first. The official 5.8.0 and 5.8.1 APKs have the same package ID and production certificate, and versionCode increases from 181 to 182. Root cause is not yet established and is tracked in Issue #18. Create and verify a Full Backup before any uninstall/reinstall path.
 
 The V18 / 5.8.1 / versionCode 182 candidate was accepted on a real device on 2026-10-02 and authorized for publication.

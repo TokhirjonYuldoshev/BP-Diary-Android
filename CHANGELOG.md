@@ -17,6 +17,8 @@
 - Official APK SHA-256: `38b1e92307df61915ff85edc8e447688f4f36010ec39c6e01178a9f5796b1301`.
 - Production signer SHA-256: `a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`.
 - Release workflow artifact ID: `11221212265`.
+- Post-release install note: the owner reported that the official 5.8.1 APK was rejected when installed over the existing app on one real device; Issue #18 tracks diagnosis. Official 5.8.0 and 5.8.1 APKs have the same package ID and production certificate, so the affected installed package state still needs verification.
+- Until Issue #18 is resolved, in-place update is not documented as guaranteed; Full Backup must be created and verified before any uninstall/reinstall path.
 
 ## V18 — Secure Signing & Supply Chain — 5.8.0
 

@@ -128,7 +128,7 @@ Verification on Linux/macOS:
 sha256sum BP-Diary-5.8.1-V18.apk
 ```
 
-V18 preserves the package ID but uses a new private signer. To migrate from V17: create and verify a Full Backup, uninstall V17, install V18 and restore your data. Existing new-signer V18 installations can update in place.
+V18 preserves the package ID but uses a new private signer relative to V17. To migrate from V17: create and verify a Full Backup, uninstall V17, install V18 and restore your data. For updates within the V18 5.8.x line, create and verify a Full Backup first. On one real device, Android rejected the official 5.8.0 → 5.8.1 in-place update; investigation is tracked in Issue #18.
 
 Create a Full Backup before uninstalling or moving to another device.
 
@@ -236,3 +236,10 @@ Branch workflow, required checks and Pull Request expectations are described in 
 ---
 
 [← Back to home](../README.md)
+
+
+### ⚠️ Known update issue
+
+The official V18 5.8.0 and 5.8.1 APKs have the same package ID and production signing certificate, and versionCode increases from 181 to 182. Even so, one real device rejected installation of 5.8.1 over the existing V18 app.
+
+Create and verify a Full Backup before any uninstall/reinstall path. Do not install CI/debug candidates on the main production device. See [KNOWN_ISSUES.md](../KNOWN_ISSUES.md) and [Issue #18](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues/18) for diagnostics.

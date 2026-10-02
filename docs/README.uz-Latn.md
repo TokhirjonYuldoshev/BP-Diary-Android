@@ -236,3 +236,10 @@ Branch jarayoni, majburiy checks va Pull Request talablari [CONTRIBUTING.md](../
 ---
 
 [← Bosh sahifaga qaytish](../README.md)
+
+
+### ⚠️ Ma’lum yangilash muammosi
+
+Rasmiy V18 5.8.0 va 5.8.1 APK fayllari bir xil package ID va bir xil production signing certificate’dan foydalanadi, versionCode esa 181 dan 182 ga oshirilgan. Shunga qaramay, bitta haqiqiy qurilmada Android 5.8.1 ni mavjud V18 ustiga o‘rnatishni rad etdi.
+
+Uninstall/reinstall qilishdan oldin Full Backup yarating va uni tekshiring. Asosiy telefonga CI/debug candidate APK o‘rnatmang. Batafsil diagnostika uchun [KNOWN_ISSUES.md](../KNOWN_ISSUES.md) va [Issue #18](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues/18) ga qarang.
