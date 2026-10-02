@@ -397,13 +397,13 @@ public class ReminderReceiver extends BroadcastReceiver {
         }
     }
 
-    private Uri soundUri(int sound) {
+    private static Uri soundUri(int sound) {
         if (sound == 1) return Settings.System.DEFAULT_NOTIFICATION_URI;
         if (sound == 3) return Settings.System.DEFAULT_RINGTONE_URI;
         return Settings.System.DEFAULT_ALARM_ALERT_URI;
     }
 
-    private String channelId(int sound, boolean vibrate) {
+    static String channelId(int sound, boolean vibrate) {
         return "bp_diary_reminder_v17_s" + Math.max(1, Math.min(3, sound)) + "_v" + (vibrate ? "1" : "0");
     }
 
@@ -460,7 +460,7 @@ public class ReminderReceiver extends BroadcastReceiver {
         }
     }
 
-    private String createChannel(Context context, int sound, boolean vibrate) {
+    static String createChannel(Context context, int sound, boolean vibrate) {
         String id = channelId(sound, vibrate);
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return id;
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -520,6 +520,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -1079,7 +1080,31 @@ public class NativeBridgePlugin extends Plugin {
 
             int sound = ReminderScheduler.getSound(getContext());
             try { sound = Integer.parseInt(String.valueOf(call.getString("sound"))); } catch (Exception ignored) {}
+            sound = Math.max(1, Math.min(3, sound));
             boolean vibrate = !Boolean.FALSE.equals(call.getBoolean("vibrate"));
+
+            boolean channelEnabled = true;
+            boolean channelSoundEnabled = true;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                String channelId = ReminderReceiver.createChannel(getContext(), sound, vibrate);
+                NotificationManager manager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                NotificationChannel channel = manager == null ? null : manager.getNotificationChannel(channelId);
+                if (channel != null) {
+                    channelEnabled = channel.getImportance() != NotificationManager.IMPORTANCE_NONE;
+                    channelSoundEnabled = channel.getSound() != null;
+                }
+            }
+
+            int stream = sound == 1 ? AudioManager.STREAM_NOTIFICATION
+                : sound == 3 ? AudioManager.STREAM_RING
+                : AudioManager.STREAM_ALARM;
+            AudioManager audio = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+            int volume = audio == null ? -1 : audio.getStreamVolume(stream);
+            int maxVolume = audio == null ? -1 : audio.getStreamMaxVolume(stream);
+            out.put("channelEnabled", channelEnabled);
+            out.put("channelSoundEnabled", channelSoundEnabled);
+            out.put("volume", volume);
+            out.put("maxVolume", maxVolume);
 
             // Repeatedly updating the same test notification can be rate-limited or
             // treated as an update by Android/OEM firmware. Remove the previous test
@@ -1088,7 +1113,7 @@ public class NativeBridgePlugin extends Plugin {
 
             Intent test = new Intent(getContext(), ReminderReceiver.class)
                 .setAction(ReminderScheduler.ACTION_TEST)
-                .putExtra("sound", Math.max(1, Math.min(3, sound)))
+                .putExtra("sound", sound)
                 .putExtra("vibrate", vibrate);
             getContext().sendBroadcast(test);
             out.put("triggered", true);
