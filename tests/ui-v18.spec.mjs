@@ -1,9 +1,10 @@
 // V18 secure-signing migration regression suite; V17 behavior remains the compatibility baseline.
 import { test, expect } from '@playwright/test';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 
 const BASE='http://127.0.0.1:4173';
 const shots='artifacts/ui-v18';
+const version=JSON.parse(await readFile(new URL('../version.json',import.meta.url),'utf8'));
 
 test.use({ viewport:{width:390,height:844}, deviceScaleFactor:1, reducedMotion:'reduce' });
 
@@ -45,8 +46,9 @@ test('V18 preserves core mobile layout and exposes privacy settings',async({page
 
   await page.locator('#mobileAppBar [data-top="settings"]').click();
   await expect(page.locator('#mobileSettingsSheet')).toHaveClass(/open/);
-  await expect(page.locator('#mobileSettingsSheet')).toContainText('5.8.0');
-  await expect(page.locator('#mobileSettingsSheet')).toContainText('V18');
+  await expect(page.locator('#mobileSettingsSheet')).toContainText(version.versionName);
+  await expect(page.locator('#mobileSettingsSheet')).toContainText(version.release);
+  await expect(page.locator('#mobileSettingsSheet')).toContainText(`versionCode ${version.versionCode}`);
   await expect(page.locator('#mobileSettingsSheet')).toContainText(/Блокировка приложения|App lock/);
   await expect(page.locator('#mobileSettingsSheet')).toContainText(/Защита экрана|Screen privacy/);
   await expect(page.locator('#mobileSettingsSheet')).toContainText(/Защищённый бэкап|Protected backup/);
