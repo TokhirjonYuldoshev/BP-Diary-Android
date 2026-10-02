@@ -351,6 +351,7 @@ public class ReminderReceiver extends BroadcastReceiver {
         if (ReminderScheduler.ACTION_TEST.equals(action)) {
             int sound = intent.getIntExtra("sound", ReminderScheduler.getSound(context));
             boolean vibrate = intent.getBooleanExtra("vibrate", ReminderScheduler.getVibrate(context));
+            NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID_TEST);
             showNotification(context, slot, true, sound, vibrate);
             return;
         }
@@ -1054,14 +1055,22 @@ public class NativeBridgePlugin extends Plugin {
         try {
             int sound = ReminderScheduler.getSound(getContext());
             try { sound = Integer.parseInt(String.valueOf(call.getString("sound"))); } catch (Exception ignored) {}
+            sound = Math.max(1, Math.min(3, sound));
             boolean vibrate = !Boolean.FALSE.equals(call.getBoolean("vibrate"));
+            boolean allowed = notificationsAllowed();
+            JSObject out = new JSObject();
+            out.put("notificationsAllowed", allowed);
+            out.put("sound", sound);
+            out.put("vibrate", vibrate);
+            if (!allowed) {
+                call.resolve(out);
+                return;
+            }
             Intent test = new Intent(getContext(), ReminderReceiver.class)
                 .setAction(ReminderScheduler.ACTION_TEST)
-                .putExtra("sound", Math.max(1, Math.min(3, sound)))
+                .putExtra("sound", sound)
                 .putExtra("vibrate", vibrate);
             getContext().sendBroadcast(test);
-            JSObject out = new JSObject();
-            out.put("notificationsAllowed", notificationsAllowed());
             call.resolve(out);
         } catch (Exception e) {
             call.reject("Could not test reminder sound", e);
