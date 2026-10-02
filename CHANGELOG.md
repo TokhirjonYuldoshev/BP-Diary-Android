@@ -1,5 +1,17 @@
 # Changelog
 
+## V18 — Maintenance Candidate — 5.8.1
+
+- Candidate only; not yet published.
+- Version metadata prepared as V18 / 5.8.1 / versionCode 182 / tag `v5.8.1`.
+- Chart.js updated to 4.5.1 after automated CI and owner real-device chart regression.
+- Font Awesome Free updated to 7.3.1 after automated CI and owner real-device visual regression.
+- GitHub Actions upgraded and pinned to immutable full commit SHAs.
+- Added `THIRD_PARTY_NOTICES.md`.
+- Runtime high/critical dependency audit remains clean; known `@capacitor/assets 3.0.5` build-time findings remain documented.
+- Medical/core logic, SCORE2, report formulas, data schema, native implementation and package ID remain unchanged from the accepted V18 code.
+- Publication gate remains `false` until separate owner authorization.
+
 ## V18 — Secure Signing & Supply Chain — 5.8.0
 
 - New private RSA-4096 production signer replaces the exposed legacy signing identity.
