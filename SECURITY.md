@@ -96,7 +96,7 @@ V18 использует новый приватный production-сертифи
 
 `a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`
 
-Signing secrets доступны только release workflow через `production-signing`, разрешённую ветку `main`. Старый V17 signer скомпрометирован публичной историей и больше не используется. Переход с V17: backup → uninstall → install V18 → restore. Уже установленный V18 с новой подписью обновляется поверх.
+Signing secrets доступны только release workflow через `production-signing`, разрешённую ветку `main`. Старый V17 signer скомпрометирован публичной историей и больше не используется. Переход с V17: backup → uninstall → install V18 → restore. Для V18 5.8.x in-place update не считается гарантированным до закрытия Issue #18: на одном реальном устройстве официальный 5.8.1 был отклонён при установке поверх существующей V18. Перед uninstall/reinstall сначала создайте и проверьте Full Backup.
 
 ### Медицинские данные
 
@@ -200,7 +200,7 @@ V18 uses a new private production certificate:
 
 `a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`
 
-Signing secrets are isolated in `production-signing`, restricted to `main`. The exposed legacy V17 signer is compromised and is no longer used. V17 migration: backup → uninstall → install V18 → restore. Existing new-signer V18 installations update in place.
+Signing secrets are isolated in `production-signing`, restricted to `main`. The exposed legacy V17 signer is compromised and is no longer used. V17 migration: backup → uninstall → install V18 → restore. For V18 5.8.x, in-place update is not treated as guaranteed until Issue #18 is resolved: one real device rejected the official 5.8.1 APK over an existing V18 installation. Create and verify a Full Backup before any uninstall/reinstall path.
 
 ### Medical data
 
@@ -304,7 +304,7 @@ V18 yangi private production certificate’dan foydalanadi:
 
 `a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`
 
-Signing secrets `production-signing` ichida, faqat `main` uchun saqlanadi. Eski V17 signer public tarixda oshkor bo‘lgan va endi ishlatilmaydi. V17’dan o‘tish: backup → uninstall → install V18 → restore. Yangi imzoli V18 ustiga yangilash mumkin.
+Signing secrets `production-signing` ichida, faqat `main` uchun saqlanadi. Eski V17 signer public tarixda oshkor bo‘lgan va endi ishlatilmaydi. V17’dan o‘tish: backup → uninstall → install V18 → restore. V18 5.8.x uchun in-place update Issue #18 yopilmaguncha kafolatlangan deb hisoblanmaydi: bitta haqiqiy qurilmada rasmiy 5.8.1 mavjud V18 ustiga o‘rnatilmadi. Uninstall/reinstall oldidan Full Backup yarating va tekshiring.
 
 ### Tibbiy ma’lumotlar
 
