@@ -10,7 +10,13 @@
 - Added `THIRD_PARTY_NOTICES.md`.
 - Runtime high/critical dependency audit remains clean; known `@capacitor/assets 3.0.5` build-time findings remain documented.
 - Medical/core logic, SCORE2, report formulas, data schema, native implementation and package ID remain unchanged from the accepted V18 code.
-- Publication gate is opened only for the authorized release transaction and must be closed again immediately after verification.
+- Publication gate was opened only for the authorized release transaction and is closed again after verification.
+- Official stable release `v5.8.1` published by Publish Android Release #11 (`36994705331`).
+- Release target: `44b0b80447a3e2a58c01b3199469416be65967e4`.
+- Official APK: `BP-Diary-5.8.1-V18.apk` — 4,818,035 bytes.
+- Official APK SHA-256: `38b1e92307df61915ff85edc8e447688f4f36010ec39c6e01178a9f5796b1301`.
+- Production signer SHA-256: `a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`.
+- Release workflow artifact ID: `11221212265`.
 
 ## V18 — Secure Signing & Supply Chain — 5.8.0
 
