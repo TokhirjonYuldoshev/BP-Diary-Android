@@ -119,3 +119,36 @@ The owner installed the official GitHub Release APK in place over the accepted V
 - [x] Existing user data remains intact
 - [x] About/version marker confirmed as V18 / 5.8.0 / versionCode 181
 - [x] Official release APK post-release device sanity: PASSED
+
+
+## V18 maintenance candidate 5.8.1 / versionCode 182 — 2026-10-02
+
+This candidate exists to version the already reviewed post-release dependency and supply-chain maintenance separately from the immutable official V18 / 5.8.0 release.
+
+Accepted maintenance changes:
+
+- [x] Chart.js 4.5.1 automated CI: PASSED
+- [x] Chart.js 4.5.1 owner real-device analytics / rotation / RU-EN-UZ check: PASSED
+- [x] Font Awesome Free 7.3.1 automated CI: PASSED
+- [x] Font Awesome Free 7.3.1 owner real-device icon / light-dark / RU-EN-UZ check: PASSED
+- [x] GitHub Actions upgraded and pinned to immutable full commit SHAs
+- [x] `THIRD_PARTY_NOTICES.md` added and aligned with direct dependency versions
+- [x] Medical/core source remains unchanged from the accepted V18 release target
+- [x] Package ID remains `com.tokhirjonyuldoshev.bpdiary`
+- [x] Publication gate remains `false`
+
+Candidate metadata:
+
+- Release line: `V18`
+- Version name: `5.8.1`
+- Version code: `182`
+- Proposed tag: `v5.8.1`
+- Proposed artifact: `BP-Diary-5.8.1-V18.apk`
+
+Still required before publication:
+
+- [x] Final candidate CI on exact candidate SHA `132783b16cc0e323a806225709673ecb3bdb576d`: Build #304, UI Regression #197 (20/20), Dependency Security Audit #104, CodeQL #71 — SUCCESS
+- [x] Owner verified V18 / 5.8.1 / versionCode 182 and reported the candidate working on 2026-10-02
+- [ ] Owner explicitly authorizes publication of 5.8.1
+- [ ] Signed release is created from protected `main`
+- [ ] Official APK hash/signer and post-release install sanity are verified

@@ -1,4 +1,4 @@
 {
   "publish": false,
-  "notes": "V18 / 5.8.0 / versionCode 181 publication gate closed after the owner-authorized release request. Future releases require separate owner acceptance and authorization."
+  "notes": "V18 maintenance candidate 5.8.1 / versionCode 182. Publication remains closed until owner device acceptance and separate explicit authorization."
 }

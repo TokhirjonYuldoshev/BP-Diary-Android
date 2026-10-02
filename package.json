@@ -1,6 +1,6 @@
 {
   "name": "bp-diary-android",
-  "version": "5.8.0",
+  "version": "5.8.1",
   "private": true,
   "description": "Local-first Android blood-pressure diary with reminders, analytics, backups and doctor-ready reports.",
   "scripts": {
