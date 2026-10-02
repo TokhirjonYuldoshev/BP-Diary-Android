@@ -400,6 +400,47 @@ test('V18 reminder settings expose daily times repeats sound vibration and persi
   expect(saved.args.snoozeLabel).toBeTruthy();
 });
 
+test('V18 reminder test sound is single-flight and toast feedback is deduplicated',async({page})=>{
+  await page.evaluate(()=>{
+    window.__reminderCalls=[];
+    window.Capacitor={Plugins:{NativeBridge:{
+      getReminderStatus:async()=>({enabled:true,times:'09:00',time:'09:00',repeatCount:1,repeatInterval:10,sound:2,vibrate:true,notificationsAllowed:false}),
+      testReminderSound:async args=>{
+        window.__reminderCalls.push({method:'test',args});
+        await new Promise(resolve=>setTimeout(resolve,120));
+        return {notificationsAllowed:false};
+      },
+      setPrivacyShield:async()=>({})
+    }}};
+  });
+  await page.locator('#mobileAppBar [data-top="reminder"]').click();
+  await expect(page.locator('#mobileReminderSheet')).toHaveClass(/open/);
+  await page.locator('#mobileReminderSheet .mobile-reminder-test').evaluate(button=>{
+    button.click();button.click();button.click();
+  });
+  await page.waitForTimeout(180);
+  const calls=await page.evaluate(()=>window.__reminderCalls.filter(x=>x.method==='test').length);
+  expect(calls).toBe(1);
+  await expect(page.locator('#mobileToastHost .mobile-toast')).toHaveCount(1);
+  await expect(page.locator('#mobileReminderSheet')).toHaveClass(/open/);
+});
+
+test('V18 automatic backup sheet has an explicit close control',async({page})=>{
+  await page.evaluate(()=>{
+    window.Capacitor={Plugins:{NativeBridge:{
+      listAutoBackups:async()=>({items:[]}),
+      setPrivacyShield:async()=>({})
+    }}};
+  });
+  await page.locator('#mobileAppBar [data-top="settings"]').click();
+  await expect(page.locator('#mobileSettingsSheet')).toHaveClass(/open/);
+  await page.locator('#mobileSettingsSheet .mobile-settings-row').filter({hasText:/Авто-бэкапы|Auto-backups/}).click();
+  await expect(page.locator('#mobileAutoBackupSheet')).toHaveClass(/open/);
+  await expect(page.locator('#mobileAutoBackupSheet .mobile-sheet-close')).toBeVisible();
+  await page.locator('#mobileAutoBackupSheet .mobile-sheet-close').click();
+  await expect(page.locator('#mobileAutoBackupSheet')).not.toHaveClass(/open/);
+});
+
 test('V18 protected backup is a true modal above navigation and closes cleanly',async({page})=>{
   await page.evaluate(()=>{
     window.Capacitor={Plugins:{NativeBridge:{
