@@ -400,6 +400,56 @@ test('V18 reminder settings expose daily times repeats sound vibration and persi
   expect(saved.args.snoozeLabel).toBeTruthy();
 });
 
+test('V18 reminder sound test suppresses rapid duplicates and keeps one feedback toast',async({page})=>{
+  await page.evaluate(()=>{
+    window.__reminderTestCalls=0;
+    window.Capacitor={Plugins:{NativeBridge:{
+      getReminderStatus:async()=>({enabled:true,times:'09:00',time:'09:00',repeatCount:1,repeatInterval:10,sound:2,vibrate:true,notificationsAllowed:false}),
+      scheduleDailyReminder:async()=>({enabled:true,notificationsAllowed:false}),
+      cancelDailyReminder:async()=>({enabled:false,notificationsAllowed:false}),
+      testReminderSound:async()=>{window.__reminderTestCalls++;await new Promise(r=>setTimeout(r,120));return {notificationsAllowed:false,triggered:false}},
+      setPrivacyShield:async()=>({})
+    }}};
+  });
+
+  await page.locator('#mobileAppBar [data-top="reminder"]').click();
+  const testButton=page.locator('#mobileReminderSheet .mobile-reminder-test');
+  await testButton.click();
+  await page.evaluate(()=>{
+    const b=document.querySelector('#mobileReminderSheet .mobile-reminder-test');
+    for(let i=0;i<5;i++)b.dispatchEvent(new MouseEvent('click',{bubbles:true}));
+  });
+  await page.waitForTimeout(180);
+  expect(await page.evaluate(()=>window.__reminderTestCalls)).toBe(1);
+  await expect(page.locator('#mobileToastHost .mobile-toast')).toHaveCount(1);
+
+  await page.waitForTimeout(950);
+  await testButton.click();
+  await page.waitForTimeout(180);
+  expect(await page.evaluate(()=>window.__reminderTestCalls)).toBe(2);
+  await expect(page.locator('#mobileToastHost .mobile-toast')).toHaveCount(1);
+});
+
+test('V18 auto-backup sheet has an explicit close control and dismisses cleanly',async({page})=>{
+  await page.evaluate(()=>{
+    window.Capacitor={Plugins:{NativeBridge:{
+      listAutoBackups:async()=>({items:[
+        {name:'auto-1.json',modified:Date.now(),size:3072,reason:'after-save'}
+      ]}),
+      setPrivacyShield:async()=>({})
+    }}};
+  });
+
+  await page.locator('#mobileAppBar [data-top="settings"]').click();
+  await page.locator('#mobileSettingsSheet .mobile-settings-row').filter({hasText:/Авто-бэкапы|Auto-backups/}).click();
+  await expect(page.locator('#mobileAutoBackupSheet')).toHaveClass(/open/);
+  const close=page.locator('#mobileAutoBackupSheet .mobile-sheet-close');
+  await expect(close).toBeVisible();
+  await close.click();
+  await expect(page.locator('#mobileAutoBackupSheet')).not.toHaveClass(/open/);
+  await expect(page.locator('body')).not.toHaveClass(/mobile-sheet-open/);
+});
+
 test('V18 protected backup is a true modal above navigation and closes cleanly',async({page})=>{
   await page.evaluate(()=>{
     window.Capacitor={Plugins:{NativeBridge:{
