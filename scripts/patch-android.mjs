@@ -341,7 +341,7 @@ import androidx.core.app.NotificationManagerCompat;
 
 public class ReminderReceiver extends BroadcastReceiver {
     private static final int NOTIFICATION_ID_BASE = 16010;
-    private static final int NOTIFICATION_ID_TEST = 16999;
+    static final int NOTIFICATION_ID_TEST = 16999;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -1052,16 +1052,30 @@ public class NativeBridgePlugin extends Plugin {
     @PluginMethod
     public void testReminderSound(PluginCall call) {
         try {
+            boolean allowed = notificationsAllowed();
+            JSObject out = new JSObject();
+            out.put("notificationsAllowed", allowed);
+            if (!allowed) {
+                out.put("triggered", false);
+                call.resolve(out);
+                return;
+            }
+
             int sound = ReminderScheduler.getSound(getContext());
             try { sound = Integer.parseInt(String.valueOf(call.getString("sound"))); } catch (Exception ignored) {}
             boolean vibrate = !Boolean.FALSE.equals(call.getBoolean("vibrate"));
+
+            // Repeatedly updating the same test notification can be rate-limited or
+            // treated as an update by Android/OEM firmware. Remove the previous test
+            // notification first so each user-requested check is a fresh alert.
+            NotificationManagerCompat.from(getContext()).cancel(ReminderReceiver.NOTIFICATION_ID_TEST);
+
             Intent test = new Intent(getContext(), ReminderReceiver.class)
                 .setAction(ReminderScheduler.ACTION_TEST)
                 .putExtra("sound", Math.max(1, Math.min(3, sound)))
                 .putExtra("vibrate", vibrate);
             getContext().sendBroadcast(test);
-            JSObject out = new JSObject();
-            out.put("notificationsAllowed", notificationsAllowed());
+            out.put("triggered", true);
             call.resolve(out);
         } catch (Exception e) {
             call.reject("Could not test reminder sound", e);
