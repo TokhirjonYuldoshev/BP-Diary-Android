@@ -18,6 +18,7 @@
 [Скачать стабильную версию](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.1) ·
 [Что нового](RELEASE_NOTES.md) ·
 [Безопасность](SECURITY.md) ·
+[Известные проблемы](KNOWN_ISSUES.md) ·
 [Участие в разработке](CONTRIBUTING.md)
 
 </div>
@@ -71,6 +72,18 @@ sha256sum BP-Diary-5.8.1-V18.apk
 V18 сохраняет Package ID, но использует новую приватную подпись относительно V17. Для перехода с V17: создайте и проверьте Full Backup, удалите V17, установите V18 и восстановите данные. Для перехода между V18 5.8.x сначала создайте и проверьте Full Backup. На одном реальном устройстве установка официального 5.8.1 поверх существующей V18 была отклонена Android; причина расследуется в [Issue #18](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues/18). До закрытия расследования не считайте in-place update гарантированным.
 
 Перед uninstall или переносом на другое устройство рекомендуется создать Full Backup.
+
+## Известная проблема обновления
+
+Официальные APK V18 5.8.0 и 5.8.1 имеют одинаковый package ID, один и тот же production-сертификат и versionCode 181 → 182. Несмотря на это, на одном реальном устройстве Android отклонил установку 5.8.1 поверх существующей V18.
+
+До выяснения причины:
+
+- создайте и проверьте Full Backup перед любым uninstall/reinstall;
+- не устанавливайте CI/debug-candidate APK на основной телефон;
+- при отказе обновления сохраните точное сообщение Package Installer или вывод `adb install -r`;
+- следуйте [KNOWN_ISSUES.md](KNOWN_ISSUES.md) и [Issue #18](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues/18).
+
 
 ## Напоминания
 
