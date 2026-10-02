@@ -1,53 +1,47 @@
-# BP Diary 5.8.1 — V18 Maintenance Release
+# BP Diary 5.8.2 — V18 Maintenance Candidate
 
 ## Русский
 
-BP Diary 5.8.1 — maintenance-обновление линии V18. Оно не меняет medical/core-логику, SCORE2, формулы отчётов, схему данных или package ID.
+BP Diary 5.8.2 — maintenance-кандидат линии V18. Он исправляет проблемы интерфейса и теста напоминаний, замеченные владельцем на реальном устройстве, и усиливает безопасное тестирование APK. Medical/core-логика, SCORE2, формулы отчётов, схема данных и production package ID не меняются.
 
-### Что изменено
+### Исправления
 
-- Chart.js обновлён с 4.4.0 до 4.5.1.
-- Font Awesome Free обновлён с 6.0.0-beta3 до 7.3.1.
-- GitHub Actions обновлены и закреплены на immutable full commit SHA.
-- Добавлен `THIRD_PARTY_NOTICES.md`.
-- Сохранён текущий private production signer V18.
-- Публикация 5.8.1 разрешена владельцем 2026-10-02 после успешной проверки кандидата.
+- Повторные быстрые нажатия больше не создают стопку одинаковых информационных toast/snackbar.
+- Кнопка «Проверить звук» блокирует параллельные повторные нажатия до завершения текущего native-вызова.
+- Перед новым тестовым Android-уведомлением предыдущий test notification отменяется, чтобы новый тест запускался как отдельный alert.
+- Если Android notifications запрещены, тестовый broadcast не отправляется; UI показывает одно понятное сообщение.
+- Окно «Автоматические копии» получило явную кнопку закрытия и покрыто UI regression test.
 
-### Проверки
+### Усиление процесса сборки
 
-- Chart.js 4.5.1: автоматические проверки SUCCESS; real-device analytics/rotation/RU-EN-UZ check PASSED.
-- Font Awesome Free 7.3.1: автоматические проверки SUCCESS; real-device icon/light-dark/RU-EN-UZ check PASSED.
-- Runtime high/critical dependency audit: 0 findings.
-- Известные build-time findings через `@capacitor/assets 3.0.5` остаются отслеживаемыми отдельно.
+- CI/debug APK получает отдельный package ID `com.tokhirjonyuldoshev.bpdiary.debug`.
+- Debug-приложение называется **BP Diary Dev** и может быть установлено рядом с production BP Diary.
+- Release APK сохраняет production package ID `com.tokhirjonyuldoshev.bpdiary`.
+- Production release workflow перед публикацией сравнивает новый подписанный APK с предыдущим stable release: package ID, versionCode и signing certificate должны быть совместимы.
+- Publication gate остаётся `false` до отдельного device acceptance и отдельного разрешения владельца.
 
-### Известная проблема установки
+### Связанные вопросы
 
-После публикации владелец сообщил, что официальный 5.8.1 не установился поверх уже установленной V18 без uninstall. При этом официальные APK 5.8.0 и 5.8.1 имеют одинаковый package ID и один и тот же production certificate, а versionCode повышен 181 → 182. Причина пока не установлена и отслеживается в Issue #18. Перед uninstall/reinstall необходимо создать и проверить Full Backup.
-
-Кандидат V18 / 5.8.1 / versionCode 182 принят владельцем на реальном устройстве 2026-10-02 и разрешён к публикации.
+Issue #18 по отказу установки официального 5.8.1 поверх существующей установки остаётся открытым до проверки фактически установленного APK на устройстве. Разделение debug package ID предотвращает повторение ситуации, когда тестовая сборка может занять production package slot.
 
 ## English
 
-BP Diary 5.8.1 is a maintenance update for the V18 line. It does not change medical/core calculations, SCORE2, report formulas, the data schema, or the package ID.
+BP Diary 5.8.2 is a V18 maintenance candidate. It fixes UI/reminder-test issues reported by the owner on a real device and hardens APK testing. Medical/core calculations, SCORE2, report formulas, the data schema, and the production package ID remain unchanged.
 
-### Changes
+### Fixes
 
-- Chart.js updated from 4.4.0 to 4.5.1.
-- Font Awesome Free updated from 6.0.0-beta3 to 7.3.1.
-- GitHub Actions upgraded and pinned to immutable full commit SHAs.
-- Added `THIRD_PARTY_NOTICES.md`.
-- The existing private V18 production signer is retained.
-- Publication was authorized by the owner on 2026-10-02 after candidate acceptance.
+- Rapid repeated actions no longer stack identical informational toast/snackbar messages.
+- The Test sound button blocks concurrent taps until the current native request completes.
+- The previous Android test notification is cancelled before a new test alert is triggered.
+- If Android notifications are not allowed, the test broadcast is not sent and the UI shows a single clear message.
+- The Automatic backups sheet now has an explicit close control and dedicated UI regression coverage.
 
-### Verification
+### Build hardening
 
-- Chart.js 4.5.1: automated checks SUCCESS; real-device analytics/rotation/RU-EN-UZ check PASSED.
-- Font Awesome Free 7.3.1: automated checks SUCCESS; real-device icon/light-dark/RU-EN-UZ check PASSED.
-- Runtime high/critical dependency audit: 0 findings.
-- Known build-time findings through `@capacitor/assets 3.0.5` remain tracked separately.
+- CI/debug APK uses the isolated package ID `com.tokhirjonyuldoshev.bpdiary.debug`.
+- The debug app is labeled **BP Diary Dev** and can coexist with the production app.
+- Release APK retains `com.tokhirjonyuldoshev.bpdiary`.
+- The production release workflow compares the newly signed APK with the previous stable release before publication: package ID, versionCode, and signing certificate must remain upgrade-compatible.
+- The publication gate remains `false` until separate owner device acceptance and explicit publication authorization.
 
-### Known installation issue
-
-After publication, the owner reported that the official 5.8.1 APK did not install over an existing V18 installation without uninstalling first. The official 5.8.0 and 5.8.1 APKs have the same package ID and production certificate, and versionCode increases from 181 to 182. Root cause is not yet established and is tracked in Issue #18. Create and verify a Full Backup before any uninstall/reinstall path.
-
-The V18 / 5.8.1 / versionCode 182 candidate was accepted on a real device on 2026-10-02 and authorized for publication.
+Issue #18 remains open until the exact APK currently installed on the affected device is identified.
