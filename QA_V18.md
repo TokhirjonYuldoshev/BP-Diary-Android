@@ -152,7 +152,10 @@ Still required before publication:
 - [x] Owner explicitly authorized publication of 5.8.1 on 2026-10-02
 - [x] Signed release created from protected `main` by Publish Android Release #11 (`36994705331`)
 - [x] Official APK hash and production signer verified
-- [ ] Official 5.8.1 APK post-release install sanity is verified
+- [x] Owner attempted official 5.8.1 post-release update on 2026-10-02
+- [x] In-place install over the existing device installation FAILED; Issue #18 opened
+- [ ] Exact installed APK signer/version state on the affected device is identified
+- [ ] Official 5.8.1 post-release install path is resolved and re-verified
 
 
 ## Official V18 5.8.1 release verification — 2026-10-02
@@ -168,6 +171,21 @@ Still required before publication:
 - [x] Release workflow artifact ID: `11221212265`
 - [x] Release asset ID: `605346382`
 - [x] Publication gate set back to `false` in the post-release commit
-- [ ] Owner post-release install/update sanity of the official 5.8.1 APK
+- [x] Owner attempted official 5.8.1 install/update sanity; in-place update failed on the affected device
+- [ ] Root cause from installed package/signing state is confirmed
+- [ ] Resolved install/update path is re-tested on the device
 
 The original `v5.8.0` release remains preserved as immutable release history.
+
+
+### 5.8.1 post-release install failure evidence
+
+- Issue: [#18 — Investigate failed in-place update from official V18 5.8.0 to 5.8.1](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues/18)
+- Official 5.8.0 package ID: `com.tokhirjonyuldoshev.bpdiary`
+- Official 5.8.1 package ID: `com.tokhirjonyuldoshev.bpdiary`
+- Official 5.8.0 versionCode: `181`
+- Official 5.8.1 versionCode: `182`
+- Both official APKs independently verified with APK Signature Scheme v2 signer SHA-256:
+  `a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`
+- Therefore the release APK pair does not currently show a package/signing mismatch; the exact installed package on the affected device must be captured before assigning root cause.
+- Until Issue #18 is resolved, documentation does not guarantee in-place update for every existing V18 installation.
