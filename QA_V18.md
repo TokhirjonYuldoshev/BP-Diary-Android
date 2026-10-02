@@ -5,15 +5,15 @@ Status: **FINAL / STABLE / RELEASED**
 ## Version
 
 - Release: `V18`
-- Version: `5.8.0`
-- versionCode: `181`
-- Official tag: `v5.8.0`
-- Branch: `v18-secure-signing-migration`
+- Version: `5.8.1`
+- versionCode: `182`
+- Official tag: `v5.8.1`
+- Branch: `main`
 - Publication gate: `publish=false`
 
 ## Device retest marker
 
-- Candidate after protected-backup lifecycle fixes uses `versionCode 181` so Android must install the new APK over the earlier V18 candidate.
+- Current stable maintenance release uses `versionCode 182`; the original V18 / 5.8.0 release used `versionCode 181`.
 
 ## Scope
 
@@ -150,5 +150,24 @@ Still required before publication:
 - [x] Final candidate CI on exact candidate SHA `132783b16cc0e323a806225709673ecb3bdb576d`: Build #304, UI Regression #197 (20/20), Dependency Security Audit #104, CodeQL #71 — SUCCESS
 - [x] Owner verified V18 / 5.8.1 / versionCode 182 and reported the candidate working on 2026-10-02
 - [x] Owner explicitly authorized publication of 5.8.1 on 2026-10-02
-- [ ] Signed release is created from protected `main`
-- [ ] Official APK hash/signer and post-release install sanity are verified
+- [x] Signed release created from protected `main` by Publish Android Release #11 (`36994705331`)
+- [x] Official APK hash and production signer verified
+- [ ] Official 5.8.1 APK post-release install sanity is verified
+
+
+## Official V18 5.8.1 release verification — 2026-10-02
+
+- [x] Owner explicitly authorized publication on 2026-10-02
+- [x] Publish Android Release #11 (`36994705331`): SUCCESS
+- [x] Official tag: `v5.8.1`
+- [x] Release target: `44b0b80447a3e2a58c01b3199469416be65967e4`
+- [x] Official APK: `BP-Diary-5.8.1-V18.apk`
+- [x] Official APK size: `4,818,035` bytes
+- [x] Official APK SHA-256: `38b1e92307df61915ff85edc8e447688f4f36010ec39c6e01178a9f5796b1301`
+- [x] Production signer SHA-256: `a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`
+- [x] Release workflow artifact ID: `11221212265`
+- [x] Release asset ID: `605346382`
+- [x] Publication gate set back to `false` in the post-release commit
+- [ ] Owner post-release install/update sanity of the official 5.8.1 APK
+
+The original `v5.8.0` release remains preserved as immutable release history.

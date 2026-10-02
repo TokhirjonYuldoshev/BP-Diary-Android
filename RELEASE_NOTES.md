@@ -11,7 +11,7 @@ BP Diary 5.8.1 — maintenance-обновление линии V18. Оно не 
 - GitHub Actions обновлены и закреплены на immutable full commit SHA.
 - Добавлен `THIRD_PARTY_NOTICES.md`.
 - Сохранён текущий private production signer V18.
-- Publication gate остаётся закрыт до отдельного подтверждения владельца.
+- Публикация 5.8.1 разрешена владельцем 2026-10-02 после успешной проверки кандидата.
 
 ### Проверки
 

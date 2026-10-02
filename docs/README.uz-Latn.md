@@ -4,7 +4,7 @@
 
 ## Loyiha haqida
 
-**BP Diary V18 / 5.8.0** — qon bosimi kundaligini yuritish, takroriy o‘lchovlarni saqlash, dinamikani tahlil qilish, eslatmalarni sozlash, zaxira nusxalar yaratish va shifokor uchun hisobot tayyorlashga mo‘ljallangan Android ilova.
+**BP Diary V18 / 5.8.1** — qon bosimi kundaligini yuritish, takroriy o‘lchovlarni saqlash, dinamikani tahlil qilish, eslatmalarni sozlash, zaxira nusxalar yaratish va shifokor uchun hisobot tayyorlashga mo‘ljallangan Android ilova.
 
 Ilova local-first tamoyiliga asoslangan: kundalik yozuvlari va profil ma’lumotlari foydalanuvchi ularni o‘zi eksport qilmaguncha yoki ulashmaguncha qurilmada qoladi.
 
@@ -106,26 +106,26 @@ Tilni ilova interfeysi yoki Sozlamalar orqali almashtirish mumkin.
 
 Rasmiy stable release:
 
-**V18 / 5.8.0**
+**V18 / 5.8.1**
 
-[Rasmiy GitHub Release sahifasini ochish](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.0)
+[Rasmiy GitHub Release sahifasini ochish](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.1)
 
 Fayl:
 
 ```text
-BP-Diary-5.8-V18.apk
+BP-Diary-5.8.1-V18.apk
 ```
 
 SHA-256:
 
 ```text
-802b608d2828c4513be644cdbb4287bf922dadec4fe3a6469378ee5c50c3d15c
+38b1e92307df61915ff85edc8e447688f4f36010ec39c6e01178a9f5796b1301
 ```
 
 Linux/macOS da tekshirish:
 
 ```bash
-sha256sum BP-Diary-5.8-V18.apk
+sha256sum BP-Diary-5.8.1-V18.apk
 ```
 
 V18 Package ID’ni saqlaydi, ammo yangi private signing key’dan foydalanadi. V17’dan o‘tish: Full Backup yarating va tekshiring, V17’ni o‘chiring, V18’ni o‘rnating va ma’lumotlarni tiklang. Yangi imzoli V18 ustiga ilovani o‘chirmasdan yangilash mumkin.
