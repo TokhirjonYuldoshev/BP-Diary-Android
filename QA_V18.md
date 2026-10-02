@@ -147,8 +147,8 @@ Candidate metadata:
 
 Still required before publication:
 
-- [ ] Final candidate CI on the exact 5.8.1 metadata commit
-- [ ] Owner verifies the 5.8.1 / versionCode 182 marker in the candidate build
+- [x] Final candidate CI on exact candidate SHA `132783b16cc0e323a806225709673ecb3bdb576d`: Build #304, UI Regression #197 (20/20), Dependency Security Audit #104, CodeQL #71 — SUCCESS
+- [x] Owner verified V18 / 5.8.1 / versionCode 182 and reported the candidate working on 2026-10-02
 - [ ] Owner explicitly authorizes publication of 5.8.1
 - [ ] Signed release is created from protected `main`
 - [ ] Official APK hash/signer and post-release install sanity are verified
