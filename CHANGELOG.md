@@ -1,5 +1,21 @@
 # Changelog
 
+## V18 — Maintenance Candidate — 5.8.2
+
+- Candidate only; not yet published.
+- Version metadata: V18 / 5.8.2 / versionCode 183 / proposed tag `v5.8.2`.
+- Deduplicated repeated mobile toast/snackbar feedback.
+- Added busy-state protection for the reminder Test sound action.
+- Android reminder sound test now skips broadcast when notification permission is unavailable and cancels the previous test notification before triggering a new one.
+- Added an explicit close control for the Automatic backups sheet.
+- Added UI regression coverage for repeated sound-test taps, toast deduplication, and Auto-backups dismissal.
+- CI/debug APK isolated as `com.tokhirjonyuldoshev.bpdiary.debug` with app label `BP Diary Dev`.
+- Production release APK remains `com.tokhirjonyuldoshev.bpdiary`.
+- Release workflow now blocks publication unless the new signed APK is upgrade-compatible with the previous stable APK by package ID, increasing versionCode, and matching production signer.
+- Medical/core logic, SCORE2, report formulas, data schema and production package ID are unchanged.
+- Publication gate remains `false` pending owner device acceptance and separate publication authorization.
+- Issue #18 remains open for the already-observed 5.8.1 in-place update failure.
+
 ## V18 — Maintenance Release — 5.8.1
 
 - Publication authorized by the owner on 2026-10-02 after successful candidate acceptance.
