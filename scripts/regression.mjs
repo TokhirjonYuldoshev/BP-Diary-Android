@@ -9,15 +9,19 @@ const files={
   html:join(www,'index.html'),
   js:join(www,'mobile-modern.js'),
   css:join(www,'mobile-modern.css'),
-  patch:join(root,'scripts','patch-android.mjs')
+  patch:join(root,'scripts','patch-android.mjs'),
+  buildWorkflow:join(root,'.github','workflows','build-android.yml'),
+  releaseWorkflow:join(root,'.github','workflows','release.yml')
 };
 
-const [source,html,js,css,patch]=await Promise.all([
+const [source,html,js,css,patch,buildWorkflow,releaseWorkflow]=await Promise.all([
   readFile(files.source,'utf8'),
   readFile(files.html,'utf8'),
   readFile(files.js,'utf8'),
   readFile(files.css,'utf8'),
-  readFile(files.patch,'utf8')
+  readFile(files.patch,'utf8'),
+  readFile(files.buildWorkflow,'utf8'),
+  readFile(files.releaseWorkflow,'utf8')
 ]);
 
 const sourceEntries=await readdir(join(root,'source'));
@@ -66,6 +70,8 @@ const checks=[
   ['V18 reminder test blocks rapid duplicate clicks',js.includes("test.dataset.bpBusy==='1'")&&js.includes("test.disabled=true")&&js.includes("setTimeout(()=>{test.disabled=false")],
   ['V18 auto-backup sheet has explicit close control',js.includes("mobileAutoBackupSheet")&&js.includes("class=\"mobile-sheet-close\"")&&js.includes("q('.mobile-sheet-close',sheet).onclick=()=>closeMobileSheet(sheet)")],
   ['V18 native reminder test checks permission before broadcast',patch.includes('out.put("triggered", false)')&&patch.includes('cancel(ReminderReceiver.NOTIFICATION_ID_TEST)')&&patch.includes('out.put("triggered", true)')],
+  ['V18 debug candidate has isolated package identity',patch.includes('applicationIdSuffix ".debug"')&&patch.includes('BP Diary Dev')&&buildWorkflow.includes("com.tokhirjonyuldoshev.bpdiary.debug")&&buildWorkflow.includes("application-label:'BP Diary Dev'")],
+  ['V18 release gate compares previous stable upgrade identity',releaseWorkflow.includes('Verify upgrade compatibility with previous stable APK')&&releaseWorkflow.includes('test "$CURRENT_CODE" -gt "$PREVIOUS_CODE"')&&releaseWorkflow.includes('test "$CURRENT_FP" = "$PREVIOUS_FP"')],
   ['V17 advanced reminder UI',js.includes('mobileReminderRepeats')&&js.includes('mobileReminderInterval')&&js.includes('mobileReminderSound')&&js.includes('mobileReminderVibrate')&&js.includes('testReminderSound')],
   ['V17 repeating native reminders',patch.includes('ACTION_REMINDER_REPEAT')&&patch.includes('ACTION_REMINDER_DONE')&&patch.includes('ACTION_REMINDER_SNOOZE')&&patch.includes('ACTION_REMINDER_TEST')&&patch.includes('getTimesCsv')&&patch.includes('IMPORTANCE_HIGH')&&patch.includes('DEFAULT_ALARM_ALERT_URI')&&patch.includes('testReminderSound')],
   ['V17 onboarding scenes',js.includes('onboardingIllustration')&&js.includes('data-scene="measure"')&&js.includes('data-scene="privacy"')&&js.includes('bp_v17_onboarding_done')],
