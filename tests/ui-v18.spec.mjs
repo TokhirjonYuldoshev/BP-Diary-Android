@@ -405,6 +405,8 @@ test('V18 reminder test sound is single-flight and toast feedback is deduplicate
     window.__reminderCalls=[];
     window.Capacitor={Plugins:{NativeBridge:{
       getReminderStatus:async()=>({enabled:true,times:'09:00',time:'09:00',repeatCount:1,repeatInterval:10,sound:2,vibrate:true,notificationsAllowed:false}),
+      scheduleDailyReminder:async args=>({enabled:true,notificationsAllowed:false,...args}),
+      cancelDailyReminder:async()=>({enabled:false,notificationsAllowed:false}),
       testReminderSound:async args=>{
         window.__reminderCalls.push({method:'test',args});
         await new Promise(resolve=>setTimeout(resolve,120));
