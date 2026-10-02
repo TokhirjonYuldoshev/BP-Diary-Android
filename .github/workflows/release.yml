@@ -179,6 +179,50 @@ jobs:
           test "$APK_FP" = "$EXPECTED_FP"
           echo "Verified V18 production signer: $APK_FP"
 
+      - name: Verify upgrade compatibility with previous stable APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CURRENT_APK="android/app/build/outputs/apk/release/app-release.apk"
+          test -s "$CURRENT_APK"
+          PREVIOUS_TAG="$(gh release list --limit 1 --json tagName --jq '.[0].tagName // empty')"
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "No previous GitHub Release found; skipping upgrade comparison."
+            exit 0
+          fi
+
+          mkdir -p /tmp/previous-release
+          gh release download "$PREVIOUS_TAG" --pattern '*.apk' --dir /tmp/previous-release
+          PREVIOUS_APK="$(find /tmp/previous-release -maxdepth 1 -type f -name '*.apk' | head -1)"
+          test -s "$PREVIOUS_APK"
+
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -1)"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
+          test -x "$AAPT"
+          test -x "$APKSIGNER"
+
+          "$AAPT" dump badging "$PREVIOUS_APK" | head -1 | tee /tmp/previous-badging.txt
+          "$AAPT" dump badging "$CURRENT_APK" | head -1 | tee /tmp/current-badging.txt
+
+          PREVIOUS_PACKAGE="$(sed -n "s/.*package: name='\([^']*\)'.*/\1/p" /tmp/previous-badging.txt)"
+          CURRENT_PACKAGE="$(sed -n "s/.*package: name='\([^']*\)'.*/\1/p" /tmp/current-badging.txt)"
+          PREVIOUS_CODE="$(sed -n "s/.*versionCode='\([^']*\)'.*/\1/p" /tmp/previous-badging.txt)"
+          CURRENT_CODE="$(sed -n "s/.*versionCode='\([^']*\)'.*/\1/p" /tmp/current-badging.txt)"
+
+          test "$PREVIOUS_PACKAGE" = "com.tokhirjonyuldoshev.bpdiary"
+          test "$CURRENT_PACKAGE" = "com.tokhirjonyuldoshev.bpdiary"
+          test "$CURRENT_CODE" -gt "$PREVIOUS_CODE"
+
+          "$APKSIGNER" verify --print-certs "$PREVIOUS_APK" | tee /tmp/previous-cert.txt
+          "$APKSIGNER" verify --print-certs "$CURRENT_APK" | tee /tmp/current-cert.txt
+          PREVIOUS_FP="$(grep -m1 'certificate SHA-256 digest' /tmp/previous-cert.txt | sed 's/.*digest: //' | tr '[:upper:]' '[:lower:]' | tr -d ':[:space:]')"
+          CURRENT_FP="$(grep -m1 'certificate SHA-256 digest' /tmp/current-cert.txt | sed 's/.*digest: //' | tr '[:upper:]' '[:lower:]' | tr -d ':[:space:]')"
+          test -n "$PREVIOUS_FP"
+          test "$CURRENT_FP" = "$PREVIOUS_FP"
+          test "$CURRENT_FP" = "$BP_DIARY_RELEASE_CERT_SHA256"
+
+          echo "Upgrade compatibility verified against $PREVIOUS_TAG: package=$CURRENT_PACKAGE versionCode=$PREVIOUS_CODE->$CURRENT_CODE signer=$CURRENT_FP"
+
       - name: Prepare immutable release assets and notes
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk "${ARTIFACT_BASE}.apk"
