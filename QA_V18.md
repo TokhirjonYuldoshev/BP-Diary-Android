@@ -189,3 +189,27 @@ The original `v5.8.0` release remains preserved as immutable release history.
   `a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`
 - Therefore the release APK pair does not currently show a package/signing mismatch; the exact installed package on the affected device must be captured before assigning root cause.
 - Until Issue #18 is resolved, documentation does not guarantee in-place update for every existing V18 installation.
+
+
+## V18 bugfix candidate 5.8.2 / versionCode 183
+
+Purpose: fix reminder/sheet stability bugs reported from real-device screenshots without changing medical/core calculations, SCORE2, report formulas, data schema, or package ID.
+
+Candidate fixes:
+
+- [x] Repeated identical in-app toast feedback is deduplicated instead of stacking indefinitely
+- [x] Toast host is capped so rapid repeated actions cannot cover the whole sheet
+- [x] Reminder “Test sound” action is single-flight while the native call is pending
+- [x] Native reminder sound test cancels the previous test notification before publishing the next one
+- [x] Native sound test does not broadcast a notification when Android notification permission is denied
+- [x] Auto-backup sheet has an explicit visible close button
+- [x] Automated UI tests added for repeated reminder-test taps and auto-backup close behavior
+- [x] Static regression invariants added for the new behavior
+
+Still required:
+
+- [ ] Exact-head candidate CI is fully green
+- [ ] Owner tests reminder sound repeatedly on a real Android device
+- [ ] Owner verifies repeated taps no longer stack many toasts or dismiss the page unexpectedly
+- [ ] Owner verifies the Auto-backup sheet closes from the × button
+- [ ] Owner explicitly authorizes merge/publication
