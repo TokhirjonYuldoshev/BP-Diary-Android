@@ -4,7 +4,7 @@
 
 ## About
 
-**BP Diary V18 / 5.8.0** is an Android application for blood-pressure journaling, repeated readings, trend review, reminders, backups and doctor-ready reporting.
+**BP Diary V18 / 5.8.1** is an Android application for blood-pressure journaling, repeated readings, trend review, reminders, backups and doctor-ready reporting.
 
 The application is local-first: diary records and profile data stay on the device unless the user explicitly exports or shares them.
 
@@ -106,26 +106,26 @@ Language can be changed from the application interface and Settings.
 
 Official stable release:
 
-**V18 / 5.8.0**
+**V18 / 5.8.1**
 
-[Open the official GitHub Release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.0)
+[Open the official GitHub Release](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.1)
 
 File:
 
 ```text
-BP-Diary-5.8-V18.apk
+BP-Diary-5.8.1-V18.apk
 ```
 
 SHA-256:
 
 ```text
-802b608d2828c4513be644cdbb4287bf922dadec4fe3a6469378ee5c50c3d15c
+38b1e92307df61915ff85edc8e447688f4f36010ec39c6e01178a9f5796b1301
 ```
 
 Verification on Linux/macOS:
 
 ```bash
-sha256sum BP-Diary-5.8-V18.apk
+sha256sum BP-Diary-5.8.1-V18.apk
 ```
 
 V18 preserves the package ID but uses a new private signer. To migrate from V17: create and verify a Full Backup, uninstall V17, install V18 and restore your data. Existing new-signer V18 installations can update in place.
