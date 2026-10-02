@@ -826,8 +826,17 @@
       test.dataset.bpBusy='1';test.disabled=true;test.setAttribute('aria-busy','true');
       try{
         const res=await nativeCall('testReminderSound',{sound,vibrate});
-        if(res?.notificationsAllowed===false)mobileToast(l('Сначала разрешите уведомления Android','Allow Android notifications first','Avval Android bildirishnomalariga ruxsat bering'),'info',3200);
-        else mobileToast(l('Тестовый сигнал отправлен','Test alert sent','Sinov signali yuborildi'),'success',1800);
+        if(res?.notificationsAllowed===false){
+          mobileToast(l('Сначала разрешите уведомления Android','Allow Android notifications first','Avval Android bildirishnomalariga ruxsat bering'),'info',3200);
+        }else if(res?.channelEnabled===false){
+          mobileToast(l('Канал напоминаний отключён в настройках Android','Reminder channel is disabled in Android settings','Eslatma kanali Android sozlamalarida o‘chirilgan'),'error',3900);
+        }else if(res?.channelSoundEnabled===false){
+          mobileToast(l('Звук канала напоминаний отключён в Android','Reminder channel sound is disabled in Android','Eslatma kanali ovozi Android’da o‘chirilgan'),'error',3900);
+        }else if(Number(res?.volume)===0){
+          mobileToast(l('Громкость выбранного системного сигнала установлена на 0','The selected system sound volume is set to 0','Tanlangan tizim ovozi balandligi 0 ga o‘rnatilgan'),'info',3900);
+        }else{
+          mobileToast(l('Тестовый сигнал отправлен','Test alert sent','Sinov signali yuborildi'),'success',1800);
+        }
       }catch(err){mobileToast(l('Не удалось проверить звук','Could not test sound','Ovozni tekshirib bo‘lmadi'),'error')}
       finally{
         setTimeout(()=>{test.disabled=false;delete test.dataset.bpBusy;test.removeAttribute('aria-busy')},900);
