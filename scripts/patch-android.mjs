@@ -511,6 +511,7 @@ const plugin=`package com.tokhirjonyuldoshev.bpdiary;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
