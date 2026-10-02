@@ -189,3 +189,40 @@ The original `v5.8.0` release remains preserved as immutable release history.
   `a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`
 - Therefore the release APK pair does not currently show a package/signing mismatch; the exact installed package on the affected device must be captured before assigning root cause.
 - Until Issue #18 is resolved, documentation does not guarantee in-place update for every existing V18 installation.
+
+
+## V18 maintenance candidate 5.8.2 / versionCode 183 — 2026-10-03
+
+Scope is limited to owner-reported UI/reminder stability fixes plus CI/release hardening. Medical/core logic and the production package ID are out of scope and must remain unchanged.
+
+Candidate changes:
+
+- [x] Identical mobile toast/snackbar messages are deduplicated and capped
+- [x] Reminder Test sound action blocks concurrent rapid taps
+- [x] Native reminder test does not broadcast when notifications are unavailable
+- [x] Previous test notification is cancelled before a new Android test alert
+- [x] Automatic backups sheet has an explicit close control
+- [x] UI regression tests cover rapid sound-test taps and Auto-backup dismissal
+- [x] CI/debug package ID isolated as `com.tokhirjonyuldoshev.bpdiary.debug`
+- [x] CI/debug app label is `BP Diary Dev`
+- [x] Release package ID remains `com.tokhirjonyuldoshev.bpdiary`
+- [x] Release workflow compares package ID, increasing versionCode and production signer against the previous stable APK
+- [x] Publication gate remains `false`
+
+Candidate metadata:
+
+- Release line: `V18`
+- Version name: `5.8.2`
+- Version code: `183`
+- Proposed tag: `v5.8.2`
+- Proposed artifact: `BP-Diary-5.8.2-V18.apk`
+
+Required before publication:
+
+- [ ] Exact-head candidate CI passes
+- [ ] Owner tests repeated Test sound taps and confirms only one feedback toast appears
+- [ ] Owner confirms the selected reminder sound consistently plays when Android notification permission is allowed
+- [ ] Owner confirms Auto-backups can be closed with the explicit close button and Android Back
+- [ ] Owner confirms BP Diary Dev can coexist with the production BP Diary
+- [ ] Owner explicitly authorizes publication of 5.8.2
+- [ ] Official production release is built and verified
