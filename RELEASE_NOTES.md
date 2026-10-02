@@ -1,4 +1,4 @@
-# BP Diary 5.8.1 — V18 Maintenance Candidate
+# BP Diary 5.8.1 — V18 Maintenance Release
 
 ## Русский
 
@@ -20,7 +20,7 @@ BP Diary 5.8.1 — maintenance-обновление линии V18. Оно не 
 - Runtime high/critical dependency audit: 0 findings.
 - Известные build-time findings через `@capacitor/assets 3.0.5` остаются отслеживаемыми отдельно.
 
-Официальным стабильным релизом до публикации 5.8.1 остаётся V18 / 5.8.0.
+Кандидат V18 / 5.8.1 / versionCode 182 принят владельцем на реальном устройстве 2026-10-02 и разрешён к публикации.
 
 ## English
 
@@ -33,7 +33,7 @@ BP Diary 5.8.1 is a maintenance update for the V18 line. It does not change medi
 - GitHub Actions upgraded and pinned to immutable full commit SHAs.
 - Added `THIRD_PARTY_NOTICES.md`.
 - The existing private V18 production signer is retained.
-- The publication gate remains closed until separate owner approval.
+- Publication was authorized by the owner on 2026-10-02 after candidate acceptance.
 
 ### Verification
 
@@ -42,4 +42,4 @@ BP Diary 5.8.1 is a maintenance update for the V18 line. It does not change medi
 - Runtime high/critical dependency audit: 0 findings.
 - Known build-time findings through `@capacitor/assets 3.0.5` remain tracked separately.
 
-Until 5.8.1 is explicitly published, the official stable release remains V18 / 5.8.0.
+The V18 / 5.8.1 / versionCode 182 candidate was accepted on a real device on 2026-10-02 and authorized for publication.
