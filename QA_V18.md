@@ -109,3 +109,13 @@ Build-time findings through @capacitor/assets remain documented and visible in t
 - Production signer verified by release workflow: `a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`.
 - production-signing restricted to main, verified from owner screenshot on 2026-10-01.
 - Publication gate returned to false.
+
+## Official APK post-release device sanity — 2026-10-02
+
+The owner installed the official GitHub Release APK in place over the accepted V18 installation and confirmed the final post-release sanity checks passed.
+
+- [x] Official `BP-Diary-5.8-V18.apk` installs/updates successfully without uninstalling the app
+- [x] Application starts normally after the in-place update
+- [x] Existing user data remains intact
+- [x] About/version marker confirmed as V18 / 5.8.0 / versionCode 181
+- [x] Official release APK post-release device sanity: PASSED
