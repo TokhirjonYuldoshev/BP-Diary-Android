@@ -22,7 +22,7 @@ Copyright (c) 2017-present Drifty Co.
 
 ### Font Awesome Free
 
-- Package: `@fortawesome/fontawesome-free 6.0.0-beta3`
+- Package: `@fortawesome/fontawesome-free 7.3.1`
 - Project: https://github.com/FortAwesome/Font-Awesome
 - Licensing:
   - Icons: CC BY 4.0
