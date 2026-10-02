@@ -17,7 +17,23 @@ if(!gradle.includes('androidx.biometric:biometric')){
     implementation "androidx.biometric:biometric:1.1.0"
 `);
 }
+if(!gradle.includes('applicationIdSuffix ".debug"')){
+  gradle=gradle.replace(/buildTypes\s*\{/,m=>m+`
+        debug {
+            applicationIdSuffix ".debug"
+        }
+`);
+}
 await writeFile(join(app,'build.gradle'),gradle,'utf8');
+
+const debugValues=join(app,'src','debug','res','values');
+await mkdir(debugValues,{recursive:true});
+await writeFile(join(debugValues,'strings.xml'),`<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BP Diary Dev</string>
+    <string name="title_activity_main">BP Diary Dev</string>
+</resources>
+`,'utf8');
 
 const mainActivity=`package com.tokhirjonyuldoshev.bpdiary;
 
