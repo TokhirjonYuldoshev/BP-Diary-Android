@@ -139,6 +139,26 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug assembleRelease --no-daemon
 
+      - name: Verify CI debug package isolation
+        run: |
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -1)"
+          test -x "$AAPT"
+          DEBUG_APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          RELEASE_APK="$(find android/app/build/outputs/apk/release -type f -name '*.apk' | head -1)"
+          test -s "$DEBUG_APK"
+          test -s "$RELEASE_APK"
+
+          "$AAPT" dump badging "$DEBUG_APK" | tee /tmp/debug-badging.txt
+          "$AAPT" dump badging "$RELEASE_APK" | tee /tmp/release-badging.txt
+
+          grep -q "package: name='com.tokhirjonyuldoshev.bpdiary.debug'" /tmp/debug-badging.txt
+          grep -q "application-label:'BP Diary Dev'" /tmp/debug-badging.txt
+          grep -q "package: name='com.tokhirjonyuldoshev.bpdiary'" /tmp/release-badging.txt
+          if grep -q "package: name='com.tokhirjonyuldoshev.bpdiary.debug'" /tmp/release-badging.txt; then
+            echo "Release APK unexpectedly uses debug package ID"
+            exit 1
+          fi
+
       - name: Verify CI signing boundary
         run: |
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
