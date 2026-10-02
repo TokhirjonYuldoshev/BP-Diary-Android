@@ -16,7 +16,7 @@ Copyright (c) 2017-present Drifty Co.
 
 ### Chart.js
 
-- Package: `chart.js 4.4.0`
+- Package: `chart.js 4.5.1`
 - Project: https://github.com/chartjs/Chart.js
 - License: MIT
 
