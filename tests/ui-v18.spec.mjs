@@ -430,6 +430,22 @@ test('V18 reminder sound test suppresses rapid duplicates and keeps one feedback
   await expect(page.locator('#mobileToastHost .mobile-toast')).toHaveCount(1);
 });
 
+test('V18 reminder sound diagnostics report zero system volume',async({page})=>{
+  await page.evaluate(()=>{
+    window.Capacitor={Plugins:{NativeBridge:{
+      getReminderStatus:async()=>({enabled:true,times:'09:00',time:'09:00',repeatCount:1,repeatInterval:10,sound:2,vibrate:true,notificationsAllowed:true}),
+      scheduleDailyReminder:async()=>({enabled:true,notificationsAllowed:true}),
+      cancelDailyReminder:async()=>({enabled:false,notificationsAllowed:true}),
+      testReminderSound:async()=>({notificationsAllowed:true,triggered:true,channelEnabled:true,channelSoundEnabled:true,volume:0,maxVolume:7}),
+      setPrivacyShield:async()=>({})
+    }}};
+  });
+
+  await page.locator('#mobileAppBar [data-top="reminder"]').click();
+  await page.locator('#mobileReminderSheet .mobile-reminder-test').click();
+  await expect(page.locator('#mobileToastHost .mobile-toast')).toContainText(/Громкость|volume|balandligi/i);
+});
+
 test('V18 auto-backup sheet has an explicit close control and dismisses cleanly',async({page})=>{
   await page.evaluate(()=>{
     window.Capacitor={Plugins:{NativeBridge:{
