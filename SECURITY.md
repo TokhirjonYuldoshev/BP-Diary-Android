@@ -82,13 +82,13 @@ Screen Privacy использует Android `FLAG_SECURE`.
 Текущий stable asset:
 
 ```text
-BP-Diary-5.8.1-V18.apk
+BP-Diary-5.8.2-V18.apk
 SHA-256:
-38b1e92307df61915ff85edc8e447688f4f36010ec39c6e01178a9f5796b1301
+c6159deacf2e3f93d596e774b5e294f78bb426d49c73b21104c223bdc0df6ba3
 ```
 
 Официальный Release:
-https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.1
+https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.2
 
 ### Signing
 
@@ -186,13 +186,13 @@ Install APKs from the official GitHub Release.
 Current stable asset:
 
 ```text
-BP-Diary-5.8.1-V18.apk
+BP-Diary-5.8.2-V18.apk
 SHA-256:
-38b1e92307df61915ff85edc8e447688f4f36010ec39c6e01178a9f5796b1301
+c6159deacf2e3f93d596e774b5e294f78bb426d49c73b21104c223bdc0df6ba3
 ```
 
 Official Release:
-https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.1
+https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.2
 
 ### Signing
 
@@ -290,13 +290,13 @@ APK’ni rasmiy GitHub Release’dan o‘rnating.
 Joriy stable asset:
 
 ```text
-BP-Diary-5.8.1-V18.apk
+BP-Diary-5.8.2-V18.apk
 SHA-256:
-38b1e92307df61915ff85edc8e447688f4f36010ec39c6e01178a9f5796b1301
+c6159deacf2e3f93d596e774b5e294f78bb426d49c73b21104c223bdc0df6ba3
 ```
 
 Rasmiy Release:
-https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.1
+https://github.com/TokhirjonYuldoshev/BP-Diary-Android/releases/tag/v5.8.2
 
 ### Signing
 
