@@ -208,8 +208,9 @@ Candidate fixes:
 
 Still required:
 
-- [ ] Exact-head candidate CI is fully green
-- [ ] Owner tests reminder sound repeatedly on a real Android device
-- [ ] Owner verifies repeated taps no longer stack many toasts or dismiss the page unexpectedly
-- [ ] Owner verifies the Auto-backup sheet closes from the × button
-- [ ] Owner explicitly authorizes merge/publication
+- [x] Exact-head candidate CI on `4b6836e54e51d66e8fdf001ad2a7a3f613b65a92`: Build #387, UI Regression #280 (22/22), Dependency Security Audit #187, CodeQL #90 — SUCCESS
+- [x] Owner tested reminder sound repeatedly on a real Android device on 2026-10-03 — PASSED
+- [x] Owner verified repeated taps no longer stack many toasts or dismiss the page unexpectedly — PASSED
+- [x] Owner verified the Auto-backup sheet closes from the × button — PASSED
+- [x] Owner authorized merging the accepted 5.8.2 bugfix candidate into `main`
+- [ ] Owner separately authorizes publication of V18 / 5.8.2
