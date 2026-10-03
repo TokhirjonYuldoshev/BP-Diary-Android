@@ -213,4 +213,4 @@ Still required:
 - [x] Owner verified repeated taps no longer stack many toasts or dismiss the page unexpectedly — PASSED
 - [x] Owner verified the Auto-backup sheet closes from the × button — PASSED
 - [x] Owner authorized merging the accepted 5.8.2 bugfix candidate into `main`
-- [ ] Owner separately authorizes publication of V18 / 5.8.2
+- [x] Owner explicitly authorized publication of V18 / 5.8.2 on 2026-10-03

@@ -1,9 +1,9 @@
 # Changelog
 
-## V18 — Bugfix Candidate — 5.8.2
+## V18 — Bugfix Release — 5.8.2
 
-- Candidate only; not published.
-- Version metadata: V18 / 5.8.2 / versionCode 183 / proposed tag `v5.8.2`.
+- Publication authorized by the owner on 2026-10-03 after successful real-device candidate acceptance.
+- Version metadata: V18 / 5.8.2 / versionCode 183 / tag `v5.8.2`.
 - Deduplicate/cap repeated mobile toast feedback so rapid taps cannot flood the active sheet.
 - Make reminder “Test sound” single-flight while its native request is pending.
 - Cancel the previous native test notification before replaying the selected reminder sound.
@@ -11,7 +11,7 @@
 - Add an explicit close button to the Automatic backups sheet.
 - Add UI/regression coverage for repeated sound-test taps and backup-sheet dismissal.
 - Medical/core logic, SCORE2, report formulas, data schema and package ID are unchanged.
-- Publication gate remains `false` until separate owner acceptance and authorization.
+- Publication gate is opened only for the owner-authorized release transaction and must be closed again immediately after verification.
 
 ## V18 — Maintenance Release — 5.8.1
 

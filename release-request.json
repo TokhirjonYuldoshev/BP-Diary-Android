@@ -1,4 +1,4 @@
 {
-  "publish": false,
-  "notes": "V18 / 5.8.2 / versionCode 183 bugfix candidate. Publication is closed pending CI, owner device acceptance, and separate explicit authorization."
+  "publish": true,
+  "notes": "Owner authorized publication of V18 / 5.8.2 / versionCode 183 on 2026-10-03 after successful real-device acceptance. Close this gate immediately after release verification."
 }
