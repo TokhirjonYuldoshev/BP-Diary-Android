@@ -25,7 +25,7 @@ BP Diary 5.8.2 — bugfix-релиз линии V18. Он исправляет �
 
 Issue #18 остаётся открытым: на одном реальном устройстве официальный V18 5.8.1 не установился поверх существующей V18 без uninstall. Официальные APK 5.8.0 и 5.8.1 имеют одинаковый package ID и production certificate, поэтому root cause ещё не установлен. Перед uninstall/reinstall создайте и проверьте Full Backup. До закрытия Issue #18 in-place update не считается гарантированным.
 
-Публикация V18 / 5.8.2 / versionCode 183 разрешена владельцем 2026-10-03.
+Публикация V18 / 5.8.2 / versionCode 183 разрешена владельцем 2026-10-03. Официальный релиз `v5.8.2` опубликован и production APK проверен по SHA-256 и production signer.
 
 ## English
 
@@ -52,4 +52,4 @@ BP Diary 5.8.2 is a V18 bugfix release. It fixes reminder-sheet and popup stabil
 
 Issue #18 remains open: on one real device, the official V18 5.8.1 APK did not install over an existing V18 installation without uninstalling first. The official 5.8.0 and 5.8.1 APKs have the same package ID and production certificate, so root cause is not yet established. Create and verify a Full Backup before any uninstall/reinstall path. Until Issue #18 is resolved, in-place update is not documented as guaranteed.
 
-Publication of V18 / 5.8.2 / versionCode 183 was authorized by the owner on 2026-10-03.
+Publication of V18 / 5.8.2 / versionCode 183 was authorized by the owner on 2026-10-03. Official `v5.8.2` was published and the production APK was verified by SHA-256 and production signer.
