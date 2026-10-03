@@ -1,4 +1,4 @@
 {
-  "publish": true,
-  "notes": "Owner authorized publication of V18 / 5.8.2 / versionCode 183 on 2026-10-03 after successful real-device acceptance. Close this gate immediately after release verification."
+  "publish": false,
+  "notes": "V18 / 5.8.2 / versionCode 183 release completed and verified on 2026-10-03. Future releases require separate owner acceptance and authorization."
 }
