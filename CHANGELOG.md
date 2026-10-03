@@ -11,7 +11,14 @@
 - Add an explicit close button to the Automatic backups sheet.
 - Add UI/regression coverage for repeated sound-test taps and backup-sheet dismissal.
 - Medical/core logic, SCORE2, report formulas, data schema and package ID are unchanged.
-- Publication gate is opened only for the owner-authorized release transaction and must be closed again immediately after verification.
+- Publication gate was opened only for the owner-authorized release transaction and is closed again after verification.
+- Official stable release `v5.8.2` published by Publish Android Release #14 (`37083619446`).
+- Release target: `1f80c58c0b27bb4d33745d7cebe24c48b6612693`.
+- Official APK: `BP-Diary-5.8.2-V18.apk` — 4,818,047 bytes.
+- Official APK SHA-256: `c6159deacf2e3f93d596e774b5e294f78bb426d49c73b21104c223bdc0df6ba3`.
+- Production signer SHA-256: `a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`.
+- Release workflow artifact ID: `11259725389`.
+- Known install issue #18 remains open; in-place update is not documented as guaranteed until root cause is confirmed.
 
 ## V18 — Maintenance Release — 5.8.1
 

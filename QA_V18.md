@@ -5,15 +5,15 @@ Status: **FINAL / STABLE / RELEASED**
 ## Version
 
 - Release: `V18`
-- Version: `5.8.1`
-- versionCode: `182`
-- Official tag: `v5.8.1`
+- Version: `5.8.2`
+- versionCode: `183`
+- Official tag: `v5.8.2`
 - Branch: `main`
 - Publication gate: `publish=false`
 
 ## Device retest marker
 
-- Current stable maintenance release uses `versionCode 182`; the original V18 / 5.8.0 release used `versionCode 181`.
+- Current stable bugfix release uses `versionCode 183`; the original V18 / 5.8.0 release used `versionCode 181`.
 
 ## Scope
 
@@ -214,3 +214,21 @@ Still required:
 - [x] Owner verified the Auto-backup sheet closes from the × button — PASSED
 - [x] Owner authorized merging the accepted 5.8.2 bugfix candidate into `main`
 - [x] Owner explicitly authorized publication of V18 / 5.8.2 on 2026-10-03
+
+
+## Official V18 5.8.2 release verification — 2026-10-03
+
+- [x] Owner explicitly authorized publication on 2026-10-03
+- [x] Publish Android Release #14 (`37083619446`): SUCCESS
+- [x] Official tag: `v5.8.2`
+- [x] Release target: `1f80c58c0b27bb4d33745d7cebe24c48b6612693`
+- [x] Official APK: `BP-Diary-5.8.2-V18.apk`
+- [x] Official APK size: `4,818,047` bytes
+- [x] Official APK SHA-256: `c6159deacf2e3f93d596e774b5e294f78bb426d49c73b21104c223bdc0df6ba3`
+- [x] Production signer SHA-256: `a5937391a51706596971d19374b9e956f256ba4621c58a2ac487f0862f2b2cb4`
+- [x] Release workflow artifact ID: `11259725389`
+- [x] Release asset ID: `606814408`
+- [x] Publication gate returned to `false` in the post-release branch
+- [ ] Owner post-release install/update sanity of the official 5.8.2 APK
+
+Issue #18 remains open. Until the installed-package state from the earlier 5.8.1 update failure is identified, in-place update is not documented as guaranteed.

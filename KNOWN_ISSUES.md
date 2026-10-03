@@ -70,6 +70,12 @@ adb install -r .\BP-Diary-5.8.1-V18.apk
 
 Track investigation details in [Issue #18](https://github.com/TokhirjonYuldoshev/BP-Diary-Android/issues/18).
 
+### Current stable context — V18 5.8.2
+
+V18 5.8.2 / versionCode 183 is now the current stable release. It preserves the same production package ID and production signing identity. The earlier in-place update failure tracked in Issue #18 is still unresolved because the exact installed APK/signing state on the affected device has not yet been captured. Therefore the project still does not guarantee in-place update for every existing V18 installation.
+
+Before any uninstall/reinstall path, create and verify a Full Backup.
+
 ## Build-tooling findings
 
 The dependency audit continues to report known build-time findings through `@capacitor/assets 3.0.5`. The shipped runtime dependency audit remains clean at the current stable release. These findings are tracked separately and do not change medical/core calculations.
