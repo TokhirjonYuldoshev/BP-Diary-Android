@@ -80,7 +80,11 @@ const checks=[
   ['keyboard focus',css.includes(':focus-visible')],
   ['offline PDF libraries',html.includes('vendor/pdf/html2canvas.min.js')&&html.includes('vendor/pdf/jspdf.umd.min.js')],
   ['V18 no embedded release signing',!patch.includes('signingConfig signingConfigs.bpDiaryStable')&&!patch.includes('storePassword "android"')],
-  ['V18 no tracked legacy signer reference',!patch.includes('ci/debug.keystore.b64')&&!patch.includes('bp-diary-signing.p12')]
+  ['V18 no tracked legacy signer reference',!patch.includes('ci/debug.keystore.b64')&&!patch.includes('bp-diary-signing.p12')],
+  ['V18 reminder test is single-flight',js.includes("if(test.disabled)return;")&&js.includes("finally{setTimeout(()=>{test.disabled=false},700)}")],
+  ['V18 toast feedback is deduplicated and capped',js.includes("dataset.bpToastKey")&&js.includes("while(host.children.length>2)")],
+  ['V18 auto-backup sheet has explicit close control',js.includes("mobileAutoBackupSheet")&&js.includes("mobile-sheet-close")&&js.includes("showAutoBackupSheet")],
+  ['V18 repeated sound test cancels previous native test notification',patch.includes("cancel(NOTIFICATION_ID_TEST)")&&patch.includes('out.put("notificationsAllowed", allowed)')]
 ];
 
 let failed=0;

@@ -237,14 +237,26 @@
     if(!mq.matches){mobileNativeAlert(String(message||''));return}
     let host=q('#mobileToastHost');
     if(!host){host=document.createElement('div');host.id='mobileToastHost';host.setAttribute('aria-live','polite');document.body.appendChild(host)}
-    const item=document.createElement('div');item.className='mobile-toast '+type;
-    const icon=type==='success'?'✓':type==='error'?'!':'i';
-    item.innerHTML='<span class="mobile-toast-icon">'+icon+'</span><span class="mobile-toast-text"></span>';
-    q('.mobile-toast-text',item).textContent=uz()?translateUzText(String(message||'')):String(message||'');
-    host.appendChild(item);
-    requestAnimationFrame(()=>item.classList.add('show'));
-    const remove=()=>{item.classList.remove('show');setTimeout(()=>item.remove(),220)};
-    setTimeout(remove,duration);
+    const text=uz()?translateUzText(String(message||'')):String(message||'');
+    const key=type+'\n'+text;
+    let item=qa('.mobile-toast',host).find(el=>el.dataset.bpToastKey===key);
+    if(!item){
+      item=document.createElement('div');item.className='mobile-toast '+type;item.dataset.bpToastKey=key;
+      const icon=type==='success'?'✓':type==='error'?'!':'i';
+      item.innerHTML='<span class="mobile-toast-icon">'+icon+'</span><span class="mobile-toast-text"></span>';
+      q('.mobile-toast-text',item).textContent=text;
+      host.appendChild(item);
+      while(host.children.length>2)host.firstElementChild?.remove();
+      requestAnimationFrame(()=>item.classList.add('show'));
+    }else{
+      item.className='mobile-toast '+type+' show';
+      q('.mobile-toast-text',item).textContent=text;
+    }
+    clearTimeout(item.__bpToastTimer);
+    item.__bpToastTimer=setTimeout(()=>{
+      item.classList.remove('show');
+      setTimeout(()=>{if(!item.classList.contains('show'))item.remove()},220);
+    },duration);
   }
 
   function mobileConfirm({title,message,confirmLabel,cancelLabel,danger=true}){
@@ -804,13 +816,16 @@
     const test=document.createElement('button');test.type='button';test.className='outline mobile-reminder-test';
     test.innerHTML=svgIcon('bell')+'<span>'+l('Проверить звук','Test sound','Ovozni tekshirish')+'</span>';
     test.onclick=async()=>{
+      if(test.disabled)return;
       const sound=String(q('#mobileReminderSound',sheet)?.value||'2');
       const vibrate=!!q('#mobileReminderVibrate',sheet)?.checked;
+      test.disabled=true;
       try{
         const res=await nativeCall('testReminderSound',{sound,vibrate});
         if(res?.notificationsAllowed===false)mobileToast(l('Сначала разрешите уведомления Android','Allow Android notifications first','Avval Android bildirishnomalariga ruxsat bering'),'info',3200);
         else mobileToast(l('Тестовый сигнал отправлен','Test alert sent','Sinov signali yuborildi'),'success',1800);
       }catch(err){mobileToast(l('Не удалось проверить звук','Could not test sound','Ovozni tekshirib bo‘lmadi'),'error')}
+      finally{setTimeout(()=>{test.disabled=false},700)}
     };
     g.appendChild(test);
 
@@ -1455,9 +1470,9 @@
   }
   async function showAutoBackupSheet(){
     const sheet=makeSheet('mobileAutoBackupSheet',ru()?'Авто-бэкапы':'Auto-backups');
-    q('.mobile-sheet-title',sheet).textContent=ru()?'Автоматические копии':'Automatic backups';
+    q('.mobile-sheet-title',sheet).innerHTML='<span>'+(ru()?'Автоматические копии':'Automatic backups')+'</span><button type="button" class="mobile-sheet-close" aria-label="'+(ru()?'Закрыть':'Close')+'">×</button>';
     const g=q('.mobile-sheet-grid',sheet);g.innerHTML='<div class="mobile-backup-loading">'+(ru()?'Загрузка…':'Loading…')+'</div>';
-    openMobileSheet(sheet);
+    openMobileSheet(sheet);q('.mobile-sheet-close',sheet).onclick=()=>closeMobileSheet(sheet);
     try{
       const res=await nativeCall('listAutoBackups',{});
       const items=Array.isArray(res?.items)?res.items:[];
