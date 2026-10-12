@@ -202,7 +202,7 @@ jobs:
           gh release create "${RELEASE_TAG}"             "${ARTIFACT_BASE}.apk"             "${ARTIFACT_BASE}.apk.sha256"             --target "$GITHUB_SHA"             --title "BP Diary ${VERSION_NAME} ${APP_RELEASE}"             --notes-file /tmp/release-notes.md             --latest
 
       - name: Upload workflow artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ${{ env.ARTIFACT_BASE }}-Release
           path: |
