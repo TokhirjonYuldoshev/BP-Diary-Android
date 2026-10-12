@@ -10,7 +10,7 @@
     "security:check": "node scripts/security-check.mjs"
   },
   "dependencies": {
-    "@capacitor/android": "8.5.2",
+    "@capacitor/android": "8.5.3",
     "@capacitor/core": "8.5.2",
     "@fortawesome/fontawesome-free": "7.3.1",
     "chart.js": "4.5.1",
