@@ -1691,25 +1691,8 @@
   }
 
   function restoreBackupObject(b){
-    const before={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('bp_'))before[k]=localStorage.getItem(k)}
-    const rollback=()=>{for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith('bp_'))localStorage.removeItem(k)}Object.entries(before).forEach(([k,v])=>localStorage.setItem(k,v))};
-    try{
-      if(window.validateBackupV2?.(b)){
-        for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith('bp_'))localStorage.removeItem(k)}
-        const p=window.sanitizePatients(b.patients);
-        localStorage.setItem('bp_patients',JSON.stringify(p));
-        localStorage.setItem('bp_patient_settings',JSON.stringify(window.sanitizeSettings(b.patientSettings)));
-        for(const [id,arr] of Object.entries(b.dataByPatient)){
-          if(!Object.prototype.hasOwnProperty.call(p,id))continue;
-          localStorage.setItem('bp_data_'+id,JSON.stringify(arr.map(r=>{const x=window.sanitizeRecord(r);x.patientId=id;return x})));
-        }
-        if(['light','dark'].includes(b.theme))localStorage.setItem('bp_theme',b.theme);
-        if(/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(b.reminderTime||''))localStorage.setItem('bp_reminder_time',b.reminderTime);
-        localStorage.setItem('bp_lang',b.currentLang==='en'?'en':'ru');
-        return true;
-      }
-      return false;
-    }catch(err){rollback();throw err}
+    if(typeof window.restoreFullBackupObject!=='function')return false;
+    return window.restoreFullBackupObject(b);
   }
 
   async function nativeRestoreBackup(){

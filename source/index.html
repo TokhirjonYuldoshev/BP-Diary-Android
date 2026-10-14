@@ -680,7 +680,7 @@
     let chartPressure = null, chartPulse = null, chartTempWeight = null, chartTimeOfDay = null, chartWeekday = null, calendarChart = null;
     let patients = { "default": "Основной" };
     let patientSettings = {};
-    let currentPatient = "default";
+    let currentPatient = (()=>{try{return incomingSafeId(localStorage.getItem('bp_current_patient'))||'default';}catch(_){return 'default';}})();
     let reminderTimeout = null;
     let timeAutoUpdateInterval = null;
     let lastAutoDate = null;
@@ -919,7 +919,7 @@
         patients=sanitizePatients(safeJsonParse(localStorage.getItem('bp_patients'), {default:t('mainPatient')}));
         patientSettings=sanitizeSettings(safeJsonParse(localStorage.getItem('bp_patient_settings'), {}));
         if(!patients[currentPatient]) currentPatient='default';
-        savePatients(); renderPatientSelect();
+        saveCurrentPatient(); savePatients(); renderPatientSelect();
     }
     function renderPatientSelect() {
         let sel = document.getElementById("patientSelect");
@@ -935,11 +935,17 @@
     }
     function savePatients() { localStorage.setItem("bp_patients", JSON.stringify(patients)); }
     function savePatientSettings() { localStorage.setItem("bp_patient_settings", JSON.stringify(patientSettings)); }
+    function saveCurrentPatient() {
+        const id=incomingSafeId(currentPatient);
+        if(id)localStorage.setItem('bp_current_patient',id);
+        else localStorage.removeItem('bp_current_patient');
+    }
     function addPatient() {
         let id = "p_" + uuidv4();
         patients[id] = t("patientNamePrefix") + (Object.keys(patients).length);
         savePatients();
         currentPatient = id;
+        saveCurrentPatient();
         renderPatientSelect();
         loadData();
     }
@@ -955,6 +961,7 @@
             delete patientSettings[currentPatient];
             savePatients(); savePatientSettings();
             currentPatient = "default";
+            saveCurrentPatient();
             renderPatientSelect(); loadData();
         }
     }
@@ -1817,7 +1824,7 @@
             }
             dataByPatient[id]=valid; if(quarantine.length) quarantineByPatient[id]=quarantine;
         }
-        return {format:'BPDiaryBackup',schemaVersion:2,appVersion:'5.5.0-final-validated',exportedAt:new Date().toISOString(),currentPatient,currentLang,theme:localStorage.getItem('bp_theme')||'light',reminderTime:localStorage.getItem('bp_reminder_time')||'',patients,patientSettings,dataByPatient,...(Object.keys(quarantineByPatient).length?{quarantineByPatient}: {})};
+        return {format:'BPDiaryBackup',schemaVersion:2,appVersion:'__BP_VERSION_NAME__',exportedAt:new Date().toISOString(),currentPatient,currentLang,theme:localStorage.getItem('bp_theme')||'light',reminderTime:localStorage.getItem('bp_reminder_time')||'',patients,patientSettings,dataByPatient,...(Object.keys(quarantineByPatient).length?{quarantineByPatient}: {})};
     }
     function fullBackup() { const b=buildFullBackup(); downloadBlob(new Blob([JSON.stringify(b,null,2)],{type:'application/json'}),`full_backup_ALL_${localDateISO()}.json`); }
     function validateBackupV2(b) { if(!isPlainObject(b)||b.format!=='BPDiaryBackup'||b.schemaVersion!==2||!isPlainObject(b.patients)||!isPlainObject(b.patientSettings)||!isPlainObject(b.dataByPatient))return false; for(const id of Object.keys(b.patients))if(!incomingSafeId(id))return false; for(const id of Object.keys(b.patientSettings))if(!incomingSafeId(id)||!Object.prototype.hasOwnProperty.call(b.patients,id))return false; for(const [id,arr] of Object.entries(b.dataByPatient)){if(!incomingSafeId(id)||!Object.prototype.hasOwnProperty.call(b.patients,id)||!validateImportedData(arr))return false;} return true; }
@@ -1825,10 +1832,36 @@
     function snapshotRuntimeState(){return {currentPatient,currentLang,patients:JSON.parse(JSON.stringify(patients)),patientSettings:JSON.parse(JSON.stringify(patientSettings)),records:JSON.parse(JSON.stringify(records))};}
     function restoreBpStorageSnapshot(s){for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith('bp_'))localStorage.removeItem(k);}for(const [k,v] of Object.entries(s||{}))localStorage.setItem(k,v);}
     function restoreRuntimeState(s){if(!s)return;currentPatient=s.currentPatient;currentLang=s.currentLang;patients=s.patients;patientSettings=s.patientSettings;records=s.records;}
+    function restoreFullBackupObject(b) {
+        if(!validateBackupV2(b))return false;
+        const before=snapshotBpStorage(),runtimeBefore=snapshotRuntimeState();
+        try{
+            for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith('bp_'))localStorage.removeItem(k);}
+            const p=sanitizePatients(b.patients);
+            localStorage.setItem('bp_patients',JSON.stringify(p));
+            localStorage.setItem('bp_patient_settings',JSON.stringify(sanitizeSettings(b.patientSettings)));
+            for(const [id,arr] of Object.entries(b.dataByPatient)){
+                if(!Object.prototype.hasOwnProperty.call(p,id))continue;
+                localStorage.setItem('bp_data_'+id,JSON.stringify(arr.map(r=>{const x=sanitizeRecord(r);x.patientId=id;return x;})));
+            }
+            if(['light','dark'].includes(b.theme))localStorage.setItem('bp_theme',b.theme);
+            if(/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(b.reminderTime||''))localStorage.setItem('bp_reminder_time',b.reminderTime);
+            currentLang=['ru','en','uz'].includes(b.currentLang)?b.currentLang:'ru';
+            localStorage.setItem('bp_lang',currentLang);
+            currentPatient=Object.prototype.hasOwnProperty.call(p,b.currentPatient)?b.currentPatient:'default';
+            saveCurrentPatient();
+            return true;
+        }catch(err){
+            restoreBpStorageSnapshot(before);
+            restoreRuntimeState(runtimeBefore);
+            throw err;
+        }
+    }
+    window.restoreFullBackupObject=restoreFullBackupObject;
     function restoreBackup() {
         const inp=document.createElement('input');inp.type='file';inp.accept='application/json';inp.onchange=e=>{const file=e.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{showLoading(true);let before=null,runtimeBefore=snapshotRuntimeState();try{const b=JSON.parse(ev.target.result);if(!confirm(t('restoreConfirm')))return;
-            if(validateBackupV2(b)){before=snapshotBpStorage();try{for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith('bp_'))localStorage.removeItem(k);}const p=sanitizePatients(b.patients);localStorage.setItem('bp_patients',JSON.stringify(p));localStorage.setItem('bp_patient_settings',JSON.stringify(sanitizeSettings(b.patientSettings)));for(const [id,arr] of Object.entries(b.dataByPatient)){if(!Object.prototype.hasOwnProperty.call(p,id))continue;localStorage.setItem('bp_data_'+id,JSON.stringify(arr.map(r=>{const x=sanitizeRecord(r);x.patientId=id;return x;})));}if(['light','dark'].includes(b.theme))localStorage.setItem('bp_theme',b.theme);if(/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(b.reminderTime||''))localStorage.setItem('bp_reminder_time',b.reminderTime);currentLang=b.currentLang==='en'?'en':'ru';localStorage.setItem('bp_lang',currentLang);currentPatient=Object.prototype.hasOwnProperty.call(p,b.currentPatient)?b.currentPatient:'default';renderFullApp();alert(t('backupRestored'));return;}catch(writeErr){restoreBpStorageSnapshot(before);restoreRuntimeState(runtimeBefore);throw new Error(t('restoreFailedReverted')+' '+writeErr.message);}}
-            if(Array.isArray(b.records)&&validateImportedData(b.records)){before=snapshotBpStorage();try{const pid=safeRecordId(b.patient||'default');if(!patients[pid])patients[pid]=String(b.patientName||pid);currentPatient=pid;records=b.records.map(r=>{const x=sanitizeRecord(r);x.patientId=pid;return x;});patientSettings[pid]=sanitizePatientSetting(isPlainObject(b.settings)?b.settings:{});savePatients();savePatientSettings();saveData();loadData();alert(t('backupRestored'));return;}catch(writeErr){restoreBpStorageSnapshot(before);restoreRuntimeState(runtimeBefore);throw new Error(t('restoreFailedReverted')+' '+writeErr.message);}}
+            if(validateBackupV2(b)){try{if(!restoreFullBackupObject(b))throw new Error(t('invalidBackup'));renderFullApp();alert(t('backupRestored'));return;}catch(writeErr){throw new Error(t('restoreFailedReverted')+' '+writeErr.message);}}
+            if(Array.isArray(b.records)&&validateImportedData(b.records)){before=snapshotBpStorage();try{const pid=safeRecordId(b.patient||'default');if(!patients[pid])patients[pid]=String(b.patientName||pid);currentPatient=pid;saveCurrentPatient();records=b.records.map(r=>{const x=sanitizeRecord(r);x.patientId=pid;return x;});patientSettings[pid]=sanitizePatientSetting(isPlainObject(b.settings)?b.settings:{});savePatients();savePatientSettings();saveData();loadData();alert(t('backupRestored'));return;}catch(writeErr){restoreBpStorageSnapshot(before);restoreRuntimeState(runtimeBefore);throw new Error(t('restoreFailedReverted')+' '+writeErr.message);}}
             throw new Error(t('invalidBackup'));
         }catch(err){alert(t('importError')+': '+err.message);}finally{showLoading(false);}};reader.readAsText(file);};inp.click();
     }
@@ -2231,6 +2264,7 @@
         document.getElementById("restoreBackupBtn").onclick = restoreBackup;
         document.getElementById("patientSelect").onchange = function() {
             currentPatient = this.value;
+            saveCurrentPatient();
             editId = null;
             editBpContextBefore = null;
             clearFormMeasurements();

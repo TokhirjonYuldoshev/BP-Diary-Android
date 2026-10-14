@@ -44,6 +44,14 @@ if (!/^V\d+$/.test(String(version.release||''))) throw new Error('Invalid releas
 if (!/^\d+\.\d+\.\d+$/.test(String(version.versionName||''))) throw new Error('Invalid versionName in version.json');
 if (!Number.isInteger(version.versionCode) || version.versionCode < 1) throw new Error('Invalid versionCode in version.json');
 
+html = html
+  .replaceAll('__BP_RELEASE__', String(version.release))
+  .replaceAll('__BP_VERSION_NAME__', String(version.versionName))
+  .replaceAll('__BP_VERSION_CODE__', String(version.versionCode));
+if (html.includes('__BP_RELEASE__') || html.includes('__BP_VERSION_NAME__') || html.includes('__BP_VERSION_CODE__')) {
+  throw new Error('Unresolved version placeholder in source/index.html');
+}
+
 await ensureDir(join(www, 'vendor', 'chart'));
 await ensureDir(join(www, 'vendor', 'fontawesome', 'css'));
 await ensureDir(join(www, 'vendor', 'fontawesome', 'webfonts'));
