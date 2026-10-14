@@ -68,6 +68,7 @@ const checks=[
   ['V17 system authentication lock',js.includes('toggleBiometricProtection')&&js.includes('V17_BACKGROUND_LOCK_MS=10000')&&js.includes('consumeScreenOffEvent')&&js.includes('privacyAuthInFlight')&&js.includes('schedulePrivacyResumeCheck')&&js.includes('startPrivacyWatchdog')&&!js.includes('function privacyOverlay()')],
   ['V17 pre-paint lock',html.includes('bp_biometric_lock_v17')&&css.includes('html.bp-prelocked body')],
   ['native biometric bridge',patch.includes('void getBiometricStatus')&&patch.includes('void authenticateBiometric')&&patch.includes('DEVICE_CREDENTIAL')&&patch.includes('androidx.biometric:biometric')],
+  ['V18 debug package isolation',patch.includes('applicationIdSuffix ".debug"')&&patch.includes('resValue "string", "app_name", "BP Diary Dev"')&&!patch.includes('applicationId "com.tokhirjonyuldoshev.bpdiary.debug"')],
   ['native privacy shield',patch.includes('void setPrivacyShield')&&patch.includes('FLAG_SECURE')&&patch.includes('bp_diary_privacy')&&patch.includes('screen_shield')],
   ['native screen-off lock signal',patch.includes('ACTION_SCREEN_OFF')&&patch.includes('consumeScreenOffEvent')&&patch.includes('backgroundApp')],
   ['native reminder scheduler',patch.includes('class ReminderScheduler')&&patch.includes('class ReminderReceiver')&&patch.includes('class ReminderRestoreReceiver')],
