@@ -165,6 +165,50 @@ test('V18 protected backup produces an encrypted envelope instead of plaintext b
   expect(saved.content).not.toContain('"patientSettings"');
 });
 
+test('V18 full backup round trip preserves current version, Uzbek language and selected patient',async({page})=>{
+  await page.evaluate(()=>{
+    localStorage.setItem('bp_lang','uz');
+    localStorage.setItem('bp_current_patient','p_uz');
+    localStorage.setItem('bp_patients',JSON.stringify({default:'Asosiy',p_uz:'Bemor'}));
+    localStorage.setItem('bp_patient_settings',JSON.stringify({}));
+    localStorage.setItem('bp_data_default','[]');
+    localStorage.setItem('bp_data_p_uz','[]');
+    location.reload();
+  });
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('body')).toHaveClass(/mobile-shell-ready/);
+
+  const backup=await page.evaluate(()=>window.buildFullBackup());
+  expect(backup.appVersion).toBe(version.versionName);
+  expect(backup.currentLang).toBe('uz');
+  expect(backup.currentPatient).toBe('p_uz');
+
+  const restored=await page.evaluate(payload=>{
+    localStorage.setItem('bp_lang','ru');
+    localStorage.setItem('bp_current_patient','default');
+    const ok=window.restoreFullBackupObject(payload);
+    window.renderFullApp();
+    return ok;
+  },backup);
+
+  expect(restored).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('bp_lang'))).toBe('uz');
+  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('bp_current_patient'))).toBe('p_uz');
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.lang)).toBe('uz');
+  await expect(page.locator('#patientSelect')).toHaveValue('p_uz');
+
+  const after=await page.evaluate(()=>window.buildFullBackup());
+  expect(after.appVersion).toBe(version.versionName);
+  expect(after.currentLang).toBe('uz');
+  expect(after.currentPatient).toBe('p_uz');
+});
+
+test('V18 native and protected restore paths use the shared full-backup restore helper',async()=>{
+  const mobileSource=await readFile(new URL('../assets/mobile-modern.js',import.meta.url),'utf8');
+  expect(mobileSource).toContain("typeof window.restoreFullBackupObject!=='function'");
+  expect(mobileSource).toContain('return window.restoreFullBackupObject(b)');
+});
+
 test('V18 top language control cycles directly and UZ mobile UI has no known English leftovers',async({page})=>{
   const lang=page.locator('#mobileAppBar [data-top="lang"]');
   await expect(lang).toHaveText('RU');
