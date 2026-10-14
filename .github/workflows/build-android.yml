@@ -143,17 +143,30 @@ jobs:
         run: |
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
           test -x "$APKSIGNER"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -1)"
+          test -x "$AAPT"
+
           DEBUG_APK="android/app/build/outputs/apk/debug/app-debug.apk"
           test -s "$DEBUG_APK"
           "$APKSIGNER" verify --verbose --print-certs "$DEBUG_APK" | tee /tmp/debug-signature.txt
           DEBUG_FP="$(grep -m1 'certificate SHA-256 digest' /tmp/debug-signature.txt | sed 's/.*digest: //' | tr '[:upper:]' '[:lower:]' | tr -d ':[:space:]')"
           test -n "$DEBUG_FP"
           echo "CI debug signer: $DEBUG_FP"
+          "$AAPT" dump badging "$DEBUG_APK" | tee /tmp/debug-badging.txt
+          grep -q "package: name='com.tokhirjonyuldoshev.bpdiary.debug'" /tmp/debug-badging.txt
+          grep -q "application-label:'BP Diary Dev'" /tmp/debug-badging.txt
 
           RELEASE_APK="$(find android/app/build/outputs/apk/release -type f -name '*.apk' | head -1)"
           test -n "$RELEASE_APK"
           test -s "$RELEASE_APK"
-          echo "Unsigned release build produced: $RELEASE_APK"
+          "$AAPT" dump badging "$RELEASE_APK" | tee /tmp/release-badging.txt
+          grep -q "package: name='com.tokhirjonyuldoshev.bpdiary'" /tmp/release-badging.txt
+          if grep -q "package: name='com.tokhirjonyuldoshev.bpdiary.debug'" /tmp/release-badging.txt; then
+            echo "Release APK unexpectedly uses debug package ID" >&2
+            exit 1
+          fi
+          grep -q "application-label:'BP Diary'" /tmp/release-badging.txt
+          echo "Unsigned release build produced with production package ID: $RELEASE_APK"
 
       - name: Prepare V18 debug candidate
         run: |
