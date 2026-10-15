@@ -8,6 +8,12 @@ updates:
       time: "06:00"
       timezone: "Etc/UTC"
     open-pull-requests-limit: 5
+    groups:
+      capacitor-core-stack:
+        patterns:
+          - "@capacitor/android"
+          - "@capacitor/core"
+          - "@capacitor/cli"
     labels:
       - "dependencies"
       - "security"
@@ -20,6 +26,10 @@ updates:
       time: "06:30"
       timezone: "Etc/UTC"
     open-pull-requests-limit: 5
+    groups:
+      codeql-action:
+        patterns:
+          - "github/codeql-action/*"
     labels:
       - "dependencies"
       - "security"
