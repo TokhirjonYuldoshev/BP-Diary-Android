@@ -1,10 +1,10 @@
 name: Build Android APK
 
 on:
-  # Run on every branch push so protected-main required checks can be
-  # satisfied on the exact commit SHA before main is updated.
+  # PRs are validated by pull_request; merged commits are revalidated on main.
+  # Avoid duplicate branch-push + PR runs for the same candidate SHA.
   push:
-    branches: ['**']
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:

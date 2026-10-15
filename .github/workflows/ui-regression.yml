@@ -1,10 +1,10 @@
 name: UI Regression
 
 on:
-  # Required status checks must exist on the exact commit SHA. Do not path-skip
-  # this workflow once mobile-ui is required by the protected-main ruleset.
+  # Required checks run on the PR SHA; merged commits are revalidated on main.
+  # Avoid duplicate branch-push + PR runs for the same candidate SHA.
   push:
-    branches: ['**']
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
